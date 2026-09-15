@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NFL Research Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --field:#141920; --panel:#1b222c; --panel2:#212a36; --line:#2b3542;
+  --ink:#e7ebf1; --dim:#93a0b1; --faint:#5c6979;
+  --turf:#3fae6a; --clay:#d05b4b; --gold:#e3b34e;
+  --r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--field);color:var(--ink);
+  font:14px/1.45 Archivo,system-ui,sans-serif;font-feature-settings:"tnum" 1}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+select,input{font:inherit;color:var(--ink);background:var(--panel2);
+  border:1px solid var(--line);border-radius:var(--r);padding:5px 8px}
+input[type=number]{width:64px}
+select:focus,input:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+
+header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:12px 16px;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;font-size:17px;letter-spacing:.2px}
+.brand em{font-style:normal;color:var(--gold)}
+nav{display:flex;gap:4px;flex:1}
+nav button{padding:7px 13px;border-radius:var(--r);color:var(--dim);font-weight:600}
+nav button:hover{color:var(--ink)}
+nav button.on{background:var(--panel2);color:var(--gold)}
+.hctl{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:12.5px}
+#export{border:1px solid var(--line);border-radius:var(--r);padding:5px 10px;color:var(--dim);font-weight:600}
+#export:hover{color:var(--gold);border-color:var(--gold)}
+
+main{padding:14px 16px 8px;max-width:1560px;margin:0 auto}
+.pane{display:none}.pane.on{display:block}
+.ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ctl .lbl{color:var(--dim);font-size:12.5px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.seg button{padding:5px 11px;color:var(--dim);font-weight:600;font-size:12.5px}
+.seg button.on{background:var(--panel2);color:var(--gold)}
+.chips{display:inline-flex;gap:5px;flex-wrap:wrap}
+.chips button{padding:5px 11px;border:1px solid var(--line);border-radius:999px;
+  color:var(--dim);font-weight:600;font-size:12.5px}
+.chips button.on{border-color:var(--gold);color:var(--gold)}
+.count{color:var(--faint);font-size:12px;margin-left:auto}
+.note{color:var(--faint);font-size:12px;margin:8px 0 0}
+
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
+thead th{position:sticky;top:0;background:var(--panel);color:var(--dim);
+  font-weight:600;font-size:11.5px;text-align:center;padding:7px 8px;
+  border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;z-index:3}
+/* only the name column stays left, so a list of names reads down the page */
+thead th.l{text-align:left}
+thead th[title]{cursor:help;text-decoration:underline dotted var(--faint);text-underline-offset:3px}
+thead th.sorted{color:var(--gold)}
+tbody td{padding:5px 8px;text-align:center;border-bottom:1px solid #232c38;white-space:nowrap}
+tbody td.l{text-align:left}
+tbody tr:hover td{filter:brightness(1.18)}
+tbody tr.gsep td{border-bottom:2px solid var(--line);padding-bottom:8px}
+tbody tr.gsep+tr td{padding-top:8px}
+th.stick,td.stick{position:sticky;left:0;background:var(--panel);z-index:2}
+thead th.stick{z-index:4}
+.tblwrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  overflow:auto;max-height:74vh}
+.grp .tblwrap{max-height:none}
+
+.tm{display:inline-block;padding:1px 7px;border-radius:4px;font-weight:700;
+  font-size:12px;color:#fff;letter-spacing:.3px}
+.rk{display:inline-block;min-width:30px;text-align:center;padding:0 5px;
+  border-radius:4px;font-weight:700;font-size:11.5px}
+.lk{font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px}
+.st{font-weight:800;font-size:9.5px;padding:1px 4px;border-radius:3px;margin-left:5px;letter-spacing:.3px}
+.st.q{background:#6b5a1f;color:#f6e7b0}.st.d{background:#7a4a25;color:#fbe0c8}
+.st.o{background:#7a3a31;color:#fbe6e2}
+.spot{font-weight:800;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.4px}
+.spot.soft{background:#2c6a48;color:#dff3e6}
+.spot.tough{background:#7a3a31;color:#fbe6e2}
+
+.exp td{background:var(--panel2)!important;padding:10px 12px}
+.exp h4{font-size:12px;color:var(--dim);font-weight:600;margin:6px 0 4px}
+.exp table{font-size:12.5px}
+.exp th,.exp td{text-align:center}
+.exp thead th{position:static;background:none;cursor:default}
+.exp td.stick,.exp th.stick{position:static;background:none}
+.splitgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.splitgrid{grid-template-columns:1fr}}
+
+#slate{margin-bottom:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:4px}
+.gm{background:var(--panel);border:1px solid var(--line);border-radius:5px;
+  padding:4px 6px;font-size:11px;line-height:1.3;text-align:left;width:100%}
+.gm .row1{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
+.gm .when{color:var(--faint);font-size:9.5px;white-space:nowrap}
+.gm .row2{display:flex;justify-content:space-between;color:var(--faint);font-size:10px}
+.gm b{color:var(--dim);font-weight:600}
+.gm .tm{font-size:10.5px;padding:0 4px;border-radius:3px}
+button.gm{cursor:pointer}
+button.gm:hover{border-color:var(--dim)}
+button.gm.on{border-color:var(--gold);background:var(--panel2)}
+button.gm.on b{color:var(--ink)}
+.slatehead{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+.slatehead h2{font-size:14px;font-weight:700}
+.slatehead span{color:var(--faint);font-size:12px}
+.slatehead button{margin-left:auto;border:1px solid var(--line);border-radius:var(--r);
+  padding:3px 10px;color:var(--dim);font-size:11.5px;font-weight:600}
+.slatehead button:hover{color:var(--gold);border-color:var(--gold)}
+#iq-games{margin-bottom:12px}
+.strip{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:1px solid var(--line);border-radius:10px;padding:14px 18px;margin-bottom:16px}
+.strip .side h3{font-size:15px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.strip .side h3 .role{color:var(--faint);font-size:11.5px;font-weight:600}
+.strip .kv{display:flex;gap:14px;flex-wrap:wrap}
+.strip .kv div{font-size:12.5px;color:var(--dim)}
+.strip .kv b{display:block;font-size:16px;color:var(--ink);font-weight:700}
+.strip .mid{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;color:var(--faint);font-size:12px;border-left:1px solid var(--line);
+  border-right:1px solid var(--line);padding:0 18px}
+.strip .mid .vs{font-weight:800;font-size:18px;color:var(--gold)}
+.script{font-size:12px;color:var(--faint);margin-top:6px}
+.grp{margin-bottom:18px}
+.grp h3{font-size:13.5px;font-weight:700;margin:0 0 6px}
+.grp h3 span{color:var(--faint);font-weight:500;font-size:12px}
+#iq-units h3{font-size:13.5px;margin:4px 0 6px}
+
+footer{padding:10px 16px 26px;max-width:1560px;margin:0 auto;
+  color:var(--faint);font-size:11.5px;display:flex;gap:18px;flex-wrap:wrap;align-items:center}
+footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.err{background:var(--panel);border:1px solid var(--clay);border-radius:8px;
+  padding:14px 16px;color:var(--ink);max-width:640px}
+.err code{color:var(--gold)}
+@media(prefers-reduced-motion:no-preference){
+  .pane.on{animation:in .12s ease-out}
+  @keyframes in{from{opacity:.4}to{opacity:1}}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">NFL <em>Research Desk</em></div>
+  <nav>
+    <button data-t="team" class="on">Team usage</button>
+    <button data-t="tshort">Team short</button>
+    <button data-t="player">Player usage</button>
+    <button data-t="pshort">Player short</button>
+    <button data-t="iq">GridironIQ</button>
+  </nav>
+  <div class="hctl">
+    <span class="lbl">Season</span><select id="season"></select>
+    <button id="export" title="Download the table you are looking at as CSV">Export CSV</button>
+    <span id="stamp"></span>
+  </div>
+</header>
+<main>
+  <section class="pane on" id="p-team">
+    <div id="slate"></div>
+    <div class="ctl">
+      <span class="lbl">Window</span><span class="seg" id="t-win"></span>
+      <span class="lbl">Columns</span><span class="chips" id="t-grps"></span>
+      <span class="chips"><button id="t-gameview" title="Stack each game's two teams together, away on top, with a rule between games">Game-by-game</button></span>
+      <input id="t-q" placeholder="Find a team" size="12">
+      <span class="count" id="t-count"></span>
+    </div>
+    <div class="tblwrap"><div id="t-table"></div></div>
+    <p class="note">Click a team for its leading / trailing / tied / final-2:00 splits. Game-by-game stacks each matchup's two teams together, away on top. Shading compares the teams currently shown; hover a dotted header for what the number means.</p>
+  </section>
+
+  <section class="pane" id="p-tshort">
+    <div class="ctl">
+      <span class="lbl">Window</span><span class="seg" id="t2-win"></span>
+      <input id="t2-q" placeholder="Find a team" size="12">
+      <span class="chips"><button id="t2-gameview" title="Stack each game's two teams together">Game-by-game</button></span>
+      <span class="count" id="t2-count"></span>
+    </div>
+    <div class="tblwrap"><div id="t2-table"></div></div>
+    <p class="note">League ranks, not raw numbers — #1 is best, fastest, or most pass-heavy depending on the column; hover a chip for the underlying value. Spread, total and implied stay as numbers. Click a team for its script splits; the full tab has everything else.</p>
+  </section>
+
+  <section class="pane" id="p-player">
+    <div class="ctl">
+      <span class="chips" id="pl-pos"></span>
+      <span class="lbl">Window</span><span class="seg" id="pl-win"></span>
+      <select id="pl-team"><option value="">All teams</option></select>
+      <select id="pl-luck"><option value="">Any luck</option><option>OVER</option><option>UNDER</option><option>NEUTRAL</option></select>
+      <input id="pl-q" placeholder="Find a player" size="14">
+      <span class="lbl">Min games <input type="number" id="pl-ming" value="1" min="0" max="18"></span>
+      <span class="lbl">Min opps <input type="number" id="pl-mino" value="0" min="0" step="5"></span>
+      <span class="lbl" id="pl-projwrap"></span>
+      <span class="lbl"><input type="checkbox" id="pl-slate" checked> playing this week</span>
+      <span class="lbl" id="pl-outwrap"></span>
+      <span class="lbl">Columns</span><span class="chips" id="pl-grps"></span>
+      <span class="count" id="pl-count"></span>
+    </div>
+    <p class="note" id="pl-routenote"></p>
+    <div class="tblwrap"><div id="pl-table"></div></div>
+    <p class="note">Click a player to see the season → last-6 → last-4 → last-2 progression. Workhorse rates backfield usage (RB only), Dominator rates receiving usage (WR/TE only); both weight absolute volume, not just share. Luck is PPR FP/g minus opportunity-expected FP/g: OVER is regression risk, UNDER is a buy-low.</p>
+  </section>
+
+  <section class="pane" id="p-pshort">
+    <div class="ctl">
+      <span class="chips" id="pl2-pos"></span>
+      <span class="lbl">Window</span><span class="seg" id="pl2-win"></span>
+      <select id="pl2-team"><option value="">All teams</option></select>
+      <input id="pl2-q" placeholder="Find a player" size="14">
+      <span class="lbl" id="pl2-projwrap"></span>
+      <span class="lbl"><input type="checkbox" id="pl2-slate" checked> playing this week</span>
+      <span class="count" id="pl2-count"></span>
+    </div>
+    <p class="note" id="pl2-routenote"></p>
+    <div class="tblwrap"><div id="pl2-table"></div></div>
+    <p class="note">Ten to twelve position-shaped numbers on top of projection, salary and ownership. Click a player for his window progression; the full tab has everything else.</p>
+  </section>
+
+  <section class="pane" id="p-iq">
+    <div id="iq-games"></div>
+    <div class="ctl">
+      <span class="lbl">Offense</span><select id="iq-off"></select>
+      <button id="iq-swap" title="Swap offense and defense">⇄ Swap</button>
+      <span class="lbl">Defense</span><select id="iq-def"></select>
+      <span class="seg" id="iq-mode"></span>
+      <span class="lbl">Window</span><span class="seg" id="iq-win"></span>
+      <span class="lbl">Min games <input type="number" id="iq-ming" value="1" min="0" max="18"></span>
+      <span class="lbl" id="iq-projwrap"></span>
+    </div>
+    <div id="iq-strip"></div>
+    <div id="iq-groups"></div>
+    <div id="iq-units"></div>
+  </section>
+</main>
+<footer>
+  <span><span class="sw" style="background:#2c6a48"></span>good for the row's offense or player</span>
+  <span><span class="sw" style="background:#7a3a31"></span>works against them</span>
+  <span><span class="rk" style="background:#2c6a48;color:#fff">#32</span> stats-allowed rank: high = allows the most = soft</span>
+  <span><span class="rk" style="background:#7a3a31;color:#fff">#1</span> Opp defense rank: facing the best is bad</span>
+  <span><span class="spot soft">SOFT</span> bottom-6 allowed &nbsp;<span class="spot tough">TOUGH</span> top-6 allowed</span>
+  <span><b>*</b> window reaches into the prior season (hover the Window label)</span>
+  <span>TPRR and YPRR use only games with participation data — blank until it posts</span>
+  <span>Views are bookmarkable — the address bar follows your filters.</span>
+</footer>
+
+<script>
+/* ============================== helpers ============================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f=(v,d=1)=>v==null||isNaN(v)?'–':Number(v).toFixed(d);
+const pct0=v=>v==null||isNaN(v)?'–':Math.round(v*100)+'%';
+const pct1=v=>v==null||isNaN(v)?'–':(v*100).toFixed(1)+'%';
+const sgn=(v,d=1)=>v==null||isNaN(v)?'–':(v>0?'+':'')+Number(v).toFixed(d);
+
+function mix(a,b,t){const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+  const A=p(a),B=p(b);return '#'+A.map((x,i)=>Math.round(x+(B[i]-x)*t).toString(16).padStart(2,'0')).join('');}
+const heat=t=>`background:${mix('#1b222c','#2c6a48',Math.max(0,Math.min(1,t)))}`;
+const heatNeg=t=>`background:${mix('#1b222c','#7a3a31',Math.max(0,Math.min(1,t)))}`;
+function shade(t){ // t in 0..1, 1 = good
+  return t>=.5?heat((t-.5)*2):heatNeg((0.5-t)*2);
+}
+/* absolute-scale direction-aware shading (bounded metrics) */
+function heatDir(v,lo,hi,goodHigh=true){
+  if(v==null||isNaN(v))return'';
+  let t=(v-lo)/(hi-lo); t=Math.max(0,Math.min(1,t)); if(!goodHigh)t=1-t;
+  return shade(t);
+}
+/* percentile shading among the rows on screen — robust to outliers.
+   Returns a per-column style fn. */
+function pctShade(rows,k,goodHigh=true){
+  const vs=rows.map(r=>r[k]).filter(v=>v!=null&&!isNaN(v)).sort((a,b)=>a-b);
+  if(vs.length<2)return()=>'';
+  return v=>{
+    if(v==null||isNaN(v))return'';
+    let lo=0,hi=vs.length;
+    while(lo<hi){const m=(lo+hi)>>1; if(vs[m]<v)lo=m+1; else hi=m;}
+    let t=lo/(vs.length-1); t=Math.max(0,Math.min(1,t)); if(!goodHigh)t=1-t;
+    return shade(t);
+  };
+}
+
+/* ---- rank conventions (continuity note §5 — ranks are never transformed) */
+function rkColor(t){return `background:${mix('#7a3a31','#2c6a48',t)};color:#fff`;}
+function rk2(rank,allowed=false,n=32){
+  if(rank==null||isNaN(rank))return'<span class="rk" style="color:var(--faint)">–</span>';
+  const t=allowed?(rank-1)/(n-1):1-(rank-1)/(n-1);
+  return `<span class="rk" style="${rkColor(t)}">#${rank}</span>`;
+}
+/* short-tab rank cell: plain "#n" with the raw value on hover. The cell itself
+   is shaded by rank (see rkShade) so it matches the rest of the dashboard
+   rather than reading as a chip. */
+function rkCell(rank,raw,fmt){
+  if(rank==null||isNaN(rank))return'–';
+  const t=raw==null?'':` title="${esc(fmt(raw))}"`;
+  return `<span${t}>#${rank}</span>`;
+}
+const rkShade=v=>heatDir(v,1,32,false);   // #1 green, #32 red
+function rkOpp(rank,n=32){
+  if(rank==null||isNaN(rank))return'<span class="rk" style="color:var(--faint)">–</span>';
+  return `<span class="rk" style="${rkColor((rank-1)/(n-1))}">#${rank}</span>`;
+}
+/* stats-allowed spot badge: bottom-6 allowed = SOFT, top-6 = TOUGH */
+function spot(rank){
+  if(rank==null||isNaN(rank))return'';
+  if(rank>=27)return' <span class="spot soft">SOFT</span>';
+  if(rank<=6)return' <span class="spot tough">TOUGH</span>';
+  return'';
+}
+
+const TEAM_COLORS={ARI:'#97233F',ATL:'#A71930',BAL:'#241773',BUF:'#00338D',CAR:'#0085CA',
+CHI:'#C83803',CIN:'#FB4F14',CLE:'#311D00',DAL:'#003594',DEN:'#FB4F14',DET:'#0076B6',
+GB:'#203731',HOU:'#03202F',IND:'#002C5F',JAX:'#006778',KC:'#E31837',LAC:'#0080C6',
+LAR:'#003594',LV:'#5c6979',MIA:'#008E97',MIN:'#4F2683',NE:'#002244',NO:'#8a7a49',
+NYG:'#0B2265',NYJ:'#125740',PHI:'#004C54',PIT:'#FFB612',SEA:'#69BE28',SF:'#AA0000',
+TB:'#D50A0A',TEN:'#4B92DB',WSH:'#5A1414'};
+const tmChip=t=>`<span class="tm" style="background:${TEAM_COLORS[t]||'#444'}">${esc(t)}</span>`;
+function stChip(s){
+  const v=String(s||'').toUpperCase();
+  if(v==='Q')return'<span class="st q">Q</span>';
+  if(v==='D')return'<span class="st d">D</span>';
+  if(v==='O'||v==='OUT'||v==='IR')return'<span class="st o">OUT</span>';
+  return'';
+}
+const TIER_COLOR={'Bell cow':'#2c6a48','Alpha':'#2c6a48','Lead':'#3d6a4a','Primary':'#3d6a4a',
+  'Rotational':'#4a4f42','Secondary':'#4a4f42','Committee':'#5c4636','Depth':'#5c4636',
+  'Marginal':'#5a3630'};
+const tierChip=t=>t?`<span class="lk" style="background:${TIER_COLOR[t]||'#333'};color:#e7ebf1">${esc(t)}</span>`
+  :'<span class="lk" style="color:var(--faint)">–</span>';
+const luckChip=l=>l==='OVER'?'<span class="lk" style="background:#7a3a31;color:#fff">OVER</span>'
+  :l==='UNDER'?'<span class="lk" style="background:#2c6a48;color:#fff">UNDER</span>'
+  :'<span class="lk" style="color:var(--faint)">–</span>';
+
+/* header tooltips — plain language, one job each */
+const TIP={
+  plays_pg:'Offensive plays per game',sec_per_play:'Seconds between snaps on the same drive — lower is faster',
+  neutral_sec_per_play:'Pace with the game within one score, quarters 1–3',
+  pass_rate:'Share of plays that are passes',neutral_pass_rate:'Pass rate within one score, quarters 1–3',
+  proe:'Pass rate over expected: how much more (+) or less (−) this offense throws than the situation predicts, in points',
+  neutral_proe:'PROE within one score, quarters 1–3 — the cleanest read on identity',
+  early_down_pass_rate:'Pass rate on 1st and 2nd down',
+  rz_trips_pg:'Drives reaching the opponent 20, per game',rz_td_rate:'Share of red zone trips ending in a touchdown',
+  rz_pass_rate:'Pass rate on snaps inside the 20',
+  explosive_pass_rate:'Share of pass plays gaining 20+',explosive_rush_rate:'Share of rushes gaining 10+',
+  off_epa_pp:'Expected points added per offensive play',off_success:'Share of plays with positive EPA',
+  off_pass_epa_pp:'EPA per pass play',off_rush_epa_pp:'EPA per rush',
+  def_epa_pp:'EPA per play allowed — lower is better, rank #1 is the best defense',
+  def_success:'Success rate allowed',def_pass_epa_pp:'EPA per pass allowed',def_rush_epa_pp:'EPA per rush allowed',
+  games:'Games in this window',
+  _opp:'This week\u2019s opponent — vs = home, @ = away',
+  _spread:'This team\u2019s consensus spread this week; negative means favored',
+  _total:'Consensus game total this week',
+  _implied:'This team\u2019s implied points this week, from the spread and total',
+  _kick:'Kickoff in Eastern time, month/day — sorts chronologically',
+  _pace:'Seconds per snap on the same drive — lower is faster',
+  _plays_rk:'League rank in offensive plays per game — #1 runs the most plays. Hover for the number',
+  _pace_rk:'League rank in pace — #1 is the fastest offense. Hover for seconds per snap',
+  _pr_rk:'League rank in pass rate — #1 throws the most. Hover for the rate',
+  _proe_rk:'League rank in pass rate over expected — #1 is the most pass-happy for its situations',
+  _prD_rk:'League rank in pass-rate swing (leading minus trailing) — #1 keeps throwing most with a lead',
+  rz_td_rate_rk:'League rank in red zone TD rate — #1 finishes drives best',
+  off_epa_pp_rk:'League rank in offensive EPA per play — #1 is the best offense',
+  off_pass_epa_pp_rk:'League rank in passing EPA per play',
+  off_rush_epa_pp_rk:'League rank in rushing EPA per play',
+  def_pass_epa_pp_rk:'League rank in pass EPA allowed — #1 is the best pass defense',
+  def_rush_epa_pp_rk:'League rank in rush EPA allowed — #1 is the best run defense',
+  _paceL:'Seconds per snap while leading',
+  _paceT:'Seconds per snap while trailing',
+  _paceD:'Pace leading minus pace trailing. Negative means they stay fast with a lead',
+  _pr:'Pass rate, all situations',
+  _prL:'Pass rate while leading',
+  _prT:'Pass rate while trailing',
+  _prD:'Pass rate leading minus trailing, in points. Near zero means script-proof',
+  _rr:'Run rate, all situations',
+  _rrL:'Run rate while leading',
+  _rrT:'Run rate while trailing',
+  _rrD:'Run rate leading minus trailing, in points. Large positive means they bleed clock with a lead',
+  _proe:'Pass rate over expected — how much more (+) or less (−) they throw than the situation predicts',
+  _proeL:'PROE while leading',
+  _proeT:'PROE while trailing',
+  _proeD:'PROE leading minus trailing. Positive means they stay aggressive ahead',
+  rg_proj:'RotoGrinders projected fantasy points for this week',
+  rg_salary:'DraftKings salary from the RotoGrinders export',
+  rg_own:'RotoGrinders projected ownership for this week',
+  rg_value:'Projected points per $1,000 of salary',
+  team_current:'Team this week — differs from the stats team when the player changed teams',
+  opp_pg:'Carries + targets + pass attempts per game — the absolute volume behind the usage grade',
+  status:'RotoGrinders game status: Q questionable, D doubtful, OUT ruled out',
+  depth:'RotoGrinders depth-chart order at the position',
+  opp:'This week\u2019s opponent',opportunities:'Carries + targets + pass attempts in this window',
+  pass_att_pg:'Pass attempts per game',
+  pass_yds_pg:'Passing yards per game',
+  rush_yds_pg:'Rushing yards per game',
+  rec_yds_pg:'Receiving yards per game',pass_ypa:'Yards per attempt',pass_adot:'Average depth of target thrown',
+  cpoe:'Completion % over expected, attempt-weighted',pass_epa_per_att:'Passing EPA per attempt',
+  sack_rate:'Sacks per dropback',carries_pg:'Carries per game',carry_share:'Share of team carries',
+  i10_carries:'Carries snapped inside the 10',i5_carries:'Carries inside the 5',
+  ypc:'Yards per carry',rush_epa_per_att:'Rushing EPA per carry',
+  targets_pg:'Targets per game',target_share:'Share of team targets',air_yards_share:'Share of team air yards',
+  wopr:'Weighted opportunity: 1.5×target share + 0.7×air yards share',
+  adot:'Average depth of target',rz_targets:'Targets inside the 20',
+  rz_opp_pg:'Red zone opportunities (carries + targets) per game',
+  rz_share:'Share of the team\u2019s red zone opportunities',
+  rz_tds:'Rushing + receiving touchdowns',
+  rz_carries:'Carries inside the 20',
+  i10_carry_share:'Share of team carries inside the 10',
+  explosive_rush:'Rushes gaining 10+ yards',
+  expl_rush_20:'Rushes gaining 20+ yards',
+  expl_rush_rate:'Share of carries gaining 10+',
+  expl_rec:'Receptions gaining 10+ yards',
+  expl_rec_20:'Receptions gaining 20+ yards',
+  expl_rec_rate:'Share of receptions gaining 10+',
+  expl_pass:'Completions gaining 20+ yards',
+  expl_pass_rate:'Share of attempts gaining 20+',
+  expl_pg:'Explosive plays (10+) per game',
+  expl_20_pg:'Explosive plays (20+) per game',ez_targets:'Targets thrown into the end zone',
+  deep_targets:'Targets 20+ yards downfield',catch_rate:'Receptions per target',ypt:'Yards per target',
+  yac_per_rec:'Yards after catch per reception',rec_epa_per_tgt:'Receiving EPA per target',
+  snap_pct:'Share of offensive snaps played',
+  route_games:'Games in this window that have participation data behind them — per-route rates use only these',
+  window_from:'First game included in this window',
+  cross_season:'1 when the window reaches into the prior season',
+  routes_pg:'Routes run per game — dropbacks with the player on the field, from nflverse participation data (counts a back kept in to block as a route, so it runs slightly high for RB/TE versus charted routes)',
+  route_rate:'Routes run as a share of team dropbacks — how often he is actually out in the pattern',
+  tprr:'Targets per route run. League WR average about 20%; 30%+ is elite',
+  yprr:'Receiving yards per route run. 2.0+ is strong, 3.0+ is elite',
+  workhorse:'Backfield role grade, 0–100 within RB/FB: carry share, red zone opportunity share, target share, snap share and absolute volume. Weights fitted on 2025 first half, validated on the second half',
+  workhorse_tier:'Bell cow 90+, Lead 75+, Rotational 50+, Committee 25+, Marginal below',
+  dominator_tier:'Alpha 90+, Primary 75+, Secondary 50+, Depth 25+, Marginal below',
+  rz_share:'Share of the team\u2019s red zone opportunities (carries + targets)',
+  workhorse_trend:'Last-4 workhorse minus season workhorse — positive means a growing role',
+  dominator:'Receiving role grade, 0–100 within position: target share, air yards share, red zone opportunity share, snap share and target volume. For tight ends, plain target share tested slightly better, so treat the extra terms as colour',
+  dominator_trend:'Last-4 dominator minus season — positive means a growing role',
+  fp_ppr_pg:'PPR fantasy points per game',xfp_pg:'Expected FP/g from opportunities alone: league-average value of every carry, target and attempt by field position and depth',
+  luck_fp_pg:'Actual minus expected FP/g. Positive = production ran ahead of usage (regression risk); negative = usage says buy low',
+};
+const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
+
+/* -------- shared sortable table engine: cols {k,h,l,num,f,style,grp} ------ */
+const TSTATE=new WeakMap();
+function table(el,cols,rows,opts={}){
+  if(!el)return;
+  let st=TSTATE.get(el);
+  const dc=cols.find(c=>c.num)||cols[0];
+  if(!st||opts.reset||!cols.some(c=>c.k===st.k)){
+    st={k:dc.k,dir:dc.desc===false?1:-1};TSTATE.set(el,st);}
+  let sorted=[...rows].sort((a,b)=>{
+    const x=a[st.k],y=b[st.k];
+    if(x==null&&y==null)return 0; if(x==null)return 1; if(y==null)return -1;
+    return (x<y?-1:x>y?1:0)*st.dir;
+  });
+  // opts.groupKey keeps rows sharing a key adjacent. Groups are ordered by
+  // their best-placed member, so sorting still means something: sort by
+  // implied total and the highest-total game floats to the top, both of its
+  // teams together.
+  if(opts.groupKey){
+    const order=[],bucket=new Map();
+    sorted.forEach(r=>{
+      const g=r[opts.groupKey]??'\u0000';
+      if(!bucket.has(g)){bucket.set(g,[]);order.push(g);}
+      bucket.get(g).push(r);
+    });
+    sorted=order.flatMap(g=>{
+      const rs=bucket.get(g);
+      if(opts.groupOrder)rs.sort(opts.groupOrder);
+      return rs.map((r,i)=>({...r,_glast:i===rs.length-1}));
+    });
+  }
+  el._rows=sorted; el._cols=cols;
+  const h='<table><thead><tr>'+cols.map((c,i)=>
+    `<th class="${c.l?'l ':''}${i===0?'stick ':''}${c.k===st.k?'sorted':''}" data-k="${c.k}"${tip(c.k)}>${c.h}${c.k===st.k?(st.dir<0?' ▾':' ▴'):''}</th>`
+  ).join('')+'</tr></thead><tbody>'+sorted.map((r,i)=>
+    `<tr data-i="${i}"${r._glast?' class="gsep"':''}>`+cols.map((c,j)=>{
+      const v=r[c.k];
+      return `<td class="${c.l?'l ':''}${j===0?'stick':''}" style="${c.style?c.style(v,r):''}">${c.f?c.f(v,r):esc(v??'–')}</td>`;
+    }).join('')+'</tr>'
+  ).join('')+'</tbody></table>';
+  el.innerHTML=h;
+  el.querySelectorAll('thead th').forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(st.k===k)st.dir*=-1; else {st.k=k;st.dir=-1;}
+    table(el,cols,rows,{...opts,reset:false});
+  });
+  if(opts.rowClick)el.querySelectorAll('tbody tr').forEach(tr=>
+    tr.onclick=e=>opts.rowClick(sorted[+tr.dataset.i],tr,e));
+}
+/* CSV export of whatever table is on screen */
+function toCSV(cols,rows){
+  const strip=s=>String(s??'').replace(/<[^>]*>/g,'').replace(/"/g,'""');
+  const head=cols.map(c=>`"${strip(c.h)}"`).join(',');
+  const body=rows.map(r=>cols.map(c=>{
+    const v=r[c.k];
+    return `"${strip(c.f?c.f(v,r):v??'')}"`;
+  }).join(',')).join('\n');
+  return head+'\n'+body;
+}
+function download(name,text){
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(text);
+  a.download=name; a.click();
+}
+
+/* ============================== state ============================== */
+let MT=null;
+var SEASON=null, TWIN='season', PWIN='season', PPOS='RB', TAB='team';
+/* Positions are multi-select. PPOS stays the single "primary" position that
+   decides the column set when exactly one is chosen; PSEL holds the selection. */
+var PSEL=new Set(['RB']);
+const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
+const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
+var TGRPS={situational:1,redzone:0,efficiency:1,explosive:0};
+var PGRPS={usage:1,redzone:1,explosive:0,efficiency:1,ratings:1};
+var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
+var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
+const WINDOWS=['season','last6','last4','last2'];
+const WINLBL={season:'Season',last6:'Last 6',last4:'Last 4',last2:'Last 2'};
+/* Each button states the sample behind it, so a one-game season window and a
+   six-game window that reaches into last season can't be confused. */
+function winLabel(w){
+  const rows=Object.values(MT.teams||{})
+    .map(t=>(t.profile||[]).find(p=>p.season===SEASON&&p.window===w)).filter(Boolean);
+  if(!rows.length)return WINLBL[w];
+  const g=Math.max(...rows.map(r=>r.games||0));
+  const cross=rows.some(r=>r.cross_season);
+  return `${WINLBL[w]} (${g}g${cross?', incl. '+(SEASON-1):''})`;
+}
+
+function hashWrite(){
+  const p=new URLSearchParams({t:TAB,s:SEASON,tw:TWIN,pw:PWIN,pp:[...PSEL].join('-'),gv:GAMEVIEW?1:0,
+    io:IQ.off||'',id:IQ.def||'',m:IQ.mode,iw:IQ.win});
+  try{location.hash=p.toString();}catch(e){}
+}
+function hashRead(){
+  try{
+    const p=new URLSearchParams((location.hash||'').replace(/^#/,''));
+    if(p.get('t'))TAB=p.get('t');
+    if(p.get('s'))SEASON=+p.get('s');
+    if(p.get('tw'))TWIN=p.get('tw');
+    if(p.get('gv'))GAMEVIEW=p.get('gv')==='1';
+    if(p.get('pw'))PWIN=p.get('pw');
+    if(p.get('pp')){
+      const sel=p.get('pp').split('-').filter(x=>['QB','RB','WR','TE'].includes(x));
+      if(sel.length){PSEL=new Set(sel);PPOS=sel[0];}
+    }
+    if(p.get('io'))IQ.off=p.get('io');
+    if(p.get('id'))IQ.def=p.get('id');
+    if(p.get('m'))IQ.mode=p.get('m');
+    if(p.get('iw'))IQ.win=p.get('iw');
+  }catch(e){}
+}
+
+const tprof=(w)=>{const m={};for(const t in MT.teams)
+  for(const p of MT.teams[t].profile||[])
+    if(p.season===SEASON&&p.window===w)m[t]={...p,team:t}; return m;};
+const splitsOf=(t,side,win)=>((MT.teams[t]||{}).splits?.[side]||[])
+  .filter(r=>r.season===SEASON&&(win?(r.window||'season')===win:true));
+/* one script bucket for a team: state is leading|trailing|tied|all */
+function sp(t,win,state,side){
+  return splitsOf(t,side||'offense',win)
+    .find(r=>r.score_state===state&&r.phase==='all')||{};
+}
+const profs=(w)=>MT.player_profiles.filter(p=>p.season===SEASON&&p.window===w);
+const paMap=(w,pos)=>{const m={};for(const r of MT.posallowed)
+  if(r.season===SEASON&&r.window===w&&r.pos===pos)m[r.team]=r; return m;};
+
+/* ============================== slate ============================== */
+const wctx=t=>(MT.week_context||{})[t]||null;
+const gameKey=g=>g.game_id||g.schedule_id;
+const gameTeams=g=>g.away?[g.away,g.home]:g.teams;
+const spreadTxt=s=>s==null?'–':(s>0?'+'+f(s,1):f(s,1));
+/* nflverse gametime is published in Eastern already — format it, don't shift
+   it. "ET" rather than "EST" because the season runs across the DST change. */
+/* Compact kickoff: "9/9 8:20pm". nflverse publishes gametime in Eastern
+   already, so this formats, never shifts. */
+function etTime(t,compact){
+  if(!t)return'';
+  const m=String(t).match(/^(\d{1,2}):(\d{2})/); if(!m)return String(t);
+  let h=+m[1]; const ap=h>=12?'pm':'am'; h=h%12||12;
+  return compact?`${h}:${m[2]}${ap}`:`${h}:${m[2]} ${ap.toUpperCase()} ET`;
+}
+function etDay(d,wd,compact){
+  if(!d)return'';
+  const p=String(d).split('-');
+  if(p.length!==3)return String(d);
+  const md=`${+p[1]}/${+p[2]}`;
+  return compact?md:`${(wd||'').slice(0,3)} ${md}`.trim();
+}
+const kickText=g=>`${etDay(g.date,g.weekday,true)} ${etTime(g.time,true)}`.trim();
+/* compact form for the table column: "9/9 8:20pm" (Eastern — see the header
+   tooltip; the cards carry the weekday and the explicit ET label) */
+function kickShort(g){
+  if(!g||!g.date)return'';
+  const p=String(g.date).split('-');
+  const m=String(g.time||'').match(/^(\d{1,2}):(\d{2})/);
+  const date=p.length===3?`${+p[1]}/${+p[2]}`:String(g.date);
+  if(!m)return date;
+  let h=+m[1]; const ap=h>=12?'pm':'am'; h=h%12||12;
+  return `${date} ${h}:${m[2]}${ap}`;
+}
+const kickKey=g=>`${g.date||''} ${String(g.time||'').padStart(5,'0')}`;
+var SLATE_OPEN=true;
+/* one compact game card, used by both the Team usage slate and the
+   GridironIQ selector. `sel` makes them clickable buttons. */
+function gameCard(g,sel){
+  const[a,h]=gameTeams(g);
+  const tag=sel?'button':'div';
+  const on=(sel&&IQ.game===gameKey(g))?' on':'';
+  const pick=sel?` data-sid="${esc(gameKey(g))}"`:'';
+  return `<${tag} class="gm${on}"${pick}>
+    <div class="row1"><span>${tmChip(a)} <span style="color:var(--faint)">@</span> ${tmChip(h)}</span>
+      <span class="when">${esc(etDay(g.date,g.weekday))} ${esc(etTime(g.time,true))}</span></div>
+    <div class="row2"><span>${esc(h)} <b>${spreadTxt(g.spread_line==null?null:-g.spread_line)}</b></span>
+      <span>O/U <b>${f(g.total_line,1)}</b></span></div>
+    <div class="row2"><span>${esc(a)} <b>${f(g.away_implied,1)}</b></span>
+      <span>${esc(h)} <b>${f(g.home_implied,1)}</b></span></div>
+  </${tag}>`;
+}
+function renderSlate(){
+  const el=$('#slate'); if(!el)return;
+  const gs=MT.games||[];
+  if(!gs.length){el.innerHTML='';return;}
+  const wk=MT.meta.current_week,se=MT.meta.current_season;
+  el.innerHTML=`<div class="slatehead"><h2>Week ${wk} · ${se}</h2>
+    <span>${gs.length} games — spreads, totals, implied points per side</span>
+    <button id="slate-toggle">${SLATE_OPEN?'Hide':'Show'}</button></div>`+
+    (SLATE_OPEN?`<div class="cards" id="slate-cards">${gs.map(g=>gameCard(g,false)).join('')}</div>`:'');
+  const tg=$('#slate-toggle'); if(tg)tg.onclick=()=>{SLATE_OPEN=!SLATE_OPEN;renderSlate();};
+}
+
+/* ============================== team usage ============================== */
+const T_GRPDEF=[['situational','Situational'],['redzone','Red zone'],
+                ['efficiency','Efficiency'],['explosive','Explosives']];
+var GAMEVIEW=true;
+/* Short tabs: the 10-12 numbers that decide most research questions. Identity
+   columns (team, matchup, kickoff, name, proj/salary/own) are always kept.
+   Window, position and game-view state is shared with the full tabs so
+   switching between them keeps your context. */
+const T_SHORT=['_spread','_total','_implied','plays_pg','_pace','_pr','_proe','_prD',
+               'rz_td_rate','off_epa_pp','def_pass_epa_pp','def_rush_epa_pp'];
+const P_SHORT={
+  QB:['pass_att_pg','pass_yds_pg','pass_ypa','cpoe','pass_epa_per_att','carries_pg',
+      'rush_yds_pg','rz_tds','fp_ppr_pg','luck_fp_pg'],
+  RB:['carries_pg','carry_share','targets_pg','target_share','rz_share','snap_pct',
+      'ypc','tprr','workhorse','fp_ppr_pg','luck_fp_pg'],
+  WR:['targets_pg','target_share','route_rate','tprr','yprr','air_yards_share','rz_share',
+      'adot','dominator','fp_ppr_pg','luck_fp_pg'],
+};
+P_SHORT.TE=P_SHORT.WR;
+const P_IDENTITY=['player','team_current','opp','rg_proj','rg_salary','rg_own','team_implied'];
+const T_IDENTITY=['team','_opp','_kick'];
+/* Baseline / leading / trailing / differential for the script-sensitive
+   metrics. The differential is the read: how far a team's identity moves when
+   the game state changes. */
+function scriptCols(team,win){
+  const A=sp(team,win,'all'),L=sp(team,win,'leading'),T=sp(team,win,'trailing');
+  const d=(a,b)=>(a==null||b==null)?null:a-b;
+  return {
+    _pace:A.sec_per_play??null, _paceL:L.sec_per_play??null, _paceT:T.sec_per_play??null,
+    _paceD:d(L.sec_per_play,T.sec_per_play),
+    _pr:A.pass_rate??null, _prL:L.pass_rate??null, _prT:T.pass_rate??null,
+    _prD:d(L.pass_rate,T.pass_rate),
+    _rr:A.pass_rate==null?null:1-A.pass_rate,
+    _rrL:L.pass_rate==null?null:1-L.pass_rate,
+    _rrT:T.pass_rate==null?null:1-T.pass_rate,
+    _rrD:d(L.pass_rate==null?null:1-L.pass_rate,T.pass_rate==null?null:1-T.pass_rate),
+    _proe:A.proe??null, _proeL:L.proe??null, _proeT:T.proe??null,
+    _proeD:d(L.proe,T.proe),
+    _lplays:L.plays??null, _tplays:T.plays??null,
+  };
+}
+/* League rank of a metric across all 32 teams in the window, so a search
+   filter never changes a rank. Direction is explicit at every call site. */
+function leagueRank(all,k,highIsOne){
+  const vs=all.map(r=>r[k]).filter(v=>v!=null&&!isNaN(v)).sort((a,b)=>highIsOne?b-a:a-b);
+  return v=>{ if(v==null||isNaN(v))return null; return vs.indexOf(v)+1; };
+}
+function renderTeam(short=false){
+  const px=short?'t2':'t';
+  const tp=tprof(TWIN); let rows=Object.values(tp);
+  const q=($('#'+px+'-q')?.value||'').toUpperCase();
+  if(q)rows=rows.filter(r=>r.team.includes(q));
+  const S=(k,gh)=>pctShade(rows,k,gh);
+  rows=rows.map(r=>{const c=wctx(r.team)||{};
+    return {...r,_opp:c.opp||null,_home:c.home,_spread:c.spread,
+            _total:c.total,_implied:c.implied,_gid:c.game_id||null,
+            _kick:c.game_id?kickKey(c):null,
+            _kicktxt:c.game_id?kickShort(c):null,
+            ...scriptCols(r.team,TWIN)};});
+  // ranks for the style metrics the short tab shows (quality ranks come from Python)
+  {
+    const all=rows;
+    const rk={plays_pg:leagueRank(all,'plays_pg',true),
+              _pace:leagueRank(all,'_pace',false),        // #1 = fastest
+              _pr:leagueRank(all,'_pr',true),             // #1 = most pass-heavy
+              _proe:leagueRank(all,'_proe',true),
+              _prD:leagueRank(all,'_prD',true)};          // #1 = throws most more when leading
+    rows=rows.map(r=>({...r,
+      _plays_rk:rk.plays_pg(r.plays_pg),_pace_rk:rk._pace(r._pace),
+      _pr_rk:rk._pr(r._pr),_proe_rk:rk._proe(r._proe),_prD_rk:rk._prD(r._prD)}));
+  }
+  // game view only makes sense for teams actually playing this week
+  if(GAMEVIEW)rows=rows.filter(r=>r._gid);
+  let cols=[
+    {k:'team',h:'Team',f:v=>tmChip(v)},
+    {k:'_opp',h:'Week matchup',f:(v,r)=>v?`${r._home?'vs':'@'} ${tmChip(v)}`:'–'},
+    {k:'_kick',h:'Kickoff',num:GAMEVIEW?1:0,desc:false,f:(v,r)=>esc(r._kicktxt||'–')},
+    {k:'_spread',h:'Spread',f:v=>spreadTxt(v),style:pctShade(rows,'_spread',false)},
+    {k:'_total',h:'Total',f:v=>f(v,1)},
+    {k:'_implied',h:'Implied',f:v=>f(v,1),style:pctShade(rows,'_implied',true)},
+    {k:'games',h:'G'},
+
+    // ---- SITUATIONAL: baseline identity, then how it moves with the script
+    {grp:'situational',k:'plays_pg',h:'Plays/g',f:v=>f(v,1),style:S('plays_pg',true)},
+    {grp:'situational',k:'_pace',h:'Pace',f:v=>f(v,1),style:S('_pace',false)},
+    {grp:'situational',k:'_paceL',h:'Pace lead',f:v=>f(v,1),style:S('_paceL',false)},
+    {grp:'situational',k:'_paceT',h:'Pace trail',f:v=>f(v,1),style:S('_paceT',false)},
+    {grp:'situational',k:'_paceD',h:'Pace Δ',f:v=>sgn(v,1),style:S('_paceD',false)},
+    {grp:'situational',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
+    {grp:'situational',k:'_prL',h:'Pass% lead',f:pct0,style:S('_prL',true)},
+    {grp:'situational',k:'_prT',h:'Pass% trail',f:pct0,style:S('_prT',true)},
+    {grp:'situational',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
+    {grp:'situational',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
+    {grp:'situational',k:'_rrL',h:'Run% lead',f:pct0,style:S('_rrL',true)},
+    {grp:'situational',k:'_rrT',h:'Run% trail',f:pct0,style:S('_rrT',true)},
+    {grp:'situational',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
+    {grp:'situational',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
+    {grp:'situational',k:'_proeL',h:'PROE lead',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
+    {grp:'situational',k:'_proeT',h:'PROE trail',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
+    {grp:'situational',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
+    {grp:'situational',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
+    {grp:'situational',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
+
+    // ---- RED ZONE
+    {grp:'redzone',k:'rz_trips_pg',h:'RZ trips/g',f:v=>f(v,2),style:S('rz_trips_pg',true)},
+    {grp:'redzone',k:'rz_td_rate',h:'RZ TD%',f:pct0,style:S('rz_td_rate',true)},
+    {grp:'redzone',k:'rz_pass_rate',h:'RZ pass%',f:pct0,style:S('rz_pass_rate',true)},
+
+    // ---- EXPLOSIVES
+    {grp:'explosive',k:'explosive_pass_rate',h:'Expl pass%',f:pct1,style:S('explosive_pass_rate',true)},
+    {grp:'explosive',k:'explosive_rush_rate',h:'Expl rush%',f:pct1,style:S('explosive_rush_rate',true)},
+
+    // ---- EFFICIENCY
+    {grp:'efficiency',k:'off_epa_pp',h:'Off EPA',num:GAMEVIEW?0:1,f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_epa_pp_rk)}`,style:S('off_epa_pp',true)},
+    {grp:'efficiency',k:'off_success',h:'Off SR',f:pct0,style:S('off_success',true)},
+    {grp:'efficiency',k:'off_pass_epa_pp',h:'Pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_pass_epa_pp_rk)}`,style:S('off_pass_epa_pp',true)},
+    {grp:'efficiency',k:'off_rush_epa_pp',h:'Rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_rush_epa_pp_rk)}`,style:S('off_rush_epa_pp',true)},
+    {grp:'efficiency',k:'def_epa_pp',h:'Def EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_epa_pp_rk)}`,style:S('def_epa_pp',false)},
+    {grp:'efficiency',k:'def_success',h:'Def SR',f:pct0,style:S('def_success',false)},
+    {grp:'efficiency',k:'def_pass_epa_pp',h:'Def pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_pass_epa_pp_rk)}`,style:S('def_pass_epa_pp',false)},
+    {grp:'efficiency',k:'def_rush_epa_pp',h:'Def rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_rush_epa_pp_rk)}`,style:S('def_rush_epa_pp',false)},
+  ];
+  if(short){
+    const p100=v=>sgn(v==null?null:v*100,1);
+    cols=[
+      ...cols.filter(c=>T_IDENTITY.includes(c.k)||['_spread','_total','_implied'].includes(c.k)),
+      {k:'_plays_rk',h:'Plays/g',f:(v,r)=>rkCell(v,r.plays_pg,x=>f(x,1)),style:rkShade},
+      {k:'_pace_rk',h:'Pace',f:(v,r)=>rkCell(v,r._pace,x=>f(x,1)+' s'),style:rkShade},
+      {k:'_pr_rk',h:'Pass%',f:(v,r)=>rkCell(v,r._pr,pct0),style:rkShade},
+      {k:'_proe_rk',h:'PROE',f:(v,r)=>rkCell(v,r._proe,p100),style:rkShade},
+      {k:'_prD_rk',h:'Pass% Δ',f:(v,r)=>rkCell(v,r._prD,p100),style:rkShade},
+      {k:'rz_td_rate_rk',h:'RZ TD%',f:(v,r)=>rkCell(v,r.rz_td_rate,pct0),style:rkShade},
+      {k:'off_epa_pp_rk',h:'Off EPA',f:(v,r)=>rkCell(v,r.off_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {k:'off_pass_epa_pp_rk',h:'Pass EPA',f:(v,r)=>rkCell(v,r.off_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {k:'off_rush_epa_pp_rk',h:'Rush EPA',f:(v,r)=>rkCell(v,r.off_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {k:'def_pass_epa_pp_rk',h:'Def pass EPA',f:(v,r)=>rkCell(v,r.def_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {k:'def_rush_epa_pp_rk',h:'Def rush EPA',f:(v,r)=>rkCell(v,r.def_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
+    ];
+    // rank columns sort ascending (#1 first)
+    cols.forEach(c=>{ if(c.k.endsWith('_rk'))c.desc=false; });
+  } else {
+    cols=cols.filter(c=>!c.grp||TGRPS[c.grp]);
+  }
+  table($('#'+px+'-table'),cols,rows,{reset:true,
+    groupKey:GAMEVIEW?'_gid':null,
+    groupOrder:(a,b)=>(a._home?1:0)-(b._home?1:0),   // away on top, home beneath
+    rowClick:(r,tr)=>toggleSplits(r.team,tr,cols.length)});
+  const tc=$('#'+px+'-count');
+  if(tc){
+    const base=GAMEVIEW?`${rows.length/2} games`:`${rows.length} teams`;
+    const yet=Object.keys(tprof(TWIN)).length<32
+      ? ' · ' + Object.keys(MT.teams).filter(t=>!tprof(TWIN)[t]).join(', ') + ' yet to play'
+      : '';
+    tc.textContent=base+yet;
+  }
+}
+function toggleSplits(team,tr,span){
+  const next=tr.nextElementSibling;
+  if(next&&next.classList.contains('exp')){next.remove();return;}
+  tr.parentElement.querySelectorAll('.exp').forEach(e=>e.remove());
+  const mk=side=>{
+    const rows=splitsOf(team,side,TWIN);
+    const pick=(state,phase)=>rows.find(r=>r.score_state===state&&r.phase===phase);
+    const sel=[['With the lead',pick('leading','all')],['Trailing',pick('trailing','all')],
+      ['Tied',pick('tied','all')],['Final 2:00 of halves',pick('all','final_two_min')]];
+    return `<h4>${side==='offense'?'Offense':'Defense'} by script</h4>
+    <table><thead><tr><th class="l">Script</th><th>Plays</th><th>EPA/play</th><th>Success</th><th>Pass%</th><th>PROE</th><th>Sec/play</th></tr></thead><tbody>`+
+    sel.map(([lbl,r])=>r?`<tr><td class="l">${lbl}</td><td>${r.plays}</td>
+      <td style="${heatDir(r.epa_per_play,-0.25,0.25,side==='offense')}">${sgn(r.epa_per_play,3)}</td>
+      <td>${pct0(r.success_rate)}</td><td>${pct0(r.pass_rate)}</td>
+      <td>${r.proe==null?'–':sgn(r.proe*100,1)}</td><td>${f(r.sec_per_play,1)}</td></tr>`:'').join('')+
+    '</tbody></table>';
+  };
+  const td=document.createElement('tr');
+  td.className='exp';
+  td.innerHTML=`<td colspan="${span}"><div class="splitgrid"><div>${mk('offense')}</div><div>${mk('defense')}</div></div></td>`;
+  tr.after(td);
+}
+
+/* ============================== player usage ============================== */
+const PL_GRPDEF=[['usage','Usage'],['redzone','Red zone'],['explosive','Explosives'],
+                 ['efficiency','Efficiency'],['ratings','Ratings & luck']];
+const PL_COLS={
+  QB:[['pass_att_pg','Att/g',1,'usage'],['pass_yds_pg','Pass Y/g',1,'usage'],
+      ['pass_ypa','Y/A',2,'efficiency'],
+      ['pass_adot','aDOT',1,'efficiency'],['cpoe','CPOE',1,'efficiency'],
+      ['pass_epa_per_att','EPA/att',3,'efficiency'],['sack_rate','Sack%','p','efficiency'],
+      ['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
+      ['ypc','Y/C',2,'efficiency']],
+  RB:[['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
+      ['carry_share','Carry sh','p','usage'],
+      ['ypc','Y/C',2,'efficiency'],['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
+      ['targets_pg','Tgt/g',1,'usage'],['target_share','Tgt sh','p','usage'],
+      ['route_rate','Route%','p','usage'],['tprr','TPRR','p','usage'],['yprr','YPRR',2,'efficiency'],
+      ['catch_rate','Catch%','p','efficiency'],['ypt','Y/Tgt',2,'efficiency'],
+      ['snap_pct','Snap%','p','usage']],
+  WR:[['targets_pg','Tgt/g',1,'usage'],['rec_yds_pg','Rec Y/g',1,'usage'],
+      ['target_share','Tgt sh','p','usage'],
+      ['routes_pg','Routes/g',1,'usage'],['route_games','Route gms',0,'usage'],['route_rate','Route%','p','usage'],
+      ['tprr','TPRR','p','usage'],['yprr','YPRR',2,'efficiency'],
+      ['air_yards_share','AY sh','p','usage'],['wopr','WOPR',2,'usage'],
+      ['adot','aDOT',1,'usage'],
+      ['deep_targets','Deep tgt',0,'usage'],['catch_rate','Catch%','p','efficiency'],
+      ['ypt','Y/Tgt',2,'efficiency'],['yac_per_rec','YAC/rec',1,'efficiency'],
+      ['rec_epa_per_tgt','EPA/tgt',3,'efficiency'],['snap_pct','Snap%','p','usage']],
+};
+PL_COLS.TE=PL_COLS.WR;
+/* Each rating belongs to one position family: Workhorse is RB/FB, Dominator is
+   WR/TE. The other is never computed for that position, so showing its column
+   would only ever print blanks — leave it out entirely. */
+function RATING_COLS(pos,isRB){
+  if(pos==='QB')return[];
+  return isRB
+    ?[{grp:'ratings',k:'workhorse',h:'Workhorse',num:1,f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
+      {grp:'ratings',k:'workhorse_trend',h:'WH trend',f:v=>sgn(v,0),style:v=>heatDir(v,-25,25,true)}]
+    :[{grp:'ratings',k:'dominator',h:'Dominator',num:1,f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
+      {grp:'ratings',k:'dominator_trend',h:'Dom trend',f:v=>sgn(v,0),style:v=>heatDir(v,-25,25,true)}];
+}
+/* Red zone usage and explosive production, per position. Backs get carry-side
+   red zone volume, receivers target-side; explosives use nflverse's own
+   10+/20+ counts rather than anything re-derived. */
+function RZ_COLS(pos,S){
+  const common=[
+    {grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
+    {grp:'redzone',k:'rz_share',h:'RZ share',f:pct0,style:S('rz_share')},
+    {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}];
+  if(pos==='QB')return[
+    {grp:'redzone',k:'i5_carries',h:'i5 car',style:S('i5_carries')},
+    {grp:'redzone',k:'i10_carries',h:'i10 car',style:S('i10_carries')},
+    {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}];
+  if(pos==='RB')return[
+    {grp:'redzone',k:'rz_carries',h:'RZ car',style:S('rz_carries')},
+    {grp:'redzone',k:'i10_carries',h:'i10',style:S('i10_carries')},
+    {grp:'redzone',k:'i5_carries',h:'i5',style:S('i5_carries')},
+    {grp:'redzone',k:'i10_carry_share',h:'i10 share',f:pct0,style:S('i10_carry_share')},
+    {grp:'redzone',k:'rz_targets',h:'RZ tgt',style:S('rz_targets')},
+    ...common];
+  return[
+    {grp:'redzone',k:'rz_targets',h:'RZ tgt',style:S('rz_targets')},
+    {grp:'redzone',k:'ez_targets',h:'EZ tgt',style:S('ez_targets')},
+    {grp:'redzone',k:'rz_target_share',h:'RZ tgt share',f:pct0,style:S('rz_target_share')},
+    ...common];
+}
+function EXPL_COLS(pos,S){
+  if(pos==='QB')return[
+    {grp:'explosive',k:'expl_pass',h:'20+ pass',style:S('expl_pass')},
+    {grp:'explosive',k:'expl_pass_rate',h:'20+ rate',f:pct1,style:S('expl_pass_rate')}];
+  if(pos==='RB')return[
+    {grp:'explosive',k:'explosive_rush',h:'10+ rush',style:S('explosive_rush')},
+    {grp:'explosive',k:'expl_rush_20',h:'20+ rush',style:S('expl_rush_20')},
+    {grp:'explosive',k:'expl_rush_rate',h:'10+ rush rate',f:pct1,style:S('expl_rush_rate')},
+    {grp:'explosive',k:'expl_rec',h:'10+ rec',style:S('expl_rec')},
+    {grp:'explosive',k:'expl_pg',h:'Expl/g',f:v=>f(v,2),style:S('expl_pg')}];
+  return[
+    {grp:'explosive',k:'expl_rec',h:'10+ rec',style:S('expl_rec')},
+    {grp:'explosive',k:'expl_rec_20',h:'20+ rec',style:S('expl_rec_20')},
+    {grp:'explosive',k:'expl_rec_rate',h:'10+ rec rate',f:pct1,style:S('expl_rec_rate')},
+    {grp:'explosive',k:'expl_pg',h:'Expl/g',f:v=>f(v,2),style:S('expl_pg')},
+    {grp:'explosive',k:'expl_20_pg',h:'20+/g',f:v=>f(v,2),style:S('expl_20_pg')}];
+}
+/* shared columns for a mixed selection: the ones that mean the same thing for
+   a back and a receiver */
+const PL_MIXED=[['carries_pg','Car/g',1,'usage'],['carry_share','Carry sh','p','usage'],
+  ['targets_pg','Tgt/g',1,'usage'],['target_share','Tgt sh','p','usage'],
+  ['routes_pg','Routes/g',1,'usage'],['tprr','TPRR','p','usage'],
+  ['snap_pct','Snap%','p','usage'],['ypt','Y/Tgt',2,'efficiency']];
+function defaultSortKey(pos,mixed){
+  if(mixed)return'fp_ppr_pg';
+  return pos==='QB'?'pass_att_pg':pos==='RB'?'workhorse':'dominator';
+}
+function renderPlayers(short=false){
+  const px=short?'pl2':'pl';
+  const sel=PSEL.size?PSEL:new Set([PPOS]);
+  const mixed=selFamilies().size>1;
+  const pos=sel.size===1?[...sel][0]:PPOS;
+  const wanted=new Set([...sel].flatMap(p=>p==='RB'?['RB','FB']:[p]));
+  let rows=profs(PWIN).filter(p=>wanted.has(p.position));
+  const tf=$('#'+px+'-team')?.value||'', q=($('#'+px+'-q')?.value||'').toLowerCase(),
+    lf=short?'':($('#pl-luck')?.value||''),
+    ming=short?defaultMinGames():+($('#pl-ming')?.value||0), mino=short?0:+($('#pl-mino')?.value||0),
+    minp=+($('#'+px+'-minp')?.value||0);
+  if(tf)rows=rows.filter(r=>r.team===tf);
+  if(q)rows=rows.filter(r=>(r.player||'').toLowerCase().includes(q));
+  if(lf)rows=rows.filter(r=>r.luck_label===lf);
+  rows=rows.filter(r=>r.games>=ming&&r.opportunities>=mino);
+  if(HASPROJ&&minp>0)rows=rows.filter(r=>r.rg_proj!=null&&r.rg_proj>minp);
+  if($('#'+px+'-slate')?.checked)rows=rows.filter(r=>r.opp);
+  if(!short&&$('#pl-out')?.checked)rows=rows.filter(r=>!['O','OUT','IR'].includes(String(r.status||'').toUpperCase()));
+  const S=(k,gh=true)=>pctShade(rows,k,gh);
+  const dsk=defaultSortKey(pos,mixed);
+  const isRB=pos==='RB';
+  /* A mixed selection cannot use a position-tailored column set, so it falls
+     back to the columns that mean the same thing for everyone, plus a Pos
+     column. Both rating columns appear because the selection spans families. */
+  let cols=[
+    {k:'player',h:'Player',l:1,f:(v,r)=>esc(v)+stChip(r.status)},
+    ...(sel.size>1?[{k:'position',h:'Pos'}]:[]),
+    {k:'team_current',h:'Team',f:(v,r)=>tmChip(v||r.team)},
+    {k:'opp',h:'Opp',f:(v,r)=>v?`${r.is_home?'vs':'@'} ${tmChip(v)}`:'–'},
+    ...(HASPROJ?[
+      {k:'rg_proj',h:'Proj',num:1,f:v=>f(v,1),style:pctShade(rows,'rg_proj',true)},
+      {k:'rg_salary',h:'Salary',f:v=>v==null?'–':'$'+Math.round(v).toLocaleString()},
+      {k:'rg_own',h:'Own',f:v=>v==null?'–':pct1(v),style:pctShade(rows,'rg_own',true)},
+      {k:'rg_value',h:'Pts/$K',f:v=>f(v,2),style:pctShade(rows,'rg_value',true)},
+    ]:[]),
+    {k:'team_implied',h:'Implied',f:v=>f(v,1),style:pctShade(rows,'team_implied',true)},
+    // the usage grade is the headline number, so it sits ahead of the counts
+    ...(mixed
+      ?[{grp:'ratings',k:'workhorse',h:'Workhorse',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
+        {grp:'ratings',k:'dominator',h:'Dominator',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)}]
+      :RATING_COLS(pos,isRB)),
+    {k:'games',h:'G'},
+    {k:'opportunities',h:'Opps'},
+    ...(mixed?PL_MIXED:PL_COLS[pos]).map(([k,h,d,g])=>({k,h,grp:g,num:k===dsk?1:0,
+      f:d==='p'?pct0:(v)=>f(v,d),
+      style:S(k,k!=='sack_rate')})),
+    ...(mixed?[]:RZ_COLS(pos,S)),
+    ...(mixed?[{grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
+               {grp:'redzone',k:'rz_share',h:'RZ share',f:pct0,style:S('rz_share')},
+               {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}]:[]),
+    ...(mixed?[]:EXPL_COLS(pos,S)),
+    {grp:'ratings',k:'fp_ppr_pg',h:'FP/g',f:v=>f(v,1),style:S('fp_ppr_pg')},
+    {grp:'ratings',k:'xfp_pg',h:'xFP/g',f:v=>f(v,1),style:S('xfp_pg')},
+    {grp:'ratings',k:'luck_fp_pg',h:'Luck',f:v=>sgn(v,1),style:v=>heatDir(v,-4,4,false)},
+    {grp:'ratings',k:'luck_label',h:'',f:v=>luckChip(v)},
+  ];
+  // participation posts later than the box scores; with no coverage in this
+  // window the route columns would be an empty stripe, so drop them and say why
+  const ROUTE_KEYS=['routes_pg','route_games','route_rate','tprr','yprr'];
+  const routeCov=rows.some(r=>(r.route_games||0)>0);
+  const shortKeys=mixed
+    ?['position','carries_pg','carry_share','targets_pg','target_share','rz_share',
+      'snap_pct','tprr','workhorse','dominator','fp_ppr_pg','luck_fp_pg']
+    :(P_SHORT[pos]||[]);
+  cols=short
+    ?cols.filter(c=>P_IDENTITY.includes(c.k)||shortKeys.includes(c.k))
+    :cols.filter(c=>!c.grp||PGRPS[c.grp]);
+  if(!routeCov)cols=cols.filter(c=>!ROUTE_KEYS.includes(c.k));
+  table($('#'+px+'-table'),cols,rows,{reset:true,rowClick:(r,tr)=>togglePlayer(r,tr,cols.length)});
+  const pc=$('#'+px+'-count'); if(pc)pc.textContent=rows.length+' players';
+  const nt=$('#'+px+'-routenote');
+  if(nt)nt.innerHTML=routeCov?'':
+    `<span style="color:var(--gold)">Routes, TPRR and YPRR are unavailable for ${SEASON} — `+
+    `nflverse publishes participation data later than the box scores. `+
+    `Switch to a Last N window to see them through ${SEASON-1}.</span>`;
+}
+function togglePlayer(row,tr,span){
+  const next=tr.nextElementSibling;
+  if(next&&next.classList.contains('exp')){next.remove();return;}
+  tr.parentElement.querySelectorAll('.exp').forEach(e=>e.remove());
+  const all=MT.player_profiles.filter(p=>p.player_id===row.player_id&&p.season===SEASON);
+  const w=n=>all.find(p=>p.window===n)||{};
+  const keys=row.position==='QB'
+    ?[['pass_att_pg','Att/g',1],['pass_ypa','Y/A',2],['cpoe','CPOE',1],['pass_epa_per_att','EPA/att',3],['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']]
+    :[['carries_pg','Car/g',1],['carry_share','Carry sh','p'],['targets_pg','Tgt/g',1],['target_share','Tgt sh','p'],
+      ...(['RB','FB'].includes(row.position)?[['workhorse','Workhorse',0]]:[['dominator','Dominator',0]]),
+      ['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']];
+  const fmt=(v,d)=>d==='p'?pct0(v):d==='s'?sgn(v,1):f(v,d);
+  const td=document.createElement('tr');
+  td.className='exp';
+  td.innerHTML=`<td colspan="${span}"><h4>${esc(row.player)} — window progression (is the role growing or shrinking?)</h4>
+  <table><thead><tr><th class="l">Window</th><th>G</th>${keys.map(([k,h])=>`<th${tip(k)}>${h}</th>`).join('')}</tr></thead><tbody>`+
+  WINDOWS.map(n=>{const p=w(n);return `<tr><td class="l">${WINLBL[n]}</td><td>${p.games??'–'}</td>`+
+    keys.map(([k,,d])=>`<td>${fmt(p[k],d)}</td>`).join('')+'</tr>';}).join('')+
+  '</tbody></table></td>';
+  tr.after(td);
+}
+
+/* ============================== GridironIQ ============================== */
+var MU_UNITS={
+  pass:[['Pass game','off_pass_epa_pp','def_pass_epa_pp'],
+        ['Overall','off_epa_pp','def_epa_pp'],
+        ['Success','off_success','def_success'],
+        ['Explosive pass','explosive_pass_rate',null],
+        ['Red zone','rz_td_rate',null]],
+  run:[['Run game','off_rush_epa_pp','def_rush_epa_pp'],
+       ['Overall','off_epa_pp','def_epa_pp'],
+       ['Success','off_success','def_success'],
+       ['Explosive rush','explosive_rush_rate',null]],
+};
+function renderIQ(){
+  const tp=tprof(IQ.win);
+  const teams=Object.keys(tp).sort();
+  if((!IQ.off||!tp[IQ.off])&&!IQ_BOOTED){IQ_BOOTED=true;iqDefaultGame();}
+  if(!IQ.off||!tp[IQ.off])IQ.off=teams[0];
+  if(!IQ.def||!tp[IQ.def]||IQ.def===IQ.off)IQ.def=teams.find(t=>t!==IQ.off);
+  fillSel($('#iq-off'),teams,IQ.off); fillSel($('#iq-def'),teams,IQ.def);
+  renderIQGames(); renderIQStrip(tp); renderIQGroups(tp); renderIQUnits(tp);
+  hashWrite();
+}
+function fillSel(el,teams,val){
+  if(el)el.innerHTML=teams.map(t=>`<option ${t===val?'selected':''}>${t}</option>`).join('');
+}
+function renderIQGames(){
+  const el=$('#iq-games'); if(!el)return;
+  const gs=MT.games||[];
+  if(!gs.length){el.innerHTML='';return;}
+  const wk=MT.meta.current_week;
+  el.innerHTML=(wk?`<div class="slatehead"><h2>Week ${wk}</h2>
+      <span>pick a game — the offense defaults to the away side, Swap flips it</span></div>`:'')+
+    `<div class="cards">${gs.map(g=>gameCard(g,true)).join('')}</div>`;
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const g=gs.find(x=>String(gameKey(x))===b.dataset.sid); if(!g)return;
+    const[a,h]=gameTeams(g);
+    IQ.game=gameKey(g);
+    IQ.off=a; IQ.def=h;          // Swap flips sides after selecting
+    renderIQ();
+  });
+}
+/* open on the first game of the current slate rather than an alphabetical pair */
+function iqDefaultGame(){
+  const gs=MT.games||[]; if(!gs.length)return false;
+  const g=gs[0]; const[a,h]=gameTeams(g);
+  IQ.game=gameKey(g); IQ.off=a; IQ.def=h; return true;
+}
+function scriptLine(team){
+  const pick=st=>sp(team,IQ.win,st);
+  const L=pick('leading'),T=pick('trailing');
+  const parts=[];
+  if(L.pass_rate!=null)parts.push(`${pct0(L.pass_rate)} pass with the lead`);
+  if(T.pass_rate!=null)parts.push(`${pct0(T.pass_rate)} trailing`);
+  // a short window can legitimately contain no snaps in a state — say so
+  // rather than hiding the line and implying the split is unavailable
+  if(!parts.length)return'<div class="script">Script: no leading or trailing snaps in this window</div>';
+  if(L.pass_rate==null)parts.push('never led in this window');
+  if(T.pass_rate==null)parts.push('never trailed in this window');
+  return `<div class="script">Script: ${parts.join(' · ')}</div>`;
+}
+function renderIQStrip(tp){
+  const o=tp[IQ.off],d=tp[IQ.def];
+  const c=wctx(IQ.off);
+  const mkt=(c&&c.opp===IQ.def)?c:null;   // only show lines for the real matchup
+  const el=$('#iq-strip'); if(!el)return;
+  if(!o||!d){el.innerHTML='';return;}
+  el.innerHTML=`<div class="strip">
+    <div class="side"><h3>${tmChip(IQ.off)} <span class="role">offense</span></h3>
+      <div class="kv">
+        <div>Plays/g<b>${f(o.plays_pg,1)}</b></div>
+        <div>Neutral pace<b>${f(o.neutral_sec_per_play,1)}s</b></div>
+        <div>Pass rate<b>${pct0(o.pass_rate)}</b></div>
+        <div>PROE<b>${sgn(o.proe*100,1)}</b></div>
+        <div>Off EPA<b>${sgn(o.off_epa_pp,3)} ${rk2(o.off_epa_pp_rk)}</b></div>
+        <div>RZ TD%<b>${pct0(o.rz_td_rate)}</b></div>
+      </div>${scriptLine(IQ.off)}</div>
+    <div class="mid"><span>${WINLBL[IQ.win]} · ${SEASON}</span>
+      <span class="vs">${IQ.mode==='pass'?'PASS GAME':'RUN GAME'}</span>
+      ${mkt?`<span>${esc(IQ.off)} ${spreadTxt(mkt.spread)} · O/U ${f(mkt.total,1)}</span>
+      <span>implied <b style="color:var(--ink)">${f(mkt.implied,1)}</b> — ${esc(IQ.def)} ${f(mkt.opp_implied,1)}</span>`
+      :`<span>${o.games} g / ${d.games} g</span>`}</div>
+    <div class="side"><h3>${tmChip(IQ.def)} <span class="role">defense</span></h3>
+      <div class="kv">
+        <div>Def EPA<b>${sgn(d.def_epa_pp,3)} ${rk2(d.def_epa_pp_rk)}</b></div>
+        <div>vs pass<b>${sgn(d.def_pass_epa_pp,3)} ${rk2(d.def_pass_epa_pp_rk)}</b></div>
+        <div>vs run<b>${sgn(d.def_rush_epa_pp,3)} ${rk2(d.def_rush_epa_pp_rk)}</b></div>
+        <div>Success allowed<b>${pct0(d.def_success)}</b></div>
+      </div></div>
+  </div>`;
+}
+function renderIQGroups(tp){
+  const d=tp[IQ.def];
+  const ming=+($('#iq-ming')?.value||0);
+  const minp=+($('#iq-minp')?.value||0);
+  let all=profs(IQ.win).filter(p=>(p.team_current||p.team)===IQ.off&&p.games>=ming);
+  if(HASPROJ&&minp>0)all=all.filter(p=>p.rg_proj!=null&&p.rg_proj>=minp);
+  const groups=[['Quarterbacks','QB',['QB']],['Running backs','RB',['RB','FB']],
+    ['Wide receivers','WR',['WR']],['Tight ends','TE',['TE']]];
+  const el=$('#iq-groups'); if(!el)return;
+  el.innerHTML=groups.map(([h,,ps])=>
+    `<div class="grp"><h3>${h} <span>vs ${esc(IQ.def)}</span></h3><div class="tblwrap"><div id="iq-g-${ps[0]}"></div></div></div>`).join('');
+  for(const[,pos,ps]of groups){
+    const rows=all.filter(p=>ps.includes(p.position));
+    const pa=paMap(IQ.win,pos)[IQ.def]||{};
+    table($('#iq-g-'+pos),iqCols(pos,d,pa,rows),rows,{reset:true});
+  }
+}
+function iqCols(pos,d,pa,rows){
+  const S=(k,gh=true)=>pctShade(rows,k,gh);
+  const routeCov=rows.some(r=>(r.route_games||0)>0);
+  const luckTail=[
+    {k:'fp_ppr_pg',h:'FP/g',f:v=>f(v,1),style:S('fp_ppr_pg')},
+    {k:'xfp_pg',h:'xFP/g',f:v=>f(v,1)},
+    {k:'luck_fp_pg',h:'Luck',f:v=>sgn(v,1),style:v=>heatDir(v,-4,4,false)},
+  ];
+  const head=[{k:'player',h:'Player',l:1,f:(v,r)=>esc(v)+stChip(r.status)},
+    ...(HASPROJ?[
+      {k:'rg_proj',h:'Proj',num:1,f:v=>f(v,1),style:pctShade(rows,'rg_proj',true)},
+      {k:'rg_salary',h:'Salary',f:v=>v==null?'–':'$'+Math.round(v).toLocaleString()},
+      {k:'rg_own',h:'Own',f:v=>v==null?'–':pct1(v),style:pctShade(rows,'rg_own',true)},
+    ]:[]),
+    {k:'games',h:'G'}];
+  if(pos==='QB'){
+    // Run mode leads with the QB's rushing profile; pass mode with his arm.
+    const runQB=IQ.mode==='run';
+    const passBlk=[
+      {k:'pass_att_pg',h:'Att/g',num:runQB?0:1,f:v=>f(v,1),style:S('pass_att_pg')},
+      {k:'pass_yds_pg',h:'Pass Y/g',f:v=>f(v,1),style:S('pass_yds_pg')},
+      {k:'pass_ypa',h:'Y/A',f:v=>f(v,2),style:S('pass_ypa')},
+      {k:'pass_adot',h:'aDOT',f:v=>f(v,1)},
+      {k:'cpoe',h:'CPOE',f:v=>sgn(v,1),style:S('cpoe')},
+      {k:'pass_epa_per_att',h:'EPA/att',f:v=>sgn(v,3),style:S('pass_epa_per_att')},
+      {k:'sack_rate',h:'Sack%',f:pct1,style:S('sack_rate',false)},
+      {k:'_opd',h:'Opp pass D',f:()=>rkOpp(d?.def_pass_epa_pp_rk)}];
+    const runBlk=[
+      {k:'carries_pg',h:'Car/g',num:runQB?1:0,f:v=>f(v,1),style:S('carries_pg')},
+      {k:'rush_yds_pg',h:'Rush Y/g',f:v=>f(v,1),style:S('rush_yds_pg')},
+      {k:'ypc',h:'Y/C',f:v=>f(v,2),style:S('ypc')},
+      {k:'i5_carries',h:'i5 car',style:S('i5_carries')},
+      {k:'rush_epa_per_att',h:'Rush EPA/att',f:v=>sgn(v,3),style:S('rush_epa_per_att')},
+      {k:'_ord',h:'Opp run D',f:()=>rkOpp(d?.def_rush_epa_pp_rk)},
+      {k:'_qbr',h:'Opp rush yds/g to QBs',f:()=>`${f(pa.a_rush_yds,1)} ${rk2(pa.a_rush_yds_rk,true)}${spot(pa.a_rush_yds_rk)}`}];
+    return runQB?[...head,...runBlk,...passBlk.slice(0,3),...luckTail]
+                :[...head,...passBlk,...runBlk.slice(0,3),...luckTail];
+  }
+  if(pos==='RB'){
+    const rush=[
+      {k:'carries_pg',h:'Car/g',num:IQ.mode==='run'?1:0,f:v=>f(v,1),style:S('carries_pg')},
+      {k:'carry_share',h:'Carry sh',f:pct0,style:v=>heatDir(v,0,.7,true)},
+      {k:'i10_carries',h:'i10'},{k:'i5_carries',h:'i5'},
+      {k:'rush_yds_pg',h:'Rush Y/g',f:v=>f(v,1),style:S('rush_yds_pg')},
+      {k:'ypc',h:'Y/C',f:v=>f(v,2),style:S('ypc')},
+      {k:'rush_epa_per_att',h:'EPA/att',f:v=>sgn(v,3),style:S('rush_epa_per_att')},
+      {k:'_ord',h:'Opp run D',f:()=>rkOpp(d?.def_rush_epa_pp_rk)},
+      {k:'_arry',h:'Opp rush yds/g to RBs',f:()=>`${f(pa.a_rush_yds,1)} ${rk2(pa.a_rush_yds_rk,true)}${spot(pa.a_rush_yds_rk)}`},
+      {k:'_aypc',h:'Opp Y/C to RBs',f:()=>`${f(pa.a_ypc,2)} ${rk2(pa.a_ypc_rk,true)}${spot(pa.a_ypc_rk)}`}];
+    const rec=[
+      {k:'targets_pg',h:'Tgt/g',num:IQ.mode==='pass'?1:0,f:v=>f(v,1),style:S('targets_pg')},
+      {k:'target_share',h:'Tgt sh',f:pct0,style:v=>heatDir(v,0,.3,true)},
+      ...(routeCov?[{k:'tprr',h:'TPRR',f:pct1,style:S('tprr')}]:[]),
+      {k:'rec_yds_pg',h:'Rec Y/g',f:v=>f(v,1),style:S('rec_yds_pg')},
+      {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'Y/Tgt',f:v=>f(v,2),style:S('ypt')},
+      {k:'_opd',h:'Opp pass D',f:()=>rkOpp(d?.def_pass_epa_pp_rk)},
+      {k:'_arec',h:'Opp rec/g to RBs',f:()=>`${f(pa.a_rec,1)} ${rk2(pa.a_rec_rk,true)}${spot(pa.a_rec_rk)}`},
+      {k:'_arecy',h:'Opp rec yds/g to RBs',f:()=>`${f(pa.a_rec_yds,1)} ${rk2(pa.a_rec_yds_rk,true)}${spot(pa.a_rec_yds_rk)}`}];
+    return[...head,...(IQ.mode==='run'?[...rush,...rec.slice(0,2)]:[...rec,...rush.slice(0,2)]),
+      {k:'snap_pct',h:'Snap%',f:pct0,style:S('snap_pct')},
+      {k:'workhorse',h:'Workhorse',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
+      {k:'workhorse_trend',h:'Trend',f:v=>sgn(v,0),style:v=>heatDir(v,-25,25,true)},
+      ...luckTail];
+  }
+  return[...head,
+    {k:'targets_pg',h:'Tgt/g',num:1,f:v=>f(v,1),style:S('targets_pg')},
+    {k:'target_share',h:'Tgt sh',f:pct0,style:v=>heatDir(v,0,.35,true)},
+    ...(routeCov?[
+      {k:'route_rate',h:'Route%',f:pct0,style:S('route_rate')},
+      {k:'tprr',h:'TPRR',f:pct1,style:S('tprr')},
+      {k:'yprr',h:'YPRR',f:v=>f(v,2),style:S('yprr')}]:[]),
+    {k:'air_yards_share',h:'AY sh',f:pct0,style:S('air_yards_share')},
+    {k:'wopr',h:'WOPR',f:v=>f(v,2),style:v=>heatDir(v,0,.9,true)},
+    {k:'rec_yds_pg',h:'Rec Y/g',f:v=>f(v,1),style:S('rec_yds_pg')},
+    {k:'adot',h:'aDOT',f:v=>f(v,1)},
+    {k:'rz_targets',h:'RZ tgt',style:S('rz_targets')},{k:'ez_targets',h:'EZ tgt',style:S('ez_targets')},
+    {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'Y/Tgt',f:v=>f(v,2),style:S('ypt')},
+    {k:'yac_per_rec',h:'YAC/rec',f:v=>f(v,1)},
+    {k:'_opd',h:'Opp pass D',f:()=>rkOpp(d?.def_pass_epa_pp_rk)},
+    {k:'_arec',h:`Opp rec/g to ${pos}s`,f:()=>`${f(pa.a_rec,1)} ${rk2(pa.a_rec_rk,true)}${spot(pa.a_rec_rk)}`},
+    {k:'_arecy',h:`Opp rec yds/g to ${pos}s`,f:()=>`${f(pa.a_rec_yds,1)} ${rk2(pa.a_rec_yds_rk,true)}${spot(pa.a_rec_yds_rk)}`},
+    {k:'_aypr',h:`Opp Y/R to ${pos}s`,f:()=>`${f(pa.a_ypr,2)} ${rk2(pa.a_ypr_rk,true)}${spot(pa.a_ypr_rk)}`},
+    {k:'dominator',h:'Dominator',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
+    {k:'dominator_trend',h:'Trend',f:v=>sgn(v,0),style:v=>heatDir(v,-25,25,true)},
+    ...luckTail];
+}
+function renderIQUnits(tp){
+  const o=tp[IQ.off],dd=tp[IQ.def];
+  const el=$('#iq-units'); if(!el)return;
+  if(!o||!dd){el.innerHTML='';return;}
+  const rows=MU_UNITS[IQ.mode].map(([lbl,ok,dk])=>{
+    const orv=o[ok+'_rk'],drv=dk?dd[dk+'_rk']:null;
+    return {lbl,off:o[ok],offr:orv,def:dk?dd[dk]:null,defr:drv,
+      edge:(orv!=null&&drv!=null)?drv-orv:null};
+  });
+  const isPct=lbl=>['Success','Explosive pass','Explosive rush','Red zone'].includes(lbl);
+  el.innerHTML=`<h3>Unit comparison — ${esc(IQ.off)} offense vs ${esc(IQ.def)} defense</h3>
+  <div class="tblwrap"><table><thead><tr>
+    <th class="l">Unit</th><th>${esc(IQ.off)} value</th><th>${esc(IQ.off)} rank</th>
+    <th title="Defense rank minus offense rank: a good offense against a bad defense reads high and green">Edge</th>
+    <th>${esc(IQ.def)} rank</th><th>${esc(IQ.def)} value</th>
+  </tr></thead><tbody>`+rows.map(r=>`<tr>
+    <td class="l">${r.lbl}</td>
+    <td>${isPct(r.lbl)?pct1(r.off):sgn(r.off,3)}</td>
+    <td>${rk2(r.offr)}</td>
+    <td style="${r.edge==null?'':heatDir(r.edge,-31,31,true)}">${r.edge==null?'–':sgn(r.edge,0)}</td>
+    <td>${r.defr==null?'<span class="rk" style="color:var(--faint)">–</span>':rk2(r.defr)}</td>
+    <td>${r.def==null?'–':(isPct(r.lbl)?pct1(r.def):sgn(r.def,3))}</td>
+  </tr>`).join('')+`</tbody></table></div>
+  <p class="note">Ranks are true league ranks, never transformed. Defense rank #1 = the best defense.</p>`;
+}
+
+/* ============================== boot + wiring ============================== */
+function segs(el,items,cur,on){
+  if(!el)return;
+  el.innerHTML=items.map(([v,l])=>`<button data-v="${v}" class="${v===cur?'on':''}">${l}</button>`).join('');
+  el.querySelectorAll('button').forEach(b=>b.onclick=()=>on(b.dataset.v));
+}
+function grpChips(el,defs,state,on){
+  if(!el)return;
+  const draw=()=>{
+    el.innerHTML=defs.map(([v,l])=>`<button data-v="${v}" class="${state[v]?'on':''}">${l}</button>`).join('');
+    // re-bind after every redraw: innerHTML replaces the nodes, so handlers
+    // attached to the old ones are gone
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+      state[b.dataset.v]=state[b.dataset.v]?0:1;
+      draw();          // <- the missing piece: reflect the new state
+      on();
+    });
+  };
+  draw();
+}
+function setTab(t){
+  TAB=t;
+  $$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
+  $$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  hashWrite();
+}
+function wire(){
+  $$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+  const setTWIN=v=>{TWIN=v;renderTeams();wireSegs('t-win',v);wireSegs('t2-win',v);hashWrite();};
+  const setPWIN=v=>{PWIN=v;renderPlayerTabs();wireSegs('pl-win',v);wireSegs('pl2-win',v);hashWrite();};
+  const winOpts=()=>WINDOWS.map(w=>[w,winLabel(w)]);
+  segs($('#t-win'),winOpts(),TWIN,setTWIN);
+  segs($('#t2-win'),winOpts(),TWIN,setTWIN);
+  segs($('#pl-win'),winOpts(),PWIN,setPWIN);
+  segs($('#pl2-win'),winOpts(),PWIN,setPWIN);
+  segs($('#iq-win'),winOpts(),IQ.win,v=>{IQ.win=v;renderIQ();wireSegs('iq-win',v);});
+  segs($('#iq-mode'),[['pass','Pass game'],['run','Run game']],IQ.mode,v=>{IQ.mode=v;renderIQ();wireSegs('iq-mode',v);});
+  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>renderTeam(false));
+  for(const id of ['t-gameview','t2-gameview']){
+    const gv=$('#'+id); if(!gv)continue;
+    gv.className=GAMEVIEW?'on':'';
+    gv.onclick=()=>{GAMEVIEW=!GAMEVIEW;
+      for(const j of ['t-gameview','t2-gameview']){const e=$('#'+j);if(e)e.className=GAMEVIEW?'on':'';}
+      renderTeams();hashWrite();};
+  }
+  grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false));
+  /* Multi-select positions. A plain click selects just that position (the
+     common case); ctrl/cmd/shift-click adds or removes one. Never lets the
+     selection go empty. */
+  const posEls=['pl-pos','pl2-pos'].map(id=>$('#'+id)).filter(Boolean);
+  const drawPos=()=>posEls.forEach(el=>{
+    el.innerHTML=['QB','RB','WR','TE'].map(p=>
+      `<button data-v="${p}" class="${PSEL.has(p)?'on':''}" title="Click to select only this position, ctrl or shift-click to add">${p}</button>`).join('');
+    el.querySelectorAll('button').forEach(b=>b.onclick=e=>{
+      const v=b.dataset.v, add=e&&(e.ctrlKey||e.metaKey||e.shiftKey);
+      if(add){ PSEL.has(v)?PSEL.delete(v):PSEL.add(v); if(!PSEL.size)PSEL.add(v); }
+      else { PSEL=new Set([v]); }
+      PPOS=[...PSEL][0];
+      drawPos(); renderPlayerTabs(); hashWrite();
+    });
+  });
+  drawPos();
+  const on=(sel,ev,fn)=>{const e=$(sel);if(e)e[ev]=fn;};
+  on('#t-q','oninput',()=>renderTeam(false)); on('#t2-q','oninput',()=>renderTeam(true));
+  on('#pl-team','onchange',()=>renderPlayers(false)); on('#pl-q','oninput',()=>renderPlayers(false));
+  on('#pl2-team','onchange',()=>renderPlayers(true)); on('#pl2-q','oninput',()=>renderPlayers(true));
+  on('#pl2-slate','onchange',()=>renderPlayers(true));
+  const mp2=$('#pl2-minp'); if(mp2)mp2.oninput=()=>renderPlayers(true);
+  on('#pl-luck','onchange',()=>renderPlayers(false));
+  on('#pl-ming','oninput',()=>renderPlayers(false)); on('#pl-mino','oninput',()=>renderPlayers(false));
+  const mp=$('#pl-minp'); if(mp)mp.oninput=()=>renderPlayers(false);
+  on('#pl-slate','onchange',()=>renderPlayers(false));
+  const ob=$('#pl-out'); if(ob)ob.onchange=()=>renderPlayers(false);
+  on('#iq-ming','oninput',()=>renderIQ());
+  const im=$('#iq-minp'); if(im)im.oninput=()=>renderIQ();
+  on('#iq-off','onchange',e=>{IQ.off=e.target.value;if(IQ.def===IQ.off)IQ.def=null;IQ.game=null;renderIQ();});
+  on('#iq-def','onchange',e=>{IQ.def=e.target.value;IQ.game=null;renderIQ();});
+  on('#iq-swap','onclick',()=>{[IQ.off,IQ.def]=[IQ.def,IQ.off];renderIQ();});
+  on('#season','onchange',e=>{SEASON=+e.target.value;renderAll();hashWrite();
+    const wk=MT.meta.current_week;
+    $('#stamp').textContent=(wk?`Week ${wk} · `:'')+'data '+(MT.meta.generated_at||'').slice(0,10)+seasonNote();});
+  on('#export','onclick',()=>{
+    if(TAB==='iq'){
+      const parts=['QB','RB','WR','TE'].map(p=>{const e=$('#iq-g-'+p);
+        return e&&e._cols?p+'\n'+toCSV(e._cols,e._rows):'';}).filter(Boolean);
+      if(parts.length)download(`nfl_research_desk_iq_${IQ.off}_vs_${IQ.def}_${SEASON}.csv`,parts.join('\n\n'));
+      return;
+    }
+    const tgt={team:'#t-table',tshort:'#t2-table',player:'#pl-table',pshort:'#pl2-table'}[TAB];
+    const el=tgt?$(tgt):null;
+    if(el&&el._cols)download(`nfl_research_desk_${TAB}_${SEASON}.csv`,toCSV(el._cols,el._rows));
+  });
+}
+function wireSegs(id,v){const e=$('#'+id);if(e)e.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
+function renderTeams(){renderTeam(false);renderTeam(true);}
+function renderPlayerTabs(){renderPlayers(false);renderPlayers(true);}
+function renderAll(){renderSlate();renderTeams();renderPlayerTabs();renderIQ();}
+/* The current season is the default as soon as it has any games, because the
+   lastN windows roll back into the prior season and stay meaningful. What has
+   to adapt is the WINDOW: in week 1 the season window is a single game, so the
+   opening window is the shortest one that actually holds enough games. */
+const WINDOW_MIN_GAMES=1;
+function seasonGames(s){
+  const rows=Object.values(MT.teams)
+    .map(t=>(t.profile||[]).find(p=>p.season===s&&p.window==='season')).filter(Boolean);
+  return {teams:rows.length, max:rows.length?Math.max(...rows.map(p=>p.games)):0};
+}
+function defaultSeason(seasons){
+  const cur=MT.meta.current_season;
+  return (cur&&seasons.includes(cur)&&seasonGames(cur).max>0)?cur:seasons[seasons.length-1];
+}
+/* Open on season-to-date whenever the season has any games. A rolling default
+   was showing five 2025 games for every one from 2026 and reading as "the new
+   season isn't in here". The rolling windows stay one click away and say on
+   the button how far back they reach. */
+/* A fixed "min 3 games" empties both player tabs in week 1, when nobody has
+   three. Cap the default at what the current window can actually supply. */
+function defaultMinGames(){
+  return Math.max(1, Math.min(3, seasonGames(SEASON).max || 1));
+}
+function defaultWindow(){
+  return seasonGames(SEASON).max>=WINDOW_MIN_GAMES?'season':'last6';
+}
+/* how many games, and from where, the window on screen actually covers */
+function windowSpan(){
+  const rows=Object.values(MT.teams)
+    .map(t=>(t.profile||[]).find(p=>p.season===SEASON&&p.window===TWIN)).filter(Boolean);
+  if(!rows.length)return null;
+  const g=Math.max(...rows.map(r=>r.games));
+  const cross=rows.some(r=>r.cross_season);
+  const from=rows.map(r=>r.window_from).filter(Boolean).sort()[0];
+  return {games:g,cross,from};
+}
+function seasonNote(){
+  const sg=seasonGames(SEASON);
+  const sp=windowSpan();
+  let s=` · ${SEASON} wk${MT.meta.current_week||''} (${sg.max} game${sg.max===1?'':'s'} played)`;
+  if(sp&&sp.cross)s+=` · short windows reach back to ${esc(sp.from)}`;
+  return s;
+}
+function boot(data){
+  MT=data;
+  const seasons=[...new Set(Object.values(MT.teams).flatMap(t=>(t.profile||[]).map(p=>p.season)))].sort();
+  SEASON=defaultSeason(seasons);
+  hashRead();
+  if(!seasons.includes(SEASON))SEASON=defaultSeason(seasons);
+  $('#season').innerHTML=seasons.map(s=>`<option ${s===SEASON?'selected':''}>${s}</option>`).join('');
+  if(!(location.hash||'').includes('tw=')){
+    const dw=defaultWindow(); TWIN=dw; PWIN=dw; IQ.win=dw;
+  }
+  const teams=Object.keys(MT.teams).sort();
+  for(const id of ['pl-team','pl2-team']){
+    const e=$('#'+id);
+    if(e)e.innerHTML='<option value="">All teams</option>'+teams.map(t=>`<option>${t}</option>`).join('');
+  }
+  const mg=$('#pl-ming'); if(mg)mg.value=String(defaultMinGames());
+  HASPROJ=(MT.player_profiles||[]).some(p=>p.rg_proj!=null);
+  HASSTATUS=(MT.player_profiles||[]).some(p=>p.status!=null&&p.status!=='');
+  const iw=$('#iq-projwrap');
+  if(iw)iw.innerHTML=HASPROJ
+    ?'Min proj <input type="number" id="iq-minp" value="3" min="0" step="0.5">'
+    :'';
+  const ow=$('#pl-outwrap');
+  if(ow)ow.innerHTML=HASSTATUS?'<input type="checkbox" id="pl-out" checked> hide Out':'';
+  const pw=$('#pl-projwrap');
+  if(pw)pw.innerHTML=HASPROJ
+    ?'Min proj <input type="number" id="pl-minp" value="4" min="0" step="0.5">'
+    :'<span style="color:var(--faint)">No RG projections in this build — showing the full pool</span>';
+  const pw2=$('#pl2-projwrap');
+  if(pw2)pw2.innerHTML=HASPROJ
+    ?'Min proj <input type="number" id="pl2-minp" value="4" min="0" step="0.5">'
+    :'';
+  const wk=MT.meta.current_week;
+  $('#stamp').textContent=(wk?`Week ${wk} · `:'')+'data '+(MT.meta.generated_at||'').slice(0,10)+seasonNote();
+  wire(); setTab(TAB); renderAll();
+}
+(function load(){
+  if(window.MT_DATA)return boot(window.MT_DATA);
+  const url=new URLSearchParams(location.search).get('data')||'matchup_master.json';
+  fetch(url).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+    .then(boot)
+    .catch(e=>{$('main').innerHTML=`<div class="err"><b>Can't load the data file.</b><br>
+      Looked for <code>${esc(url)}</code> (${esc(e.message)}). Put
+      <code>matchup_master.json</code> next to this file, or point at one with
+      <code>?data=URL</code>. Serving over http (not file://) is required for fetch.</div>`;});
+})();
+</script>
+</body>
+</html>
