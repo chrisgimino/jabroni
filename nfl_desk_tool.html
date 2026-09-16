@@ -61,8 +61,8 @@ tbody tr:hover td{filter:brightness(1.18)}
    thick colored band across the full table, top of the first row and
    bottom of the last, makes one game visually distinct from the next
    instead of the rows just running together. */
-tbody tr.gfirst td{border-top:4px solid var(--gold);padding-top:8px}
-tbody tr.gsep td{border-bottom:4px solid var(--gold);padding-bottom:8px}
+tbody tr.gfirst td{border-top:3px solid var(--gold);padding-top:8px}
+tbody tr.gsep td{border-bottom:3px solid var(--gold);padding-bottom:8px}
 th.stick,td.stick{position:sticky;left:0;background:var(--panel);z-index:2}
 thead th.stick{z-index:4}
 /* Column-group separators -- a visibly thicker divider + breathing room
@@ -187,7 +187,8 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t2-win"></span>
       <input id="t2-q" placeholder="Find a team" size="12">
-      <span class="chips"><button id="t2-gameview" title="Stack each game's two teams together">Game-by-game</button></span>
+      <span class="chips"><button id="t2-gameview" title="Stack each game's two teams together">Game-by-game</button>
+      <button id="t2-odds" title="Show or hide spread/total/implied">Odds</button></span>
       <span class="count" id="t2-count"></span>
     </div>
     <div class="tblwrap"><div id="t2-table"></div></div>
@@ -210,7 +211,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
       <span class="count" id="pl-count"></span>
     </div>
     <div class="tblwrap"><div id="pl-table"></div></div>
-    <p class="note">Click a player to see the season → last-6 → last-4 → last-2 progression. Workhorse rates backfield usage (RB only), Dominator rates receiving usage (WR/TE only); both weight absolute volume, not just share. Luck is PPR FP/g minus opportunity-expected FP/g: OVER is regression risk, UNDER is a buy-low.</p>
   </section>
 
   <section class="pane" id="p-pshort">
@@ -432,6 +432,7 @@ const TIP={
   route_rate:'Routes run as a share of team dropbacks — how often he is actually out in the pattern',
   tprr:'Targets per route run. League WR average about 20%; 30%+ is elite',
   yprr:'Receiving yards per route run. 2.0+ is strong, 3.0+ is elite',
+  player:'Click a player to see his season → last-6 → last-4 → last-2 progression',
   workhorse:'Backfield role grade, 0–100 within RB/FB: carry share, red zone opportunity share, target share, snap share and absolute volume. Weights fitted on 2025 first half, validated on the second half',
   workhorse_tier:'Bell cow 90+, Lead 75+, Rotational 50+, Committee 25+, Marginal below',
   dominator_tier:'Alpha 90+, Primary 75+, Secondary 50+, Depth 25+, Marginal below',
@@ -441,13 +442,14 @@ const TIP={
   dominator_trend:'Last-4 dominator minus season — positive means a growing role',
   fp_ppr_pg:'PPR fantasy points per game',xfp_pg:'Expected FP/g from opportunities alone: league-average value of every carry, target and attempt by field position and depth',
   luck_fp_pg:'Actual minus expected FP/g. Positive = production ran ahead of usage (regression risk); negative = usage says buy low',
+  luck_label:'OVER = production ran ahead of usage, regression risk. UNDER = usage says buy low',
 };
 const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
 
 /* -------- shared sortable table engine: cols {k,h,l,num,f,style,grp} ------ */
 const TSTATE=new WeakMap();
 const GRPLABEL_MAP={situational:'Situational',redzone:'Red zone',efficiency:'Efficiency',
-  explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck'};
+  explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck',odds:'Odds'};
 function GRPLABEL(g){return GRPLABEL_MAP[g]||g;}
 function table(el,cols,rows,opts={}){
   if(!el)return;
@@ -536,7 +538,7 @@ var SEASON=null, TWIN='season', PWIN='season', PPOS='RB', TAB='tshort';
 var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
-var TGRPS={situational:1,redzone:0,efficiency:0,explosive:0};
+var TGRPS={situational:1,redzone:0,efficiency:0,explosive:0,odds:1};
 var PGRPS={usage:1,redzone:0,explosive:0,efficiency:0,ratings:1};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
@@ -632,7 +634,7 @@ function renderSlate(){
 }
 
 /* ============================== team usage ============================== */
-const T_GRPDEF=[['situational','Situational'],['redzone','Red zone'],
+const T_GRPDEF=[['odds','Odds'],['situational','Situational'],['redzone','Red zone'],
                 ['efficiency','Efficiency'],['explosive','Explosives']];
 var GAMEVIEW=true;
 /* Short tabs: the 10-12 numbers that decide most research questions. Identity
@@ -708,9 +710,9 @@ function renderTeam(short=false){
     {k:'team',h:'Team',f:v=>tmChip(v)},
     {k:'_opp',h:'Week matchup',f:(v,r)=>v?`${r._home?'vs':'@'} ${tmChip(v)}`:'–'},
     {k:'_kick',h:'Kickoff',num:GAMEVIEW?1:0,desc:false,f:(v,r)=>esc(r._kicktxt||'–')},
-    {k:'_spread',h:'Spread',f:v=>spreadTxt(v),style:pctShade(rows,'_spread',false)},
-    {k:'_total',h:'Total',f:v=>f(v,1)},
-    {k:'_implied',h:'Implied',f:v=>f(v,1),style:pctShade(rows,'_implied',true)},
+    {k:'_spread',h:'Spread',grp:'odds',f:v=>spreadTxt(v),style:pctShade(rows,'_spread',false)},
+    {k:'_total',h:'Total',grp:'odds',f:v=>f(v,1)},
+    {k:'_implied',h:'Implied',grp:'odds',f:v=>f(v,1),style:pctShade(rows,'_implied',true)},
     {k:'games',h:'G'},
 
     // ---- SITUATIONAL: baseline identity, then how it moves with the script
@@ -756,7 +758,7 @@ function renderTeam(short=false){
   if(short){
     const p100=v=>sgn(v==null?null:v*100,1);
     cols=[
-      ...cols.filter(c=>T_IDENTITY.includes(c.k)||['_spread','_total','_implied'].includes(c.k)),
+      ...cols.filter(c=>T_IDENTITY.includes(c.k)||(['_spread','_total','_implied'].includes(c.k)&&TGRPS.odds)),
       {k:'_plays_rk',h:'Plays/g',f:(v,r)=>rkCell(v,r.plays_pg,x=>f(x,1)),style:rkShade},
       {k:'_pace_rk',h:'Pace',f:(v,r)=>rkCell(v,r._pace,x=>f(x,1)+' s'),style:rkShade},
       {k:'_pr_rk',h:'Pass%',f:(v,r)=>rkCell(v,r._pr,pct0),style:rkShade},
@@ -1250,7 +1252,13 @@ function wire(){
   segs($('#pl2-win'),winOpts(),PWIN,setPWIN);
   segs($('#iq-win'),winOpts(),IQ.win,v=>{IQ.win=v;renderIQ();wireSegs('iq-win',v);});
   segs($('#iq-mode'),[['pass','Pass game'],['run','Run game']],IQ.mode,v=>{IQ.mode=v;renderIQ();wireSegs('iq-mode',v);});
-  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>renderTeam(false));
+  const syncOddsUI=()=>{const t2o=$('#t2-odds'); if(t2o)t2o.className=TGRPS.odds?'on':'';};
+  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>{renderTeams();syncOddsUI();});
+  const t2o=$('#t2-odds');
+  if(t2o){
+    t2o.className=TGRPS.odds?'on':'';
+    t2o.onclick=()=>{TGRPS.odds=TGRPS.odds?0:1;syncOddsUI();renderTeams();};
+  }
   for(const id of ['t-gameview','t2-gameview']){
     const gv=$('#'+id); if(!gv)continue;
     gv.className=GAMEVIEW?'on':'';
