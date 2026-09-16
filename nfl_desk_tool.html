@@ -87,6 +87,7 @@ thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)
   font-size:12px;color:#fff;letter-spacing:.3px}
 .rk{display:inline-block;min-width:30px;text-align:center;padding:0 5px;
   border-radius:4px;font-weight:700;font-size:11.5px}
+.rksub{color:var(--faint);font-size:11px;font-weight:500;margin-left:2px}
 .lk{font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px}
 .st{font-weight:800;font-size:9.5px;padding:1px 4px;border-radius:3px;margin-left:5px;letter-spacing:.3px}
 .st.q{background:#6b5a1f;color:#f6e7b0}.st.d{background:#7a4a25;color:#fbe0c8}
@@ -167,7 +168,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <button data-t="iq">Matchups</button>
   </nav>
   <div class="hctl">
-    <span class="lbl">Season</span><select id="season"></select>
     <span id="stamp"></span>
   </div>
 </header>
@@ -534,7 +534,7 @@ function download(name,text){
 
 /* ============================== state ============================== */
 let MT=null;
-var SEASON=null, TWIN='season', PWIN='season', PPOS='RB', TAB='tshort';
+var SEASON=null, SEASONS_AVAIL=[], TWIN='season', PWIN='season', PPOS='RB', TAB='tshort';
 /* Positions are multi-select. PPOS stays the single "primary" position that
    decides the column set when exactly one is chosen; PSEL holds the selection. */
 var PSEL=new Set(['RB']);
@@ -546,15 +546,48 @@ var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
 const WINDOWS=['season','last6','last4','last2'];
 const WINLBL={season:'Season',last6:'Last 6',last4:'Last 4',last2:'Last 2'};
-/* Each button states the sample behind it, so a one-game season window and a
-   six-game window that reaches into last season can't be confused. */
-function winLabel(w){
+/* Each button's tooltip states the sample behind it, so a one-game season
+   window and a six-game window that reaches into last season can't be
+   confused -- the label itself now just says the year or L6/L4/L2. */
+function winTip(w,season){
   const rows=Object.values(MT.teams||{})
-    .map(t=>(t.profile||[]).find(p=>p.season===SEASON&&p.window===w)).filter(Boolean);
+    .map(t=>(t.profile||[]).find(p=>p.season===season&&p.window===w)).filter(Boolean);
   if(!rows.length)return WINLBL[w];
   const g=Math.max(...rows.map(r=>r.games||0));
   const cross=rows.some(r=>r.cross_season);
-  return `${WINLBL[w]} (${g}g${cross?', incl. '+(SEASON-1):''})`;
+  return `${WINLBL[w]} ${season} (${g}g${cross?', incl. '+(season-1):''})`;
+}
+/* Unified season + rolling-window control. Folds the old separate "Season"
+   dropdown into the same segmented buttons as Last 6/4/2, so switching to
+   2025 can't silently leave a window button reading the ambiguous "Season"
+   with no year attached. A season button sets the shared SEASON global (and
+   so needs every instance of this control, across all tabs, redrawn); a
+   rolling-window button only affects its own tab. */
+const WIN_SEG_MOUNTS=[];   // [elId, ()=>currentWin][]  filled in wire()
+function winSegItems(){
+  return [...SEASONS_AVAIL].sort((a,b)=>b-a).map(y=>({season:y,label:String(y)}))
+    .concat([['last6','L6'],['last4','L4'],['last2','L2']].map(([v,l])=>({win:v,label:l})));
+}
+function renderWinSeg(elId,curWin){
+  const el=$('#'+elId); if(!el)return;
+  const items=winSegItems();
+  el.innerHTML=items.map(it=>{
+    const active=it.season!=null?(curWin()==='season'&&SEASON===it.season):(curWin()===it.win);
+    const tip=it.season!=null?winTip('season',it.season):winTip(it.win,SEASON);
+    return `<button data-v="${it.season!=null?'s'+it.season:it.win}" class="${active?'on':''}" title="${esc(tip)}">${it.label}</button>`;
+  }).join('');
+}
+function redrawWinSegs(){WIN_SEG_MOUNTS.forEach(([id,cur])=>renderWinSeg(id,cur));}
+function wireWinSeg(elId,curWin,setWin){
+  WIN_SEG_MOUNTS.push([elId,curWin]);
+  renderWinSeg(elId,curWin);
+  const el=$('#'+elId); if(!el)return;
+  el.onclick=e=>{
+    const b=e.target.closest('button'); if(!b)return;
+    const v=b.dataset.v;
+    if(v[0]==='s'){ SEASON=+v.slice(1); setWin('season'); renderAll(); redrawWinSegs(); }
+    else { setWin(v); renderWinSeg(elId,curWin); }
+  };
 }
 
 const tprof=(w)=>{const m={};for(const t in MT.teams)
@@ -627,14 +660,15 @@ function renderSlate(){
   const el=$('#slate'); if(!el)return;
   const gs=MT.games||[];
   if(!gs.length){el.innerHTML='';return;}
+  // Matchups tab has its own game picker (#iq-games, wired by renderIQGames)
+  // that does this exact job -- stay out of the way there instead of
+  // stacking a second, near-identical strip on top of it.
+  if(TAB==='iq'){el.innerHTML='';return;}
   const wk=MT.meta.current_week,se=MT.meta.current_season;
-  const forcedOpen=TAB==='iq';   // Matchups always shows the strip -- it's the game picker
-  const open=forcedOpen||SLATE_OPEN;
   el.innerHTML=`<div class="slatehead"><h2>Week ${wk} · ${se}</h2>
-    <span>${gs.length} games — spreads, totals, implied points per side. Click a game to open it in Matchups.</span>`+
-    (forcedOpen?'':`<button id="slate-toggle">${SLATE_OPEN?'Hide games':'Show games'}</button>`)+
-    `</div>`+
-    (open?`<div class="cards" id="slate-cards">${gs.map(g=>gameCard(g,true)).join('')}</div>`:'');
+    <span>${gs.length} games — spreads, totals, implied points per side. Click a game to open it in Matchups.</span>
+    <button id="slate-toggle">${SLATE_OPEN?'Hide games':'Show games'}</button></div>`+
+    (SLATE_OPEN?`<div class="cards" id="slate-cards">${gs.map(g=>gameCard(g,true)).join('')}</div>`:'');
   const tg=$('#slate-toggle'); if(tg)tg.onclick=()=>{SLATE_OPEN=!SLATE_OPEN;renderSlate();};
   el.querySelectorAll('#slate-cards button.gm').forEach(b=>b.onclick=()=>{
     const g=gs.find(x=>String(gameKey(x))===b.dataset.sid); if(!g)return;
@@ -729,20 +763,20 @@ function renderTeam(short=false){
     // ---- SITUATIONAL: baseline identity, then how it moves with the script
     {grp:'situational',k:'plays_pg',h:'Plays/g',f:v=>f(v,1),style:S('plays_pg',true)},
     {grp:'situational',k:'_pace',h:'Pace',f:v=>f(v,1),style:S('_pace',false)},
-    {grp:'situational',k:'_paceL',h:'Pace lead',f:v=>f(v,1),style:S('_paceL',false)},
-    {grp:'situational',k:'_paceT',h:'Pace trail',f:v=>f(v,1),style:S('_paceT',false)},
+    {grp:'situational',k:'_paceL',h:'Pace (up 7+)',f:v=>f(v,1),style:S('_paceL',false)},
+    {grp:'situational',k:'_paceT',h:'Pace (down 7+)',f:v=>f(v,1),style:S('_paceT',false)},
     {grp:'situational',k:'_paceD',h:'Pace Δ',f:v=>sgn(v,1),style:S('_paceD',false)},
     {grp:'situational',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
-    {grp:'situational',k:'_prL',h:'Pass% lead',f:pct0,style:S('_prL',true)},
-    {grp:'situational',k:'_prT',h:'Pass% trail',f:pct0,style:S('_prT',true)},
+    {grp:'situational',k:'_prL',h:'Pass% (up 7+)',f:pct0,style:S('_prL',true)},
+    {grp:'situational',k:'_prT',h:'Pass% (down 7+)',f:pct0,style:S('_prT',true)},
     {grp:'situational',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
     {grp:'situational',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
-    {grp:'situational',k:'_rrL',h:'Run% lead',f:pct0,style:S('_rrL',true)},
-    {grp:'situational',k:'_rrT',h:'Run% trail',f:pct0,style:S('_rrT',true)},
+    {grp:'situational',k:'_rrL',h:'Run% (up 7+)',f:pct0,style:S('_rrL',true)},
+    {grp:'situational',k:'_rrT',h:'Run% (down 7+)',f:pct0,style:S('_rrT',true)},
     {grp:'situational',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
     {grp:'situational',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
-    {grp:'situational',k:'_proeL',h:'PROE lead',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
-    {grp:'situational',k:'_proeT',h:'PROE trail',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
+    {grp:'situational',k:'_proeL',h:'PROE (up 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
+    {grp:'situational',k:'_proeT',h:'PROE (down 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
     {grp:'situational',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
     {grp:'situational',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
     {grp:'situational',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
@@ -753,16 +787,16 @@ function renderTeam(short=false){
     {grp:'redzone',k:'rz_pass_rate',h:'RZ pass%',f:pct0,style:S('rz_pass_rate',true)},
 
     // ---- EXPLOSIVES
-    {grp:'explosive',k:'explosive_pass_rate',h:'Expl pass%',f:pct1,style:S('explosive_pass_rate',true)},
-    {grp:'explosive',k:'explosive_rush_rate',h:'Expl rush%',f:pct1,style:S('explosive_rush_rate',true)},
+    {grp:'explosive',k:'explosive_pass_rate',h:'ExplosivePass%',f:pct1,style:S('explosive_pass_rate',true)},
+    {grp:'explosive',k:'explosive_rush_rate',h:'ExplosiveRun%',f:pct1,style:S('explosive_rush_rate',true)},
 
     // ---- EFFICIENCY
     {grp:'efficiency',k:'off_epa_pp',h:'Off EPA',num:GAMEVIEW?0:1,f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_epa_pp_rk)}`,style:S('off_epa_pp',true)},
-    {grp:'efficiency',k:'off_success',h:'Off SR',f:pct0,style:S('off_success',true)},
+    {grp:'efficiency',k:'off_success',h:'Off Success%',f:pct0,style:S('off_success',true)},
     {grp:'efficiency',k:'off_pass_epa_pp',h:'Pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_pass_epa_pp_rk)}`,style:S('off_pass_epa_pp',true)},
     {grp:'efficiency',k:'off_rush_epa_pp',h:'Rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_rush_epa_pp_rk)}`,style:S('off_rush_epa_pp',true)},
     {grp:'efficiency',k:'def_epa_pp',h:'Def EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_epa_pp_rk)}`,style:S('def_epa_pp',false)},
-    {grp:'efficiency',k:'def_success',h:'Def SR',f:pct0,style:S('def_success',false)},
+    {grp:'efficiency',k:'def_success',h:'DefSuccess%',f:pct0,style:S('def_success',false)},
     {grp:'efficiency',k:'def_pass_epa_pp',h:'Def pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_pass_epa_pp_rk)}`,style:S('def_pass_epa_pp',false)},
     {grp:'efficiency',k:'def_rush_epa_pp',h:'Def rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_rush_epa_pp_rk)}`,style:S('def_rush_epa_pp',false)},
   ];
@@ -842,22 +876,22 @@ const PL_COLS={
       ['pass_epa_per_att','EPA/att',3,'efficiency'],['sack_rate','Sack%','p','efficiency'],
       ['ypc','Y/C',2,'efficiency']],
   RB:[['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
-      ['carry_share','Carry sh','p','usage'],
-      ['targets_pg','Tgt/g',1,'usage'],['target_share','Tgt sh','p','usage'],
+      ['carry_share','Rush%','p','usage'],
+      ['targets_pg','Tgt%',1,'usage'],['target_share','Tgt sh','p','usage'],
       ['route_rate','Route%','p','usage'],['tprr','TPRR','p','usage'],
       ['snap_pct','Snap%','p','usage'],
       ['ypc','Y/C',2,'efficiency'],['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
       ['yprr','YPRR',2,'efficiency'],
-      ['catch_rate','Catch%','p','efficiency'],['ypt','Y/Tgt',2,'efficiency']],
-  WR:[['targets_pg','Tgt/g',1,'usage'],['rec_yds_pg','Rec Y/g',1,'usage'],
+      ['catch_rate','Catch%','p','efficiency'],['ypt','YPT',2,'efficiency']],
+  WR:[['targets_pg','Tgt%',1,'usage'],['rec_yds_pg','Rec Y/g',1,'usage'],
       ['target_share','Tgt sh','p','usage'],
       ['routes_pg','Routes/g',1,'usage'],['route_games','Route gms',0,'usage'],['route_rate','Route%','p','usage'],
       ['tprr','TPRR','p','usage'],
-      ['air_yards_share','AY sh','p','usage'],['wopr','WOPR',2,'usage'],
+      ['air_yards_share','AirYard%','p','usage'],['wopr','WOPR',2,'usage'],
       ['adot','aDOT',1,'usage'],
       ['deep_targets','Deep tgt',0,'usage'],['snap_pct','Snap%','p','usage'],
       ['yprr','YPRR',2,'efficiency'],['catch_rate','Catch%','p','efficiency'],
-      ['ypt','Y/Tgt',2,'efficiency'],['yac_per_rec','YAC/rec',1,'efficiency'],
+      ['ypt','YPT',2,'efficiency'],['yac_per_rec','YAC/rec',1,'efficiency'],
       ['rec_epa_per_tgt','EPA/tgt',3,'efficiency']],
 };
 PL_COLS.TE=PL_COLS.WR;
@@ -878,7 +912,7 @@ function RATING_COLS(pos,isRB){
 function RZ_COLS(pos,S){
   const common=[
     {grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
-    {grp:'redzone',k:'rz_share',h:'RZ share',f:pct0,style:S('rz_share')},
+    {grp:'redzone',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
     {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}];
   if(pos==='QB')return[
     {grp:'redzone',k:'i5_carries',h:'i5 car',style:S('i5_carries')},
@@ -888,7 +922,7 @@ function RZ_COLS(pos,S){
     {grp:'redzone',k:'rz_carries',h:'RZ car',style:S('rz_carries')},
     {grp:'redzone',k:'i10_carries',h:'i10',style:S('i10_carries')},
     {grp:'redzone',k:'i5_carries',h:'i5',style:S('i5_carries')},
-    {grp:'redzone',k:'i10_carry_share',h:'i10 share',f:pct0,style:S('i10_carry_share')},
+    {grp:'redzone',k:'i10_carry_share',h:'i10 Rush%',f:pct0,style:S('i10_carry_share')},
     {grp:'redzone',k:'rz_targets',h:'RZ tgt',style:S('rz_targets')},
     ...common];
   return[
@@ -904,7 +938,7 @@ function EXPL_COLS(pos,S){
   if(pos==='RB')return[
     {grp:'explosive',k:'explosive_rush',h:'10+ rush',style:S('explosive_rush')},
     {grp:'explosive',k:'expl_rush_20',h:'20+ rush',style:S('expl_rush_20')},
-    {grp:'explosive',k:'expl_rush_rate',h:'10+ rush rate',f:pct1,style:S('expl_rush_rate')},
+    {grp:'explosive',k:'expl_rush_rate',h:'10+ Rush%',f:pct1,style:S('expl_rush_rate')},
     {grp:'explosive',k:'expl_rec',h:'10+ rec',style:S('expl_rec')},
     {grp:'explosive',k:'expl_pg',h:'Expl/g',f:v=>f(v,2),style:S('expl_pg')}];
   return[
@@ -916,10 +950,10 @@ function EXPL_COLS(pos,S){
 }
 /* shared columns for a mixed selection: the ones that mean the same thing for
    a back and a receiver */
-const PL_MIXED=[['carries_pg','Car/g',1,'usage'],['carry_share','Carry sh','p','usage'],
-  ['targets_pg','Tgt/g',1,'usage'],['target_share','Tgt sh','p','usage'],
+const PL_MIXED=[['carries_pg','Car/g',1,'usage'],['carry_share','Rush%','p','usage'],
+  ['targets_pg','Tgt%',1,'usage'],['target_share','Tgt sh','p','usage'],
   ['routes_pg','Routes/g',1,'usage'],['tprr','TPRR','p','usage'],
-  ['snap_pct','Snap%','p','usage'],['ypt','Y/Tgt',2,'efficiency']];
+  ['snap_pct','Snap%','p','usage'],['ypt','YPT',2,'efficiency']];
 function defaultSortKey(pos,mixed){
   if(mixed)return'fp_ppr_pg';
   return pos==='QB'?'pass_att_pg':pos==='RB'?'workhorse':'dominator';
@@ -966,13 +1000,13 @@ function renderPlayers(short=false){
         {grp:'ratings',k:'dominator',h:'Dominator',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)}]
       :RATING_COLS(pos,isRB)),
     {k:'games',h:'G'},
-    {k:'opportunities',h:'Opps'},
+    {k:'opportunities',h:'Touches'},
     ...(mixed?PL_MIXED:PL_COLS[pos]).map(([k,h,d,g])=>({k,h,grp:g,num:k===dsk?1:0,
       f:d==='p'?pct0:(v)=>f(v,d),
       style:S(k,k!=='sack_rate')})),
     ...(mixed?[]:RZ_COLS(pos,S)),
     ...(mixed?[{grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
-               {grp:'redzone',k:'rz_share',h:'RZ share',f:pct0,style:S('rz_share')},
+               {grp:'redzone',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
                {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}]:[]),
     ...(mixed?[]:EXPL_COLS(pos,S)),
     {grp:'ratings',k:'fp_ppr_pg',h:'FP/g',f:v=>f(v,1),style:S('fp_ppr_pg')},
@@ -1003,7 +1037,7 @@ function togglePlayer(row,tr,span){
   const w=n=>all.find(p=>p.window===n)||{};
   const keys=row.position==='QB'
     ?[['pass_att_pg','Att/g',1],['pass_ypa','Y/A',2],['cpoe','CPOE',1],['pass_epa_per_att','EPA/att',3],['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']]
-    :[['carries_pg','Car/g',1],['carry_share','Carry sh','p'],['targets_pg','Tgt/g',1],['target_share','Tgt sh','p'],
+    :[['carries_pg','Car/g',1],['carry_share','Rush%','p'],['targets_pg','Tgt%',1],['target_share','Tgt sh','p'],
       ...(['RB','FB'].includes(row.position)?[['workhorse','Workhorse',0]]:[['dominator','Dominator',0]]),
       ['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']];
   const fmt=(v,d)=>d==='p'?pct0(v):d==='s'?sgn(v,1):f(v,d);
@@ -1090,6 +1124,7 @@ function renderIQStrip(tp){
         <div>Pass rate<b>${pct0(o.pass_rate)}</b></div>
         <div>PROE<b>${sgn(o.proe*100,1)}</b></div>
         <div>Off EPA<b>${sgn(o.off_epa_pp,3)} ${rk2(o.off_epa_pp_rk)}</b></div>
+        <div>Off Success%<b>${pct0(o.off_success)}</b></div>
         <div>RZ TD%<b>${pct0(o.rz_td_rate)}</b></div>
       </div>${scriptLine(IQ.off)}</div>
     <div class="mid"><span>${WINLBL[IQ.win]} · ${SEASON}</span>
@@ -1157,30 +1192,30 @@ function iqCols(pos,d,pa,rows){
       {k:'i5_carries',h:'i5 car',style:S('i5_carries')},
       {k:'rush_epa_per_att',h:'Rush EPA/att',f:v=>sgn(v,3),style:S('rush_epa_per_att')},
       {k:'_ord',h:'Opp run D',f:()=>rkOpp(d?.def_rush_epa_pp_rk)},
-      {k:'_qbr',h:'Opp rush yds/g to QBs',f:()=>`${f(pa.a_rush_yds,1)} ${rk2(pa.a_rush_yds_rk,true)}${spot(pa.a_rush_yds_rk)}`}];
+      {k:'_qbr',h:'Opp rush yds/g to QBs',f:()=>`${rk2(pa.a_rush_yds_rk,true)} <span class="rksub">(${f(pa.a_rush_yds,1)})</span>${spot(pa.a_rush_yds_rk)}`}];
     return runQB?[...head,...runBlk,...passBlk.slice(0,3),...luckTail]
                 :[...head,...passBlk,...runBlk.slice(0,3),...luckTail];
   }
   if(pos==='RB'){
     const rush=[
       {k:'carries_pg',h:'Car/g',num:IQ.mode==='run'?1:0,f:v=>f(v,1),style:S('carries_pg')},
-      {k:'carry_share',h:'Carry sh',f:pct0,style:v=>heatDir(v,0,.7,true)},
+      {k:'carry_share',h:'Rush%',f:pct0,style:v=>heatDir(v,0,.7,true)},
       {k:'i10_carries',h:'i10'},{k:'i5_carries',h:'i5'},
       {k:'rush_yds_pg',h:'Rush Y/g',f:v=>f(v,1),style:S('rush_yds_pg')},
       {k:'ypc',h:'Y/C',f:v=>f(v,2),style:S('ypc')},
       {k:'rush_epa_per_att',h:'EPA/att',f:v=>sgn(v,3),style:S('rush_epa_per_att')},
       {k:'_ord',h:'Opp run D',f:()=>rkOpp(d?.def_rush_epa_pp_rk)},
-      {k:'_arry',h:'Opp rush yds/g to RBs',f:()=>`${f(pa.a_rush_yds,1)} ${rk2(pa.a_rush_yds_rk,true)}${spot(pa.a_rush_yds_rk)}`},
-      {k:'_aypc',h:'Opp Y/C to RBs',f:()=>`${f(pa.a_ypc,2)} ${rk2(pa.a_ypc_rk,true)}${spot(pa.a_ypc_rk)}`}];
+      {k:'_arry',h:'Opp rush yds/g to RBs',f:()=>`${rk2(pa.a_rush_yds_rk,true)} <span class="rksub">(${f(pa.a_rush_yds,1)})</span>${spot(pa.a_rush_yds_rk)}`},
+      {k:'_aypc',h:'Opp Y/C to RBs',f:()=>`${rk2(pa.a_ypc_rk,true)} <span class="rksub">(${f(pa.a_ypc,2)})</span>${spot(pa.a_ypc_rk)}`}];
     const rec=[
-      {k:'targets_pg',h:'Tgt/g',num:IQ.mode==='pass'?1:0,f:v=>f(v,1),style:S('targets_pg')},
+      {k:'targets_pg',h:'Tgt%',num:IQ.mode==='pass'?1:0,f:v=>f(v,1),style:S('targets_pg')},
       {k:'target_share',h:'Tgt sh',f:pct0,style:v=>heatDir(v,0,.3,true)},
       ...(routeCov?[{k:'tprr',h:'TPRR',f:pct1,style:S('tprr')}]:[]),
       {k:'rec_yds_pg',h:'Rec Y/g',f:v=>f(v,1),style:S('rec_yds_pg')},
-      {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'Y/Tgt',f:v=>f(v,2),style:S('ypt')},
+      {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'YPT',f:v=>f(v,2),style:S('ypt')},
       {k:'_opd',h:'Opp pass D',f:()=>rkOpp(d?.def_pass_epa_pp_rk)},
-      {k:'_arec',h:'Opp rec/g to RBs',f:()=>`${f(pa.a_rec,1)} ${rk2(pa.a_rec_rk,true)}${spot(pa.a_rec_rk)}`},
-      {k:'_arecy',h:'Opp rec yds/g to RBs',f:()=>`${f(pa.a_rec_yds,1)} ${rk2(pa.a_rec_yds_rk,true)}${spot(pa.a_rec_yds_rk)}`}];
+      {k:'_arec',h:'Opp rec/g to RBs',f:()=>`${rk2(pa.a_rec_rk,true)} <span class="rksub">(${f(pa.a_rec,1)})</span>${spot(pa.a_rec_rk)}`},
+      {k:'_arecy',h:'Opp rec yds/g to RBs',f:()=>`${rk2(pa.a_rec_yds_rk,true)} <span class="rksub">(${f(pa.a_rec_yds,1)})</span>${spot(pa.a_rec_yds_rk)}`}];
     return[...head,...(IQ.mode==='run'?[...rush,...rec.slice(0,2)]:[...rec,...rush.slice(0,2)]),
       {k:'snap_pct',h:'Snap%',f:pct0,style:S('snap_pct')},
       {k:'workhorse',h:'Workhorse',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
@@ -1188,23 +1223,23 @@ function iqCols(pos,d,pa,rows){
       ...luckTail];
   }
   return[...head,
-    {k:'targets_pg',h:'Tgt/g',num:1,f:v=>f(v,1),style:S('targets_pg')},
+    {k:'targets_pg',h:'Tgt%',num:1,f:v=>f(v,1),style:S('targets_pg')},
     {k:'target_share',h:'Tgt sh',f:pct0,style:v=>heatDir(v,0,.35,true)},
     ...(routeCov?[
       {k:'route_rate',h:'Route%',f:pct0,style:S('route_rate')},
       {k:'tprr',h:'TPRR',f:pct1,style:S('tprr')},
       {k:'yprr',h:'YPRR',f:v=>f(v,2),style:S('yprr')}]:[]),
-    {k:'air_yards_share',h:'AY sh',f:pct0,style:S('air_yards_share')},
+    {k:'air_yards_share',h:'AirYard%',f:pct0,style:S('air_yards_share')},
     {k:'wopr',h:'WOPR',f:v=>f(v,2),style:v=>heatDir(v,0,.9,true)},
     {k:'rec_yds_pg',h:'Rec Y/g',f:v=>f(v,1),style:S('rec_yds_pg')},
     {k:'adot',h:'aDOT',f:v=>f(v,1)},
     {k:'rz_targets',h:'RZ tgt',style:S('rz_targets')},{k:'ez_targets',h:'EZ tgt',style:S('ez_targets')},
-    {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'Y/Tgt',f:v=>f(v,2),style:S('ypt')},
+    {k:'catch_rate',h:'Catch%',f:pct0},{k:'ypt',h:'YPT',f:v=>f(v,2),style:S('ypt')},
     {k:'yac_per_rec',h:'YAC/rec',f:v=>f(v,1)},
     {k:'_opd',h:'Opp pass D',f:()=>rkOpp(d?.def_pass_epa_pp_rk)},
-    {k:'_arec',h:`Opp rec/g to ${pos}s`,f:()=>`${f(pa.a_rec,1)} ${rk2(pa.a_rec_rk,true)}${spot(pa.a_rec_rk)}`},
-    {k:'_arecy',h:`Opp rec yds/g to ${pos}s`,f:()=>`${f(pa.a_rec_yds,1)} ${rk2(pa.a_rec_yds_rk,true)}${spot(pa.a_rec_yds_rk)}`},
-    {k:'_aypr',h:`Opp Y/R to ${pos}s`,f:()=>`${f(pa.a_ypr,2)} ${rk2(pa.a_ypr_rk,true)}${spot(pa.a_ypr_rk)}`},
+    {k:'_arec',h:`Opp rec/g to ${pos}s`,f:()=>`${rk2(pa.a_rec_rk,true)} <span class="rksub">(${f(pa.a_rec,1)})</span>${spot(pa.a_rec_rk)}`},
+    {k:'_arecy',h:`Opp rec yds/g to ${pos}s`,f:()=>`${rk2(pa.a_rec_yds_rk,true)} <span class="rksub">(${f(pa.a_rec_yds,1)})</span>${spot(pa.a_rec_yds_rk)}`},
+    {k:'_aypr',h:`Opp Y/R to ${pos}s`,f:()=>`${rk2(pa.a_ypr_rk,true)} <span class="rksub">(${f(pa.a_ypr,2)})</span>${spot(pa.a_ypr_rk)}`},
     {k:'dominator',h:'Dominator',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
     {k:'dominator_trend',h:'Trend',f:v=>sgn(v,0),style:v=>heatDir(v,-25,25,true)},
     ...luckTail];
@@ -1263,14 +1298,14 @@ function setTab(t){
 }
 function wire(){
   $$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
-  const setTWIN=v=>{TWIN=v;renderTeams();wireSegs('t-win',v);wireSegs('t2-win',v);};
-  const setPWIN=v=>{PWIN=v;renderPlayerTabs();wireSegs('pl-win',v);wireSegs('pl2-win',v);};
-  const winOpts=()=>WINDOWS.map(w=>[w,winLabel(w)]);
-  segs($('#t-win'),winOpts(),TWIN,setTWIN);
-  segs($('#t2-win'),winOpts(),TWIN,setTWIN);
-  segs($('#pl-win'),winOpts(),PWIN,setPWIN);
-  segs($('#pl2-win'),winOpts(),PWIN,setPWIN);
-  segs($('#iq-win'),winOpts(),IQ.win,v=>{IQ.win=v;renderIQ();wireSegs('iq-win',v);});
+  const setTWIN=v=>{TWIN=v;renderTeams();renderWinSeg('t-win',()=>TWIN);renderWinSeg('t2-win',()=>TWIN);};
+  const setPWIN=v=>{PWIN=v;renderPlayerTabs();renderWinSeg('pl-win',()=>PWIN);renderWinSeg('pl2-win',()=>PWIN);};
+  const setIQWIN=v=>{IQ.win=v;renderIQ();renderWinSeg('iq-win',()=>IQ.win);};
+  wireWinSeg('t-win',()=>TWIN,setTWIN);
+  wireWinSeg('t2-win',()=>TWIN,setTWIN);
+  wireWinSeg('pl-win',()=>PWIN,setPWIN);
+  wireWinSeg('pl2-win',()=>PWIN,setPWIN);
+  wireWinSeg('iq-win',()=>IQ.win,setIQWIN);
   segs($('#iq-mode'),[['pass','Pass game'],['run','Run game']],IQ.mode,v=>{IQ.mode=v;renderIQ();wireSegs('iq-mode',v);});
   const syncOddsUI=()=>{const t2o=$('#t2-odds'); if(t2o)t2o.className=TGRPS.odds?'on':'';};
   grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>{renderTeams();syncOddsUI();});
@@ -1291,12 +1326,15 @@ function wire(){
      common case); ctrl/cmd/shift-click adds or removes one. Never lets the
      selection go empty. */
   const posEls=['pl-pos','pl2-pos'].map(id=>$('#'+id)).filter(Boolean);
+  const isFlex=()=>PSEL.size===3&&['RB','WR','TE'].every(p=>PSEL.has(p));
   const drawPos=()=>posEls.forEach(el=>{
     el.innerHTML=['QB','RB','WR','TE'].map(p=>
-      `<button data-v="${p}" class="${PSEL.has(p)?'on':''}" title="Click to select only this position, ctrl or shift-click to add">${p}</button>`).join('');
+      `<button data-v="${p}" class="${PSEL.has(p)?'on':''}" title="Click to select only this position, ctrl or shift-click to add">${p}</button>`).join('')+
+      `<button data-v="FLEX" class="${isFlex()?'on':''}" title="RB, WR and TE together in one table -- skips position-only columns (aDOT, carry share, etc.) that wouldn't apply across all three">Flex</button>`;
     el.querySelectorAll('button').forEach(b=>b.onclick=e=>{
       const v=b.dataset.v, add=e&&(e.ctrlKey||e.metaKey||e.shiftKey);
-      if(add){ PSEL.has(v)?PSEL.delete(v):PSEL.add(v); if(!PSEL.size)PSEL.add(v); }
+      if(v==='FLEX'){ PSEL=new Set(['RB','WR','TE']); }
+      else if(add){ PSEL.has(v)?PSEL.delete(v):PSEL.add(v); if(!PSEL.size)PSEL.add(v); }
       else { PSEL=new Set([v]); }
       PPOS=[...PSEL][0];
       drawPos(); renderPlayerTabs();    });
@@ -1318,8 +1356,6 @@ function wire(){
   on('#iq-off','onchange',e=>{IQ.off=e.target.value;if(IQ.def===IQ.off)IQ.def=null;IQ.game=null;renderIQ();});
   on('#iq-def','onchange',e=>{IQ.def=e.target.value;IQ.game=null;renderIQ();});
   on('#iq-swap','onclick',()=>{[IQ.off,IQ.def]=[IQ.def,IQ.off];renderIQ();});
-  on('#season','onchange',e=>{SEASON=+e.target.value;renderAll();    const wk=MT.meta.current_week;
-    $('#stamp').textContent=(wk?`Week ${wk} · `:'')+'data '+(MT.meta.generated_at||'').slice(0,10)+seasonNote();});
 }
 function wireSegs(id,v){const e=$('#'+id);if(e)e.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
 function renderTeams(){renderTeam(false);renderTeam(true);}
@@ -1374,10 +1410,9 @@ function boot(data){
   // dead weight now, not something to leave sitting in the address bar.
   if(location.hash){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}}
   MT=data;
-  const seasons=[...new Set(Object.values(MT.teams).flatMap(t=>(t.profile||[]).map(p=>p.season)))].sort();
-  SEASON=defaultSeason(seasons);
-  if(!seasons.includes(SEASON))SEASON=defaultSeason(seasons);
-  $('#season').innerHTML=seasons.map(s=>`<option ${s===SEASON?'selected':''}>${s}</option>`).join('');
+  SEASONS_AVAIL=[...new Set(Object.values(MT.teams).flatMap(t=>(t.profile||[]).map(p=>p.season)))].sort();
+  SEASON=defaultSeason(SEASONS_AVAIL);
+  if(!SEASONS_AVAIL.includes(SEASON))SEASON=defaultSeason(SEASONS_AVAIL);
   {
     const dw=defaultWindow(); TWIN=dw; PWIN=dw; IQ.win=dw;
   }
