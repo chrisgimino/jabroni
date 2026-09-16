@@ -94,6 +94,8 @@ thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)
 .spot{font-weight:800;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:4px;letter-spacing:.4px}
 .spot.soft{background:#2c6a48;color:#dff3e6}
 .spot.tough{background:#7a3a31;color:#fbe6e2}
+.gcell{cursor:pointer;text-decoration:underline dotted var(--faint);text-underline-offset:3px}
+.gcell:hover{color:var(--gold)}
 
 .exp td{background:var(--panel2)!important;padding:10px 12px}
 .exp h4{font-size:12px;color:var(--dim);font-weight:600;margin:6px 0 4px}
@@ -713,7 +715,7 @@ function renderTeam(short=false){
     {k:'_spread',h:'Spread',grp:'odds',f:v=>spreadTxt(v),style:pctShade(rows,'_spread',false)},
     {k:'_total',h:'Total',grp:'odds',f:v=>f(v,1)},
     {k:'_implied',h:'Implied',grp:'odds',f:v=>f(v,1),style:pctShade(rows,'_implied',true)},
-    {k:'games',h:'G'},
+    {k:'games',h:'G',f:(v,r)=>r._gid?`<span class="gcell" title="Jump to this matchup">${v??'–'}</span>`:esc(v??'–')},
 
     // ---- SITUATIONAL: baseline identity, then how it moves with the script
     {grp:'situational',k:'plays_pg',h:'Plays/g',f:v=>f(v,1),style:S('plays_pg',true)},
@@ -779,7 +781,15 @@ function renderTeam(short=false){
   table($('#'+px+'-table'),cols,rows,{reset:true,
     groupKey:GAMEVIEW?'_gid':null,
     groupOrder:(a,b)=>(a._home?1:0)-(b._home?1:0),   // away on top, home beneath
-    rowClick:(r,tr)=>toggleSplits(r.team,tr,cols.length)});
+    rowClick:(r,tr,e)=>{
+      const td=e.target.closest('td');
+      const idx=td?[...tr.children].indexOf(td):-1;
+      if(idx===cols.findIndex(c=>c.k==='games')){
+        if(r._gid){IQ.game=r._gid;IQ.off=r.team;IQ.def=r._opp;renderIQ();setTab('iq');}
+        return;
+      }
+      toggleSplits(r.team,tr,cols.length);
+    }});
   const tc=$('#'+px+'-count');
   if(tc){
     const base=GAMEVIEW?`${rows.length/2} games`:`${rows.length} teams`;
