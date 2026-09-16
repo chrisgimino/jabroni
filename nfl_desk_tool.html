@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NFL Research Desk</title>
+<title>NFL Matchups Tool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -31,8 +31,6 @@ nav button{padding:7px 13px;border-radius:var(--r);color:var(--dim);font-weight:
 nav button:hover{color:var(--ink)}
 nav button.on{background:var(--panel2);color:var(--gold)}
 .hctl{display:flex;gap:8px;align-items:center;color:var(--dim);font-size:12.5px}
-#export{border:1px solid var(--line);border-radius:var(--r);padding:5px 10px;color:var(--dim);font-weight:600}
-#export:hover{color:var(--gold);border-color:var(--gold)}
 
 main{padding:14px 16px 8px;max-width:1560px;margin:0 auto}
 .pane{display:none}.pane.on{display:block}
@@ -50,28 +48,37 @@ main{padding:14px 16px 8px;max-width:1560px;margin:0 auto}
 
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 thead th{position:sticky;top:0;background:var(--panel);color:var(--dim);
-  font-weight:600;font-size:11.5px;text-align:center;padding:7px 8px;
+  font-weight:600;font-size:11.5px;text-align:center;padding:8px 10px;
   border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;z-index:3}
 /* only the name column stays left, so a list of names reads down the page */
 thead th.l{text-align:left}
 thead th[title]{cursor:help;text-decoration:underline dotted var(--faint);text-underline-offset:3px}
 thead th.sorted{color:var(--gold)}
-tbody td{padding:5px 8px;text-align:center;border-bottom:1px solid #232c38;white-space:nowrap}
+tbody td{padding:6px 10px;text-align:center;border-bottom:1px solid #232c38;white-space:nowrap}
 tbody td.l{text-align:left}
 tbody tr:hover td{filter:brightness(1.18)}
-tbody tr.gsep td{border-bottom:2px solid var(--line);padding-bottom:8px}
-tbody tr.gsep+tr td{padding-top:8px}
+/* Row-pair separators -- each game is two adjacent rows (home/away); a
+   thick colored band across the full table, top of the first row and
+   bottom of the last, makes one game visually distinct from the next
+   instead of the rows just running together. */
+tbody tr.gfirst td{border-top:4px solid var(--gold);padding-top:8px}
+tbody tr.gsep td{border-bottom:4px solid var(--gold);padding-bottom:8px}
 th.stick,td.stick{position:sticky;left:0;background:var(--panel);z-index:2}
 thead th.stick{z-index:4}
 /* Column-group separators -- a visibly thicker divider + breathing room
    between e.g. Situational / Red zone / Efficiency / Explosives, so a wide
    stat table reads as organized sections instead of one wall of numbers. */
-thead th.gb,tbody td.gb{border-left:2px solid var(--groupline);padding-left:14px}
+thead th.gb,tbody td.gb{border-left:3px solid var(--groupline);padding-left:14px}
 thead tr.grow th{position:sticky;top:0;background:var(--panel2);color:var(--faint);
   font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
   text-align:left;padding:5px 8px 3px;border-bottom:1px solid var(--line);z-index:3}
-thead tr.grow th.gb{border-left:2px solid var(--groupline);padding-left:14px}
+thead tr.grow th.gb{border-left:3px solid var(--groupline);padding-left:14px}
 thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)}
+/* Team usage / Team short: full per-column grid, every column boundary
+   gets a visible line (not just section boundaries) -- this table is wide
+   enough that adjacent numbers blur together without one. */
+#p-team td,#p-team th,#p-tshort td,#p-tshort th{border-right:2px solid var(--groupline)}
+#p-team td.stick,#p-team th.stick,#p-tshort td.stick,#p-tshort th.stick{border-left:2px solid var(--groupline)}
 .tblwrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;
   overflow:auto;max-height:74vh}
 .grp .tblwrap{max-height:none}
@@ -149,22 +156,21 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
 </head>
 <body>
 <header>
-  <div class="brand">NFL <em>Research Desk</em></div>
+  <div class="brand">NFL <em>Matchups Tool</em></div>
   <nav>
-    <button data-t="team" class="on">Team usage</button>
-    <button data-t="tshort">Team short</button>
+    <button data-t="team">Team usage</button>
+    <button data-t="tshort" class="on">Team short</button>
     <button data-t="player">Player usage</button>
     <button data-t="pshort">Player short</button>
-    <button data-t="iq">GridironIQ</button>
+    <button data-t="iq">Matchups</button>
   </nav>
   <div class="hctl">
     <span class="lbl">Season</span><select id="season"></select>
-    <button id="export" title="Download the table you are looking at as CSV">Export CSV</button>
     <span id="stamp"></span>
   </div>
 </header>
 <main>
-  <section class="pane on" id="p-team">
+  <section class="pane" id="p-team">
     <div id="slate"></div>
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t-win"></span>
@@ -177,7 +183,7 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <p class="note">Click a team for its leading / trailing / tied / final-2:00 splits. Game-by-game stacks each matchup's two teams together, away on top. Shading compares the teams currently shown; hover a dotted header for what the number means.</p>
   </section>
 
-  <section class="pane" id="p-tshort">
+  <section class="pane on" id="p-tshort">
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t2-win"></span>
       <input id="t2-q" placeholder="Find a team" size="12">
@@ -203,7 +209,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
       <span class="lbl">Columns</span><span class="chips" id="pl-grps"></span>
       <span class="count" id="pl-count"></span>
     </div>
-    <p class="note" id="pl-routenote"></p>
     <div class="tblwrap"><div id="pl-table"></div></div>
     <p class="note">Click a player to see the season → last-6 → last-4 → last-2 progression. Workhorse rates backfield usage (RB only), Dominator rates receiving usage (WR/TE only); both weight absolute volume, not just share. Luck is PPR FP/g minus opportunity-expected FP/g: OVER is regression risk, UNDER is a buy-low.</p>
   </section>
@@ -218,7 +223,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
       <span class="lbl"><input type="checkbox" id="pl2-slate" checked> playing this week</span>
       <span class="count" id="pl2-count"></span>
     </div>
-    <p class="note" id="pl2-routenote"></p>
     <div class="tblwrap"><div id="pl2-table"></div></div>
     <p class="note">Ten to twelve position-shaped numbers on top of projection, salary and ownership. Click a player for his window progression; the full tab has everything else.</p>
   </section>
@@ -246,8 +250,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
   <span><span class="rk" style="background:#7a3a31;color:#fff">#1</span> Opp defense rank: facing the best is bad</span>
   <span><span class="spot soft">SOFT</span> bottom-6 allowed &nbsp;<span class="spot tough">TOUGH</span> top-6 allowed</span>
   <span><b>*</b> window reaches into the prior season (hover the Window label)</span>
-  <span>TPRR and YPRR use only games with participation data — blank until it posts</span>
-  <span>Views are bookmarkable — the address bar follows your filters.</span>
 </footer>
 
 <script>
@@ -423,10 +425,10 @@ const TIP={
   deep_targets:'Targets 20+ yards downfield',catch_rate:'Receptions per target',ypt:'Yards per target',
   yac_per_rec:'Yards after catch per reception',rec_epa_per_tgt:'Receiving EPA per target',
   snap_pct:'Share of offensive snaps played',
-  route_games:'Games in this window that have participation data behind them — per-route rates use only these',
+  route_games:'Games in this window with route coverage — per-route rates use only these',
   window_from:'First game included in this window',
   cross_season:'1 when the window reaches into the prior season',
-  routes_pg:'Routes run per game — dropbacks with the player on the field, from nflverse participation data (counts a back kept in to block as a route, so it runs slightly high for RB/TE versus charted routes)',
+  routes_pg:'Routes run per game — dropbacks with the player on the field (counts a back kept in to block as a route, so it runs slightly high for RB/TE versus charted routes)',
   route_rate:'Routes run as a share of team dropbacks — how often he is actually out in the pattern',
   tprr:'Targets per route run. League WR average about 20%; 30%+ is elite',
   yprr:'Receiving yards per route run. 2.0+ is strong, 3.0+ is elite',
@@ -472,7 +474,7 @@ function table(el,cols,rows,opts={}){
     sorted=order.flatMap(g=>{
       const rs=bucket.get(g);
       if(opts.groupOrder)rs.sort(opts.groupOrder);
-      return rs.map((r,i)=>({...r,_glast:i===rs.length-1}));
+      return rs.map((r,i)=>({...r,_gfirst:i===0,_glast:i===rs.length-1}));
     });
   }
   el._rows=sorted; el._cols=cols;
@@ -496,7 +498,7 @@ function table(el,cols,rows,opts={}){
   const h='<table><thead>'+groupRow+'<tr>'+cols.map((c,i)=>
     `<th class="${c.l?'l ':''}${i===0?'stick ':''}${c.k===st.k?'sorted':''}${gb[i]?' gb':''}" data-k="${c.k}"${tip(c.k)}>${c.h}${c.k===st.k?(st.dir<0?' ▾':' ▴'):''}</th>`
   ).join('')+'</tr></thead><tbody>'+sorted.map((r,i)=>
-    `<tr data-i="${i}"${r._glast?' class="gsep"':''}>`+cols.map((c,j)=>{
+    `<tr data-i="${i}"${(r._gfirst||r._glast)?` class="${[r._gfirst?'gfirst':'',r._glast?'gsep':''].filter(Boolean).join(' ')}"`:''}>`+cols.map((c,j)=>{
       const v=r[c.k];
       return `<td class="${c.l?'l ':''}${j===0?'stick':''}${gb[j]?' gb':''}" style="${c.style?c.style(v,r):''}">${c.f?c.f(v,r):esc(v??'–')}</td>`;
     }).join('')+'</tr>'
@@ -528,14 +530,14 @@ function download(name,text){
 
 /* ============================== state ============================== */
 let MT=null;
-var SEASON=null, TWIN='season', PWIN='season', PPOS='RB', TAB='team';
+var SEASON=null, TWIN='season', PWIN='season', PPOS='RB', TAB='tshort';
 /* Positions are multi-select. PPOS stays the single "primary" position that
    decides the column set when exactly one is chosen; PSEL holds the selection. */
 var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
-var TGRPS={situational:1,redzone:0,efficiency:1,explosive:0};
-var PGRPS={usage:1,redzone:1,explosive:0,efficiency:1,ratings:1};
+var TGRPS={situational:1,redzone:0,efficiency:0,explosive:0};
+var PGRPS={usage:1,redzone:0,explosive:0,efficiency:0,ratings:1};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
 const WINDOWS=['season','last6','last4','last2'];
@@ -549,30 +551,6 @@ function winLabel(w){
   const g=Math.max(...rows.map(r=>r.games||0));
   const cross=rows.some(r=>r.cross_season);
   return `${WINLBL[w]} (${g}g${cross?', incl. '+(SEASON-1):''})`;
-}
-
-function hashWrite(){
-  const p=new URLSearchParams({t:TAB,s:SEASON,tw:TWIN,pw:PWIN,pp:[...PSEL].join('-'),gv:GAMEVIEW?1:0,
-    io:IQ.off||'',id:IQ.def||'',m:IQ.mode,iw:IQ.win});
-  try{location.hash=p.toString();}catch(e){}
-}
-function hashRead(){
-  try{
-    const p=new URLSearchParams((location.hash||'').replace(/^#/,''));
-    if(p.get('t'))TAB=p.get('t');
-    if(p.get('s'))SEASON=+p.get('s');
-    if(p.get('tw'))TWIN=p.get('tw');
-    if(p.get('gv'))GAMEVIEW=p.get('gv')==='1';
-    if(p.get('pw'))PWIN=p.get('pw');
-    if(p.get('pp')){
-      const sel=p.get('pp').split('-').filter(x=>['QB','RB','WR','TE'].includes(x));
-      if(sel.length){PSEL=new Set(sel);PPOS=sel[0];}
-    }
-    if(p.get('io'))IQ.off=p.get('io');
-    if(p.get('id'))IQ.def=p.get('id');
-    if(p.get('m'))IQ.mode=p.get('m');
-    if(p.get('iw'))IQ.win=p.get('iw');
-  }catch(e){}
 }
 
 const tprof=(w)=>{const m={};for(const t in MT.teams)
@@ -837,27 +815,29 @@ const PL_GRPDEF=[['usage','Usage'],['redzone','Red zone'],['explosive','Explosiv
                  ['efficiency','Efficiency'],['ratings','Ratings & luck']];
 const PL_COLS={
   QB:[['pass_att_pg','Att/g',1,'usage'],['pass_yds_pg','Pass Y/g',1,'usage'],
+      ['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
       ['pass_ypa','Y/A',2,'efficiency'],
       ['pass_adot','aDOT',1,'efficiency'],['cpoe','CPOE',1,'efficiency'],
       ['pass_epa_per_att','EPA/att',3,'efficiency'],['sack_rate','Sack%','p','efficiency'],
-      ['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
       ['ypc','Y/C',2,'efficiency']],
   RB:[['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
       ['carry_share','Carry sh','p','usage'],
-      ['ypc','Y/C',2,'efficiency'],['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
       ['targets_pg','Tgt/g',1,'usage'],['target_share','Tgt sh','p','usage'],
-      ['route_rate','Route%','p','usage'],['tprr','TPRR','p','usage'],['yprr','YPRR',2,'efficiency'],
-      ['catch_rate','Catch%','p','efficiency'],['ypt','Y/Tgt',2,'efficiency'],
-      ['snap_pct','Snap%','p','usage']],
+      ['route_rate','Route%','p','usage'],['tprr','TPRR','p','usage'],
+      ['snap_pct','Snap%','p','usage'],
+      ['ypc','Y/C',2,'efficiency'],['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
+      ['yprr','YPRR',2,'efficiency'],
+      ['catch_rate','Catch%','p','efficiency'],['ypt','Y/Tgt',2,'efficiency']],
   WR:[['targets_pg','Tgt/g',1,'usage'],['rec_yds_pg','Rec Y/g',1,'usage'],
       ['target_share','Tgt sh','p','usage'],
       ['routes_pg','Routes/g',1,'usage'],['route_games','Route gms',0,'usage'],['route_rate','Route%','p','usage'],
-      ['tprr','TPRR','p','usage'],['yprr','YPRR',2,'efficiency'],
+      ['tprr','TPRR','p','usage'],
       ['air_yards_share','AY sh','p','usage'],['wopr','WOPR',2,'usage'],
       ['adot','aDOT',1,'usage'],
-      ['deep_targets','Deep tgt',0,'usage'],['catch_rate','Catch%','p','efficiency'],
+      ['deep_targets','Deep tgt',0,'usage'],['snap_pct','Snap%','p','usage'],
+      ['yprr','YPRR',2,'efficiency'],['catch_rate','Catch%','p','efficiency'],
       ['ypt','Y/Tgt',2,'efficiency'],['yac_per_rec','YAC/rec',1,'efficiency'],
-      ['rec_epa_per_tgt','EPA/tgt',3,'efficiency'],['snap_pct','Snap%','p','usage']],
+      ['rec_epa_per_tgt','EPA/tgt',3,'efficiency']],
 };
 PL_COLS.TE=PL_COLS.WR;
 /* Each rating belongs to one position family: Workhorse is RB/FB, Dominator is
@@ -993,11 +973,6 @@ function renderPlayers(short=false){
   if(!routeCov)cols=cols.filter(c=>!ROUTE_KEYS.includes(c.k));
   table($('#'+px+'-table'),cols,rows,{reset:true,rowClick:(r,tr)=>togglePlayer(r,tr,cols.length)});
   const pc=$('#'+px+'-count'); if(pc)pc.textContent=rows.length+' players';
-  const nt=$('#'+px+'-routenote');
-  if(nt)nt.innerHTML=routeCov?'':
-    `<span style="color:var(--gold)">Routes, TPRR and YPRR are unavailable for ${SEASON} — `+
-    `nflverse publishes participation data later than the box scores. `+
-    `Switch to a Last N window to see them through ${SEASON-1}.</span>`;
 }
 function togglePlayer(row,tr,span){
   const next=tr.nextElementSibling;
@@ -1041,7 +1016,6 @@ function renderIQ(){
   if(!IQ.def||!tp[IQ.def]||IQ.def===IQ.off)IQ.def=teams.find(t=>t!==IQ.off);
   fillSel($('#iq-off'),teams,IQ.off); fillSel($('#iq-def'),teams,IQ.def);
   renderIQGames(); renderIQStrip(tp); renderIQGroups(tp); renderIQUnits(tp);
-  hashWrite();
 }
 function fillSel(el,teams,val){
   if(el)el.innerHTML=teams.map(t=>`<option ${t===val?'selected':''}>${t}</option>`).join('');
@@ -1264,12 +1238,11 @@ function setTab(t){
   TAB=t;
   $$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
   $$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
-  hashWrite();
 }
 function wire(){
   $$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
-  const setTWIN=v=>{TWIN=v;renderTeams();wireSegs('t-win',v);wireSegs('t2-win',v);hashWrite();};
-  const setPWIN=v=>{PWIN=v;renderPlayerTabs();wireSegs('pl-win',v);wireSegs('pl2-win',v);hashWrite();};
+  const setTWIN=v=>{TWIN=v;renderTeams();wireSegs('t-win',v);wireSegs('t2-win',v);};
+  const setPWIN=v=>{PWIN=v;renderPlayerTabs();wireSegs('pl-win',v);wireSegs('pl2-win',v);};
   const winOpts=()=>WINDOWS.map(w=>[w,winLabel(w)]);
   segs($('#t-win'),winOpts(),TWIN,setTWIN);
   segs($('#t2-win'),winOpts(),TWIN,setTWIN);
@@ -1283,7 +1256,7 @@ function wire(){
     gv.className=GAMEVIEW?'on':'';
     gv.onclick=()=>{GAMEVIEW=!GAMEVIEW;
       for(const j of ['t-gameview','t2-gameview']){const e=$('#'+j);if(e)e.className=GAMEVIEW?'on':'';}
-      renderTeams();hashWrite();};
+      renderTeams();};
   }
   grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false));
   /* Multi-select positions. A plain click selects just that position (the
@@ -1298,8 +1271,7 @@ function wire(){
       if(add){ PSEL.has(v)?PSEL.delete(v):PSEL.add(v); if(!PSEL.size)PSEL.add(v); }
       else { PSEL=new Set([v]); }
       PPOS=[...PSEL][0];
-      drawPos(); renderPlayerTabs(); hashWrite();
-    });
+      drawPos(); renderPlayerTabs();    });
   });
   drawPos();
   const on=(sel,ev,fn)=>{const e=$(sel);if(e)e[ev]=fn;};
@@ -1318,20 +1290,8 @@ function wire(){
   on('#iq-off','onchange',e=>{IQ.off=e.target.value;if(IQ.def===IQ.off)IQ.def=null;IQ.game=null;renderIQ();});
   on('#iq-def','onchange',e=>{IQ.def=e.target.value;IQ.game=null;renderIQ();});
   on('#iq-swap','onclick',()=>{[IQ.off,IQ.def]=[IQ.def,IQ.off];renderIQ();});
-  on('#season','onchange',e=>{SEASON=+e.target.value;renderAll();hashWrite();
-    const wk=MT.meta.current_week;
+  on('#season','onchange',e=>{SEASON=+e.target.value;renderAll();    const wk=MT.meta.current_week;
     $('#stamp').textContent=(wk?`Week ${wk} · `:'')+'data '+(MT.meta.generated_at||'').slice(0,10)+seasonNote();});
-  on('#export','onclick',()=>{
-    if(TAB==='iq'){
-      const parts=['QB','RB','WR','TE'].map(p=>{const e=$('#iq-g-'+p);
-        return e&&e._cols?p+'\n'+toCSV(e._cols,e._rows):'';}).filter(Boolean);
-      if(parts.length)download(`nfl_research_desk_iq_${IQ.off}_vs_${IQ.def}_${SEASON}.csv`,parts.join('\n\n'));
-      return;
-    }
-    const tgt={team:'#t-table',tshort:'#t2-table',player:'#pl-table',pshort:'#pl2-table'}[TAB];
-    const el=tgt?$(tgt):null;
-    if(el&&el._cols)download(`nfl_research_desk_${TAB}_${SEASON}.csv`,toCSV(el._cols,el._rows));
-  });
 }
 function wireSegs(id,v){const e=$('#'+id);if(e)e.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
 function renderTeams(){renderTeam(false);renderTeam(true);}
@@ -1384,10 +1344,9 @@ function boot(data){
   MT=data;
   const seasons=[...new Set(Object.values(MT.teams).flatMap(t=>(t.profile||[]).map(p=>p.season)))].sort();
   SEASON=defaultSeason(seasons);
-  hashRead();
   if(!seasons.includes(SEASON))SEASON=defaultSeason(seasons);
   $('#season').innerHTML=seasons.map(s=>`<option ${s===SEASON?'selected':''}>${s}</option>`).join('');
-  if(!(location.hash||'').includes('tw=')){
+  {
     const dw=defaultWindow(); TWIN=dw; PWIN=dw; IQ.win=dw;
   }
   const teams=Object.keys(MT.teams).sort();
