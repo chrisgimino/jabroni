@@ -10,7 +10,7 @@
 :root{
   --field:#141920; --panel:#1b222c; --panel2:#212a36; --line:#2b3542;
   --ink:#e7ebf1; --dim:#93a0b1; --faint:#5c6979;
-  --turf:#3fae6a; --clay:#d05b4b; --gold:#e3b34e;
+  --turf:#3fae6a; --clay:#d05b4b; --gold:#e3b34e; --groupline:#4a5a70;
   --r:6px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -63,6 +63,15 @@ tbody tr.gsep td{border-bottom:2px solid var(--line);padding-bottom:8px}
 tbody tr.gsep+tr td{padding-top:8px}
 th.stick,td.stick{position:sticky;left:0;background:var(--panel);z-index:2}
 thead th.stick{z-index:4}
+/* Column-group separators -- a visibly thicker divider + breathing room
+   between e.g. Situational / Red zone / Efficiency / Explosives, so a wide
+   stat table reads as organized sections instead of one wall of numbers. */
+thead th.gb,tbody td.gb{border-left:2px solid var(--groupline);padding-left:14px}
+thead tr.grow th{position:sticky;top:0;background:var(--panel2);color:var(--faint);
+  font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  text-align:left;padding:5px 8px 3px;border-bottom:1px solid var(--line);z-index:3}
+thead tr.grow th.gb{border-left:2px solid var(--groupline);padding-left:14px}
+thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)}
 .tblwrap{background:var(--panel);border:1px solid var(--line);border-radius:8px;
   overflow:auto;max-height:74vh}
 .grp .tblwrap{max-height:none}
@@ -435,6 +444,9 @@ const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
 
 /* -------- shared sortable table engine: cols {k,h,l,num,f,style,grp} ------ */
 const TSTATE=new WeakMap();
+const GRPLABEL_MAP={situational:'Situational',redzone:'Red zone',efficiency:'Efficiency',
+  explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck'};
+function GRPLABEL(g){return GRPLABEL_MAP[g]||g;}
 function table(el,cols,rows,opts={}){
   if(!el)return;
   let st=TSTATE.get(el);
@@ -464,12 +476,29 @@ function table(el,cols,rows,opts={}){
     });
   }
   el._rows=sorted; el._cols=cols;
-  const h='<table><thead><tr>'+cols.map((c,i)=>
-    `<th class="${c.l?'l ':''}${i===0?'stick ':''}${c.k===st.k?'sorted':''}" data-k="${c.k}"${tip(c.k)}>${c.h}${c.k===st.k?(st.dir<0?' ▾':' ▴'):''}</th>`
+  // Group-boundary detection: mark the first column of each contiguous run
+  // that shares a .grp (situational/redzone/efficiency/explosive/etc) so it
+  // gets a thick divider + extra padding, and build a merged label row
+  // spanning each run when at least one column actually has a group.
+  const gb=cols.map((c,i)=>!!c.grp&&(i===0||cols[i-1].grp!==c.grp));
+  const hasGroups=cols.some(c=>c.grp);
+  let groupRow='';
+  if(hasGroups){
+    const runs=[];
+    cols.forEach((c,i)=>{
+      if(gb[i]||i===0)runs.push({grp:c.grp,label:c.grp?GRPLABEL(c.grp):'',span:0});
+      runs[runs.length-1].span++;
+    });
+    groupRow='<tr class="grow">'+runs.map((r,i)=>
+      `<th class="${i===0?'stick ':''}${r.label?'gb':''}" colspan="${r.span}">${esc(r.label)}</th>`
+    ).join('')+'</tr>';
+  }
+  const h='<table><thead>'+groupRow+'<tr>'+cols.map((c,i)=>
+    `<th class="${c.l?'l ':''}${i===0?'stick ':''}${c.k===st.k?'sorted':''}${gb[i]?' gb':''}" data-k="${c.k}"${tip(c.k)}>${c.h}${c.k===st.k?(st.dir<0?' ▾':' ▴'):''}</th>`
   ).join('')+'</tr></thead><tbody>'+sorted.map((r,i)=>
     `<tr data-i="${i}"${r._glast?' class="gsep"':''}>`+cols.map((c,j)=>{
       const v=r[c.k];
-      return `<td class="${c.l?'l ':''}${j===0?'stick':''}" style="${c.style?c.style(v,r):''}">${c.f?c.f(v,r):esc(v??'–')}</td>`;
+      return `<td class="${c.l?'l ':''}${j===0?'stick':''}${gb[j]?' gb':''}" style="${c.style?c.style(v,r):''}">${c.f?c.f(v,r):esc(v??'–')}</td>`;
     }).join('')+'</tr>'
   ).join('')+'</tbody></table>';
   el.innerHTML=h;
