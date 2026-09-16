@@ -172,8 +172,8 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
   </div>
 </header>
 <main>
+  <div id="slate"></div>
   <section class="pane" id="p-team">
-    <div id="slate"></div>
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t-win"></span>
       <span class="lbl">Columns</span><span class="chips" id="t-grps"></span>
@@ -606,7 +606,7 @@ function kickShort(g){
   return `${date} ${h}:${m[2]}${ap}`;
 }
 const kickKey=g=>`${g.date||''} ${String(g.time||'').padStart(5,'0')}`;
-var SLATE_OPEN=true;
+var SLATE_OPEN=false;
 /* one compact game card, used by both the Team usage slate and the
    GridironIQ selector. `sel` makes them clickable buttons. */
 function gameCard(g,sel){
@@ -628,11 +628,20 @@ function renderSlate(){
   const gs=MT.games||[];
   if(!gs.length){el.innerHTML='';return;}
   const wk=MT.meta.current_week,se=MT.meta.current_season;
+  const forcedOpen=TAB==='iq';   // Matchups always shows the strip -- it's the game picker
+  const open=forcedOpen||SLATE_OPEN;
   el.innerHTML=`<div class="slatehead"><h2>Week ${wk} · ${se}</h2>
-    <span>${gs.length} games — spreads, totals, implied points per side</span>
-    <button id="slate-toggle">${SLATE_OPEN?'Hide':'Show'}</button></div>`+
-    (SLATE_OPEN?`<div class="cards" id="slate-cards">${gs.map(g=>gameCard(g,false)).join('')}</div>`:'');
+    <span>${gs.length} games — spreads, totals, implied points per side. Click a game to open it in Matchups.</span>`+
+    (forcedOpen?'':`<button id="slate-toggle">${SLATE_OPEN?'Hide games':'Show games'}</button>`)+
+    `</div>`+
+    (open?`<div class="cards" id="slate-cards">${gs.map(g=>gameCard(g,true)).join('')}</div>`:'');
   const tg=$('#slate-toggle'); if(tg)tg.onclick=()=>{SLATE_OPEN=!SLATE_OPEN;renderSlate();};
+  el.querySelectorAll('#slate-cards button.gm').forEach(b=>b.onclick=()=>{
+    const g=gs.find(x=>String(gameKey(x))===b.dataset.sid); if(!g)return;
+    const[a,h]=gameTeams(g);
+    IQ.game=gameKey(g); IQ.off=a; IQ.def=h;
+    renderIQ(); setTab('iq');
+  });
 }
 
 /* ============================== team usage ============================== */
@@ -1250,6 +1259,7 @@ function setTab(t){
   TAB=t;
   $$('nav button').forEach(x=>x.classList.toggle('on',x.dataset.t===t));
   $$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+t));
+  renderSlate();   // Matchups forces the game strip open; every other tab respects the toggle
 }
 function wire(){
   $$('nav button').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
