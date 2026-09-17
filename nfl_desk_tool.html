@@ -64,6 +64,12 @@ table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}
 thead th{position:sticky;top:0;background:var(--panel);color:var(--dim);
   font-weight:600;font-size:11.5px;text-align:center;padding:8px 10px;
   border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap;z-index:3}
+/* When a table has a group-label row above the real column headers (Team
+   usage, Player usage), both were sticking to the same top:0 and the group
+   row visually covered the real headers on scroll instead of stacking above
+   them. The real header row needs to sit just below the group row's own
+   height, not at the same position. */
+thead tr.grow + tr th{top:24px}
 /* only the name column stays left, so a list of names reads down the page */
 thead th.l{text-align:left}
 thead th[title]{cursor:help;text-decoration:underline dotted var(--faint);text-underline-offset:3px}
@@ -682,22 +688,25 @@ function qbSample(){
   const byPlayer={};
   rows.forEach(p=>{
     const w=p.pass_att_pg*p.games;
-    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0,games:0,xfpSum:0});
+    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0,games:0,fpSum:0});
     e.atts+=w; e.epaSum+=(p.pass_epa_per_att||0)*w; e.cpoeSum+=(p.cpoe||0)*w;
-    e.games+=p.games; e.xfpSum+=(p.xfp_pg||0)*p.games;   // xfp_pg is already per-game, so weight by games not attempts
+    e.games+=p.games; e.fpSum+=(p.fp_ppr_pg||0)*p.games;   // actual production, not modeled -- and per-game already, so weight by games not attempts
     if(p.season===2026)e.team=p.team_current;   // attribute to this year's team (trades, etc.)
   });
-  return Object.values(byPlayer).filter(x=>x.atts>=60).map(x=>
+  // 150 weighted attempts excludes backups/spot duty (a fragmented ~60-attempt
+  // sample -- e.g. a few relief series in 2025 plus one spot start in 2026 --
+  // was still clearing the old, lower floor and outranking real starters).
+  return Object.values(byPlayer).filter(x=>x.atts>=150).map(x=>
     ({player:x.player,team:x.team,pass_epa_per_att:x.epaSum/x.atts,cpoe:x.cpoeSum/x.atts,
-      xfp_pg:x.games?x.xfpSum/x.games:null,atts:x.atts}));
+      fp_pg:x.games?x.fpSum/x.games:null,atts:x.atts}));
 }
 // Three components, each min-max scaled within the qualifying pool before
-// combining -- raw EPA/CPOE/xFP live on completely different scales (~0.3,
+// combining -- raw EPA/CPOE/FP live on completely different scales (~0.3,
 // ~10, ~20), so blending raw units the old way let CPOE dominate by
-// accident. xFP is production/opportunity, not just rate efficiency: a
-// backup with a hot but tiny sample (Malik Willis, Tyler Huntley outranking
-// Josh Allen on EPA/CPOE alone) has low volume and so a low xFP/game,
-// which pulls them back down here.
+// accident. Actual FP/game (not xFP) is the volume+production signal here:
+// it's what really happened, not a model's opportunity-based estimate --
+// and it's what correctly credits Josh Allen's rushing floor, which xFP
+// was underrating.
 function qbGrade(team){
   const pool=qbSample();
   if(!pool.length)return null;
@@ -708,8 +717,8 @@ function qbGrade(team){
     const min=Math.min(...vals), max=Math.max(...vals);
     return v=>v==null||max===min?0.5:(v-min)/(max-min);
   };
-  const epaN=mm('pass_epa_per_att'), cpoeN=mm('cpoe'), xfpN=mm('xfp_pg');
-  const score=p=>0.42*epaN(p.pass_epa_per_att)+0.08*cpoeN(p.cpoe)+0.5*xfpN(p.xfp_pg);
+  const epaN=mm('pass_epa_per_att'), cpoeN=mm('cpoe'), fpN=mm('fp_pg');
+  const score=p=>0.42*epaN(p.pass_epa_per_att)+0.08*cpoeN(p.cpoe)+0.5*fpN(p.fp_pg);
   const s=score(me), all=pool.map(score).sort((a,b)=>a-b);
   return {grade:Math.round(100*all.filter(x=>x<=s).length/all.length),
           player:me.player,epa:me.pass_epa_per_att,cpoe:me.cpoe};
