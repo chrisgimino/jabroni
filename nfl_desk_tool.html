@@ -678,9 +678,11 @@ const profs=(w)=>MT.player_profiles.filter(p=>p.season===SEASON&&p.window===w);
    itself so it's auditable, not a mystery number. Inputs: combined pace,
    combined offensive efficiency, combined defensive efficiency (inverted --
    a bad defense is shootout-friendly), the game's own total ranked against
-   this week's other games, passing efficiency both directions, a run-funnel
+   this week's other games, passing efficiency both directions, a pass-funnel
    read (bad rush offense + the opponent's strong run defense pushes a team
-   to pass more), and both starters' QB grade. */
+   to pass more -- that's the actual definition of a pass funnel; a "run
+   funnel" is the opposite, a defense tough against the pass that pushes
+   teams to run), and both starters' QB grade. */
 /* QB grade always blends full 2025 season + 2026 season-to-date, weighted
    by actual attempt volume -- NOT whatever window the rest of the panel
    has selected. A single early-season game (e.g. Jared Goff's Week 1: 0.15
@@ -1402,7 +1404,7 @@ function renderIQStrip(tp){
   const shootRows=[
     ['Game total',shoot.parts.total],['Pace',shoot.parts.pace],
     ['Off efficiency',shoot.parts.offEff],['Def efficiency',shoot.parts.defEff],
-    ['Passing',shoot.parts.passEff],['Run funnel',shoot.parts.funnel],
+    ['Passing',shoot.parts.passEff],['Pass Funnel',shoot.parts.funnel],
     ['QB grade',shoot.parts.qb],
   ].map(([label,v])=>
     `<div class="iqrow"><span class="iqlbl">${label}</span>
