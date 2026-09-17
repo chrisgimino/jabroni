@@ -973,9 +973,22 @@ function renderTeam(short=false){
               _pace:leagueRank(all,'_pace',false),        // #1 = fastest
               _pr:leagueRank(all,'_pr',true),             // #1 = most pass-heavy
               _proe:leagueRank(all,'_proe',true),
-              _prD:leagueRank(all,'_prD',true)};          // #1 = throws most more when leading
+              _prD:leagueRank(all,'_prD',true),           // #1 = throws most more when leading
+              _prL:leagueRank(all,'_prL',true),
+              _proeL:leagueRank(all,'_proeL',true),
+              _prT:leagueRank(all,'_prT',true),
+              _proeT:leagueRank(all,'_proeT',true),
+              rz_trips_pg:leagueRank(all,'rz_trips_pg',true),
+              rz_pass_rate:leagueRank(all,'rz_pass_rate',true),
+              explosive_pass_rate:leagueRank(all,'explosive_pass_rate',true),
+              explosive_rush_rate:leagueRank(all,'explosive_rush_rate',true)};
     rows=rows.map(r=>({...r,
       _plays_rk:rk.plays_pg(r.plays_pg),_pace_rk:rk._pace(r._pace),
+      _prL_rk:rk._prL(r._prL),_proeL_rk:rk._proeL(r._proeL),
+      _prT_rk:rk._prT(r._prT),_proeT_rk:rk._proeT(r._proeT),
+      rz_trips_pg_rk:rk.rz_trips_pg(r.rz_trips_pg),rz_pass_rate_rk:rk.rz_pass_rate(r.rz_pass_rate),
+      explosive_pass_rate_rk:rk.explosive_pass_rate(r.explosive_pass_rate),
+      explosive_rush_rate_rk:rk.explosive_rush_rate(r.explosive_rush_rate),
       _pr_rk:rk._pr(r._pr),_proe_rk:rk._proe(r._proe),_prD_rk:rk._prD(r._prD)}));
   }
   // game view only makes sense for teams actually playing this week
@@ -1043,10 +1056,18 @@ function renderTeam(short=false){
       ...cols.filter(c=>T_IDENTITY.includes(c.k)||(['_spread','_total','_implied','_shootout'].includes(c.k)&&TGRPS.odds)),
       {grp:'pace',k:'_plays_rk',h:'Plays/g',f:(v,r)=>rkCell(v,r.plays_pg,x=>f(x,1)),style:rkShade},
       {grp:'pace',k:'_pace_rk',h:'Pace',f:(v,r)=>rkCell(v,r._pace,x=>f(x,1)+' s'),style:rkShade},
+      {grp:'passlead',k:'_prL_rk',h:'Pass% (up 7+)',f:(v,r)=>rkCell(v,r._prL,pct0),style:rkShade},
+      {grp:'passlead',k:'_proeL_rk',h:'PROE (up 7+)',f:(v,r)=>rkCell(v,r._proeL,p100),style:rkShade},
+      {grp:'passtrail',k:'_prT_rk',h:'Pass% (down 7+)',f:(v,r)=>rkCell(v,r._prT,pct0),style:rkShade},
+      {grp:'passtrail',k:'_proeT_rk',h:'PROE (down 7+)',f:(v,r)=>rkCell(v,r._proeT,p100),style:rkShade},
       {grp:'passneutral',k:'_pr_rk',h:'Pass%',f:(v,r)=>rkCell(v,r._pr,pct0),style:rkShade},
       {grp:'passneutral',k:'_proe_rk',h:'PROE',f:(v,r)=>rkCell(v,r._proe,p100),style:rkShade},
       {grp:'passneutral',k:'_prD_rk',h:'Pass% Δ',f:(v,r)=>rkCell(v,r._prD,p100),style:rkShade},
       {grp:'passneutral',k:'rz_td_rate_rk',h:'RZ TD%',f:(v,r)=>rkCell(v,r.rz_td_rate,pct0),style:rkShade},
+      {grp:'redzone',k:'rz_trips_pg_rk',h:'RZ trips/g',f:(v,r)=>rkCell(v,r.rz_trips_pg,x=>f(x,2)),style:rkShade},
+      {grp:'redzone',k:'rz_pass_rate_rk',h:'RZ pass%',f:(v,r)=>rkCell(v,r.rz_pass_rate,pct0),style:rkShade},
+      {grp:'explosive',k:'explosive_pass_rate_rk',h:'ExplosivePass%',f:(v,r)=>rkCell(v,r.explosive_pass_rate,pct1),style:rkShade},
+      {grp:'explosive',k:'explosive_rush_rate_rk',h:'ExplosiveRun%',f:(v,r)=>rkCell(v,r.explosive_rush_rate,pct1),style:rkShade},
       {grp:'offeff',k:'off_epa_pp_rk',h:'Off EPA',f:(v,r)=>rkCell(v,r.off_epa_pp,x=>sgn(x,3)),style:rkShade},
       {grp:'offeff',k:'off_pass_epa_pp_rk',h:'Pass EPA',f:(v,r)=>rkCell(v,r.off_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
       {grp:'offeff',k:'off_rush_epa_pp_rk',h:'Rush EPA',f:(v,r)=>rkCell(v,r.off_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
