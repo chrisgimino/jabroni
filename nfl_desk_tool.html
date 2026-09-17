@@ -256,8 +256,8 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t2-win"></span>
       <input id="t2-q" placeholder="Find a team" size="12">
-      <span class="chips"><button id="t2-gameview" title="Stack each game's two teams together">Game-by-game</button>
-      <button id="t2-odds" title="Show or hide spread/total/implied">Odds</button></span>
+      <span class="lbl">Columns</span><span class="chips" id="t2-grps"></span>
+      <span class="chips"><button id="t2-gameview" title="Stack each game's two teams together">Game-by-game</button></span>
       <span class="count" id="t2-count"></span>
     </div>
     <div class="tblwrap"><div id="t2-table"></div></div>
@@ -428,6 +428,7 @@ const TIP={
   _spread:'This team\u2019s consensus spread this week; negative means favored',
   _total:'Consensus game total this week',
   _implied:'This team\u2019s implied points this week, from the spread and total',
+  _shootout:'Shootout Potential for this team\u2019s game this week, 0-100 -- see the Matchups tab for the full breakdown',
   _kick:'Kickoff in Eastern time, month/day — sorts chronologically',
   _pace:'Seconds per snap on the same drive — lower is faster',
   _plays_rk:'League rank in offensive plays per game — #1 runs the most plays. Hover for the number',
@@ -517,7 +518,8 @@ const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
 
 /* -------- shared sortable table engine: cols {k,h,l,num,f,style,grp} ------ */
 const TSTATE=new WeakMap();
-const GRPLABEL_MAP={pace:'Pace',passtend:'Pass Tendencies',redzone:'Red zone',efficiency:'Efficiency',
+const GRPLABEL_MAP={pace:'Pace',passlead:'Pass — Lead',passtrail:'Pass — Trail',passneutral:'Pass — Neutral',
+  redzone:'Red zone',offeff:'Off Efficiency',defeff:'Def Efficiency',
   explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck',odds:'Odds'};
 function GRPLABEL(g){return GRPLABEL_MAP[g]||g;}
 function table(el,cols,rows,opts={}){
@@ -607,7 +609,7 @@ var SEASON=null, SEASONS_AVAIL=[], TWIN='season', PWIN='season', PPOS='RB', TAB=
 var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
-var TGRPS={pace:1,passtend:0,redzone:0,efficiency:0,explosive:0,odds:1};
+var TGRPS={pace:1,passlead:0,passtrail:0,passneutral:0,redzone:0,offeff:0,defeff:0,explosive:0,odds:0};
 var PGRPS={usage:1,redzone:0,explosive:0,efficiency:0,ratings:1};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
@@ -723,8 +725,7 @@ function qbSample(){
 // current-week projection (bye, hasn't been added to the slate yet) just
 // falls back to a neutral 0.5 on this one component rather than losing a
 // grade entirely.
-function qbGrade(team){
-  const pool=qbSample();
+function qbGradeFromPool(pool,team){
   if(!pool.length)return null;
   const me=pool.filter(p=>p.team===team).sort((a,b)=>b.atts-a.atts)[0];
   if(!me)return null;
@@ -739,6 +740,10 @@ function qbGrade(team){
   return {grade:Math.round(100*all.filter(x=>x<=s).length/all.length),
           player:me.player,epa:me.pass_epa_per_att,cpoe:me.cpoe};
 }
+// One-off convenience wrapper -- see shootoutScore's comment for why the
+// Team tables call qbGradeFromPool directly with a pool computed once
+// instead of this.
+function qbGrade(team){ return qbGradeFromPool(qbSample(),team); }
 const rShoot=(rank,n=32)=>rank==null?0.5:1-(rank-1)/(n-1);   // rank1 -> 1 (best), rankN -> 0
 // def_plays_pg has no quality rank (more plays allowed isn't cleanly
 // good/bad -- a bend-but-don't-break defense can allow a lot of plays
@@ -778,9 +783,8 @@ function shootWideBlend(){
   Object.entries(byTeam).forEach(([t,row])=>{Object.assign(out[t]=out[t]||{},row);});
   return out;   // {team: {plays_pg, plays_pg_rk, off_epa_pp, off_epa_pp_rk, ...}}
 }
-function shootoutScore(mkt){
-  const wide=shootWideBlend();
-  const o=wide[IQ.off]||{}, d=wide[IQ.def]||{};
+function shootoutScoreCore(wide,qbPool,offTeam,defTeam,mkt){
+  const o=wide[offTeam]||{}, d=wide[defTeam]||{};
   const range=(()=>{
     const vals=Object.values(wide).map(r=>r.def_plays_pg).filter(v=>v!=null);
     return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:0,max:1};
@@ -808,12 +812,20 @@ function shootoutScore(mkt){
   const funnelA=((1-rShoot(o.off_rush_epa_pp_rk))+rShoot(d.def_rush_epa_pp_rk))/2;
   const funnelB=((1-rShoot(d.off_rush_epa_pp_rk))+rShoot(o.def_rush_epa_pp_rk))/2;
   const funnel=(funnelA+funnelB)/2;
-  const qA=qbGrade(IQ.off), qB=qbGrade(IQ.def);
+  const qA=qbGradeFromPool(qbPool,offTeam), qB=qbGradeFromPool(qbPool,defTeam);
   const qb=(qA&&qB)?(qA.grade+qB.grade)/200:0.5;
   const W={total:0.25,pace:0.12,offEff:0.15,defEff:0.15,passEff:0.15,funnel:0.08,qb:0.10};
   const parts={total:totalPct,pace,offEff,defEff,passEff,funnel,qb};
   const score=Object.keys(W).reduce((s,k)=>s+W[k]*parts[k],0);
   return {score:Math.round(score*100),parts,weights:W,qA,qB};
+}
+// Convenience wrapper for one-off callers (Matchups renders this once per
+// view, not per row, so recomputing the league-wide blend fresh is fine).
+// The Team tables compute wide/qbPool ONCE and reuse shootoutScoreCore
+// directly for all 32 rows instead -- calling this per row would redo the
+// same league-wide blend 32 times over.
+function shootoutScore(offTeam,defTeam,mkt){
+  return shootoutScoreCore(shootWideBlend(),qbSample(),offTeam,defTeam,mkt);
 }
 const paMap=(w,pos)=>{const m={};for(const r of MT.posallowed)
   if(r.season===SEASON&&r.window===w&&r.pos===pos)m[r.team]=r; return m;};
@@ -893,8 +905,9 @@ function renderSlate(){
 }
 
 /* ============================== team usage ============================== */
-const T_GRPDEF=[['odds','Odds'],['pace','Pace'],['passtend','Pass Tendencies'],['redzone','Red zone'],
-                ['efficiency','Efficiency'],['explosive','Explosives']];
+const T_GRPDEF=[['odds','Odds'],['pace','Pace'],['passlead','Pass Lead'],['passtrail','Pass Trail'],
+                ['passneutral','Pass Neutral'],['redzone','Red zone'],
+                ['offeff','Off Efficiency'],['defeff','Def Efficiency'],['explosive','Explosives']];
 var GAMEVIEW=true;
 /* Short tabs: the 10-12 numbers that decide most research questions. Identity
    columns (team, matchup, kickoff, name, proj/salary/own) are always kept.
@@ -965,6 +978,11 @@ function renderTeam(short=false){
   }
   // game view only makes sense for teams actually playing this week
   if(GAMEVIEW)rows=rows.filter(r=>r._gid);
+  // Computed once, attached to each row -- see shootoutScore's comment for
+  // why (recomputing the league-wide blend, or the score itself, per cell
+  // instead of once per row would be wasteful).
+  const shootWide=shootWideBlend(), shootQBPool=qbSample();
+  rows=rows.map(r=>({...r,_shootout:r._opp?shootoutScoreCore(shootWide,shootQBPool,r.team,r._opp,{total:r._total,implied:r._implied}).score:null}));
   let cols=[
     {k:'team',h:'Team',f:v=>tmChip(v)},
     {k:'_opp',h:'Week matchup',f:(v,r)=>v?`${r._home?'vs':'@'} ${tmChip(v)}`:'–'},
@@ -972,6 +990,9 @@ function renderTeam(short=false){
     {k:'_spread',h:'Spread',grp:'odds',f:v=>spreadTxt(v),style:pctShade(rows,'_spread',false)},
     {k:'_total',h:'Total',grp:'odds',f:v=>f(v,1)},
     {k:'_implied',h:'Implied',grp:'odds',f:v=>f(v,1),style:pctShade(rows,'_implied',true)},
+    {k:'_shootout',h:'Shootout',grp:'odds',
+      f:v=>v==null?'–':`${v}/100`,
+      style:v=>v==null?'':heat(v/100)},
     {k:'games',h:'G',f:(v,r)=>r._gid?`<span class="gcell" title="Jump to this matchup">${v??'–'}</span>`:esc(v??'–')},
 
     // ---- SITUATIONAL: baseline identity, then how it moves with the script
@@ -980,21 +1001,21 @@ function renderTeam(short=false){
     {grp:'pace',k:'_paceL',h:'Pace (up 7+)',f:v=>f(v,1),style:S('_paceL',false)},
     {grp:'pace',k:'_paceT',h:'Pace (down 7+)',f:v=>f(v,1),style:S('_paceT',false)},
     {grp:'pace',k:'_paceD',h:'Pace Δ',f:v=>sgn(v,1),style:S('_paceD',false)},
-    {grp:'passtend',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
-    {grp:'passtend',k:'_prL',h:'Pass% (up 7+)',f:pct0,style:S('_prL',true)},
-    {grp:'passtend',k:'_prT',h:'Pass% (down 7+)',f:pct0,style:S('_prT',true)},
-    {grp:'passtend',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
-    {grp:'passtend',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
-    {grp:'passtend',k:'_rrL',h:'Run% (up 7+)',f:pct0,style:S('_rrL',true)},
-    {grp:'passtend',k:'_rrT',h:'Run% (down 7+)',f:pct0,style:S('_rrT',true)},
-    {grp:'passtend',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
-    {grp:'passtend',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
-    {grp:'passtend',k:'_proeL',h:'PROE (up 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
-    {grp:'passtend',k:'_proeT',h:'PROE (down 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
-    {grp:'passtend',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
-    {grp:'passtend',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
-    {grp:'passtend',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
-    {grp:'passtend',k:'rz_td_rate',h:'RZ TD%',f:pct0,style:S('rz_td_rate',true)},
+    {grp:'passneutral',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
+    {grp:'passlead',k:'_prL',h:'Pass% (up 7+)',f:pct0,style:S('_prL',true)},
+    {grp:'passtrail',k:'_prT',h:'Pass% (down 7+)',f:pct0,style:S('_prT',true)},
+    {grp:'passneutral',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
+    {grp:'passneutral',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
+    {grp:'passlead',k:'_rrL',h:'Run% (up 7+)',f:pct0,style:S('_rrL',true)},
+    {grp:'passtrail',k:'_rrT',h:'Run% (down 7+)',f:pct0,style:S('_rrT',true)},
+    {grp:'passneutral',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
+    {grp:'passneutral',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
+    {grp:'passlead',k:'_proeL',h:'PROE (up 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
+    {grp:'passtrail',k:'_proeT',h:'PROE (down 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
+    {grp:'passneutral',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
+    {grp:'passneutral',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
+    {grp:'passneutral',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
+    {grp:'passneutral',k:'rz_td_rate',h:'RZ TD%',f:pct0,style:S('rz_td_rate',true)},
 
     // ---- RED ZONE
     {grp:'redzone',k:'rz_trips_pg',h:'RZ trips/g',f:v=>f(v,2),style:S('rz_trips_pg',true)},
@@ -1005,33 +1026,34 @@ function renderTeam(short=false){
     {grp:'explosive',k:'explosive_rush_rate',h:'ExplosiveRun%',f:pct1,style:S('explosive_rush_rate',true)},
 
     // ---- EFFICIENCY
-    {grp:'efficiency',k:'off_epa_pp',h:'Off EPA',num:GAMEVIEW?0:1,f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_epa_pp_rk)}`,style:S('off_epa_pp',true)},
-    {grp:'efficiency',k:'off_success',h:'Off Success%',f:pct0,style:S('off_success',true)},
-    {grp:'efficiency',k:'off_pass_epa_pp',h:'Pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_pass_epa_pp_rk)}`,style:S('off_pass_epa_pp',true)},
-    {grp:'efficiency',k:'off_rush_epa_pp',h:'Rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_rush_epa_pp_rk)}`,style:S('off_rush_epa_pp',true)},
-    {grp:'efficiency',k:'def_epa_pp',h:'Def EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_epa_pp_rk)}`,style:S('def_epa_pp',false)},
-    {grp:'efficiency',k:'def_success',h:'DefSuccess%',f:pct0,style:S('def_success',false)},
-    {grp:'efficiency',k:'def_pass_epa_pp',h:'Def pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_pass_epa_pp_rk)}`,style:S('def_pass_epa_pp',false)},
-    {grp:'efficiency',k:'def_rush_epa_pp',h:'Def rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_rush_epa_pp_rk)}`,style:S('def_rush_epa_pp',false)},
+    {grp:'offeff',k:'off_epa_pp',h:'Off EPA',num:GAMEVIEW?0:1,f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_epa_pp_rk)}`,style:S('off_epa_pp',true)},
+    {grp:'offeff',k:'off_success',h:'Off Success%',f:pct0,style:S('off_success',true)},
+    {grp:'offeff',k:'off_pass_epa_pp',h:'Pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_pass_epa_pp_rk)}`,style:S('off_pass_epa_pp',true)},
+    {grp:'offeff',k:'off_rush_epa_pp',h:'Rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.off_rush_epa_pp_rk)}`,style:S('off_rush_epa_pp',true)},
+    {grp:'defeff',k:'def_epa_pp',h:'Def EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_epa_pp_rk)}`,style:S('def_epa_pp',false)},
+    {grp:'defeff',k:'def_success',h:'DefSuccess%',f:pct0,style:S('def_success',false)},
+    {grp:'defeff',k:'def_pass_epa_pp',h:'Def pass EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_pass_epa_pp_rk)}`,style:S('def_pass_epa_pp',false)},
+    {grp:'defeff',k:'def_rush_epa_pp',h:'Def rush EPA',f:(v,r)=>`${sgn(v,3)} ${rk2(r.def_rush_epa_pp_rk)}`,style:S('def_rush_epa_pp',false)},
   ];
   if(short){
     const p100=v=>sgn(v==null?null:v*100,1);
     cols=[
-      ...cols.filter(c=>T_IDENTITY.includes(c.k)||(['_spread','_total','_implied'].includes(c.k)&&TGRPS.odds)),
-      {k:'_plays_rk',h:'Plays/g',f:(v,r)=>rkCell(v,r.plays_pg,x=>f(x,1)),style:rkShade},
-      {k:'_pace_rk',h:'Pace',f:(v,r)=>rkCell(v,r._pace,x=>f(x,1)+' s'),style:rkShade},
-      {k:'_pr_rk',h:'Pass%',f:(v,r)=>rkCell(v,r._pr,pct0),style:rkShade},
-      {k:'_proe_rk',h:'PROE',f:(v,r)=>rkCell(v,r._proe,p100),style:rkShade},
-      {k:'_prD_rk',h:'Pass% Δ',f:(v,r)=>rkCell(v,r._prD,p100),style:rkShade},
-      {k:'rz_td_rate_rk',h:'RZ TD%',f:(v,r)=>rkCell(v,r.rz_td_rate,pct0),style:rkShade},
-      {k:'off_epa_pp_rk',h:'Off EPA',f:(v,r)=>rkCell(v,r.off_epa_pp,x=>sgn(x,3)),style:rkShade},
-      {k:'off_pass_epa_pp_rk',h:'Pass EPA',f:(v,r)=>rkCell(v,r.off_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
-      {k:'off_rush_epa_pp_rk',h:'Rush EPA',f:(v,r)=>rkCell(v,r.off_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
-      {k:'def_pass_epa_pp_rk',h:'Def pass EPA',f:(v,r)=>rkCell(v,r.def_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
-      {k:'def_rush_epa_pp_rk',h:'Def rush EPA',f:(v,r)=>rkCell(v,r.def_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
+      ...cols.filter(c=>T_IDENTITY.includes(c.k)||(['_spread','_total','_implied','_shootout'].includes(c.k)&&TGRPS.odds)),
+      {grp:'pace',k:'_plays_rk',h:'Plays/g',f:(v,r)=>rkCell(v,r.plays_pg,x=>f(x,1)),style:rkShade},
+      {grp:'pace',k:'_pace_rk',h:'Pace',f:(v,r)=>rkCell(v,r._pace,x=>f(x,1)+' s'),style:rkShade},
+      {grp:'passneutral',k:'_pr_rk',h:'Pass%',f:(v,r)=>rkCell(v,r._pr,pct0),style:rkShade},
+      {grp:'passneutral',k:'_proe_rk',h:'PROE',f:(v,r)=>rkCell(v,r._proe,p100),style:rkShade},
+      {grp:'passneutral',k:'_prD_rk',h:'Pass% Δ',f:(v,r)=>rkCell(v,r._prD,p100),style:rkShade},
+      {grp:'passneutral',k:'rz_td_rate_rk',h:'RZ TD%',f:(v,r)=>rkCell(v,r.rz_td_rate,pct0),style:rkShade},
+      {grp:'offeff',k:'off_epa_pp_rk',h:'Off EPA',f:(v,r)=>rkCell(v,r.off_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {grp:'offeff',k:'off_pass_epa_pp_rk',h:'Pass EPA',f:(v,r)=>rkCell(v,r.off_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {grp:'offeff',k:'off_rush_epa_pp_rk',h:'Rush EPA',f:(v,r)=>rkCell(v,r.off_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {grp:'defeff',k:'def_pass_epa_pp_rk',h:'Def pass EPA',f:(v,r)=>rkCell(v,r.def_pass_epa_pp,x=>sgn(x,3)),style:rkShade},
+      {grp:'defeff',k:'def_rush_epa_pp_rk',h:'Def rush EPA',f:(v,r)=>rkCell(v,r.def_rush_epa_pp,x=>sgn(x,3)),style:rkShade},
     ];
     // rank columns sort ascending (#1 first)
     cols.forEach(c=>{ if(c.k.endsWith('_rk'))c.desc=false; });
+    cols=cols.filter(c=>!c.grp||TGRPS[c.grp]);
   } else {
     cols=cols.filter(c=>!c.grp||TGRPS[c.grp]);
   }
@@ -1375,7 +1397,7 @@ function renderIQStrip(tp){
   // from the display (not useful to a reader) and each row is framed as
   // "/100" like the headline score, not a bare "%", since that read as an
   // unexplained rate rather than a 0-100 friendliness score.
-  const shoot=shootoutScore(mkt);
+  const shoot=shootoutScore(IQ.off,IQ.def,mkt);
   const score100=v=>Math.round(v*100);
   const shootRows=[
     ['Game total',shoot.parts.total],['Pace',shoot.parts.pace],
@@ -1584,14 +1606,13 @@ function wire(){
   wireWinSeg('pl2-win',()=>PWIN,setPWIN);
   wireWinSeg('iq-win',()=>IQ.win,setIQWIN);
   segs($('#iq-mode'),[['pass','Pass game'],['run','Run game']],IQ.mode,v=>{IQ.mode=v;renderIQ();wireSegs('iq-mode',v);});
-  const syncOddsUI=()=>{const t2o=$('#t2-odds'); if(t2o)t2o.className=TGRPS.odds?'on':'';};
-  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>{renderTeams();syncOddsUI();},
-    ['pace','passtend','redzone','efficiency','explosive']);
-  const t2o=$('#t2-odds');
-  if(t2o){
-    t2o.className=TGRPS.odds?'on':'';
-    t2o.onclick=()=>{TGRPS.odds=TGRPS.odds?0:1;syncOddsUI();renderTeams();};
-  }
+  const EXCLUSIVE_GRPS=['pace','passlead','passtrail','passneutral','redzone','offeff','defeff','explosive','odds'];
+  const drawTeamGrps=()=>{
+    grpChips($('#t-grps'),T_GRPDEF,TGRPS,onTeamGrpClick,EXCLUSIVE_GRPS);
+    grpChips($('#t2-grps'),T_GRPDEF,TGRPS,onTeamGrpClick,EXCLUSIVE_GRPS);
+  };
+  function onTeamGrpClick(){ renderTeams(); drawTeamGrps(); }
+  drawTeamGrps();
   for(const id of ['t-gameview','t2-gameview']){
     const gv=$('#'+id); if(!gv)continue;
     gv.className=GAMEVIEW?'on':'';
