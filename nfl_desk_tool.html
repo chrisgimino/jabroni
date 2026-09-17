@@ -122,9 +122,10 @@ thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)
 @media(max-width:900px){.splitgrid{grid-template-columns:1fr}}
 
 #slate{margin-bottom:10px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:4px}
+.cards{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .gm{background:var(--panel);border:1px solid var(--line);border-radius:5px;
-  padding:4px 6px;font-size:11px;line-height:1.3;text-align:left;width:100%}
+  padding:4px 6px;font-size:11px;line-height:1.3;text-align:left;
+  flex:0 0 132px;width:132px}
 .gm .row1{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
 .gm .when{color:var(--faint);font-size:9.5px;white-space:nowrap}
 .gm .row2{display:flex;justify-content:space-between;color:var(--faint);font-size:10px}
@@ -179,6 +180,14 @@ button.gm.on b{color:var(--ink)}
 .shootScore{font-size:28px;font-weight:800;color:var(--gold);text-align:center;
   margin-bottom:4px;line-height:1}
 .shootScore span{font-size:14px;font-weight:600;color:var(--faint)}
+.shootDetail{margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
+.shootDetail summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--dim);
+  list-style:none}
+.shootDetail summary::-webkit-details-marker{display:none}
+.shootDetail summary::before{content:'▸ ';color:var(--faint)}
+.shootDetail[open] summary::before{content:'▾ '}
+.shootDetail summary:hover{color:var(--gold)}
+.shootNote{font-size:11px;color:var(--faint);margin:6px 0;line-height:1.4}
 .iqoff,.iqdef{font-weight:700;color:var(--ink);text-align:right}
 .iqdef{text-align:right}
 @media (max-width:640px){
@@ -1251,29 +1260,31 @@ function renderIQStrip(tp){
     row('Pass EPA',o.off_pass_epa_pp,null,d.def_pass_epa_pp,d.def_pass_epa_pp_rk,sg)+
     `<div class="iqrow"><span class="iqlbl">Script</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'trailing').pass_rate!=null?`${pct0(sp(IQ.off,IQ.win,'trailing').pass_rate)} pass trailing`:'–'}</span></div>`);
-  // Real composite (see shootoutScore) shown WITH its breakdown -- the
-  // score alone would be a black box; showing each input's contribution
-  // makes it auditable instead of just trusted.
+  // Real composite (see shootoutScore) with an optional, collapsed-by-
+  // default breakdown -- the score alone is a black box, but showing all
+  // 7 rows open by default blew out the panel height. Weights are dropped
+  // from the display (not useful to a reader) and each row is framed as
+  // "/100" like the headline score, not a bare "%", since that read as an
+  // unexplained rate rather than a 0-100 friendliness score.
   const shoot=shootoutScore(o,d,mkt);
-  const pctBar=v=>Math.round(v*100)+'%';
+  const score100=v=>Math.round(v*100);
   const shootRows=[
-    ['Game total',shoot.parts.total,`${(shoot.weights.total*100)|0}%`],
-    ['Pace',shoot.parts.pace,`${(shoot.weights.pace*100)|0}%`],
-    ['Off efficiency',shoot.parts.offEff,`${(shoot.weights.offEff*100)|0}%`],
-    ['Def efficiency',shoot.parts.defEff,`${(shoot.weights.defEff*100)|0}%`],
-    ['Passing',shoot.parts.passEff,`${(shoot.weights.passEff*100)|0}%`],
-    ['Run funnel',shoot.parts.funnel,`${(shoot.weights.funnel*100)|0}%`],
-    ['QB grade',shoot.parts.qb,`${(shoot.weights.qb*100)|0}%`],
-  ].map(([label,v,w])=>
-    `<div class="iqrow"><span class="iqlbl">${label} <i>(${w})</i></span>
-       <span class="iqoff" style="grid-column:2/4;text-align:right">${pctBar(v)}</span></div>`).join('');
+    ['Game total',shoot.parts.total],['Pace',shoot.parts.pace],
+    ['Off efficiency',shoot.parts.offEff],['Def efficiency',shoot.parts.defEff],
+    ['Passing',shoot.parts.passEff],['Run funnel',shoot.parts.funnel],
+    ['QB grade',shoot.parts.qb],
+  ].map(([label,v])=>
+    `<div class="iqrow"><span class="iqlbl">${label}</span>
+       <span class="iqoff" style="grid-column:2/4;text-align:right">${score100(v)}/100</span></div>`).join('');
   const shootP=panel('Shootout Potential',
     `<div class="shootScore">${shoot.score}<span>/100</span></div>`+
     `<div class="iqrow"><span class="iqlbl">Game total</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center">${mkt?`O/U ${f(mkt.total,1)} · ${esc(IQ.off)} ${f(mkt.implied,1)} – ${esc(IQ.def)} ${f(mkt.opp_implied,1)}`:'no line for this matchup'}</span></div>`+
     (shoot.qA&&shoot.qB?`<div class="iqrow"><span class="iqlbl">QBs</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center">${esc(shoot.qA.player)} ${shoot.qA.grade} · ${esc(shoot.qB.player)} ${shoot.qB.grade}</span></div>`:'')+
-    shootRows);
+    `<details class="shootDetail"><summary>What's in this score?</summary>
+       <div class="shootNote">Each row below is that input's own read, 0-100 (higher = more shootout-friendly).</div>
+       ${shootRows}</details>`);
 
   el.innerHTML=`<div class="stripHead">
       <div>${tmChip(IQ.off)} <span class="role">offense</span></div>
