@@ -666,11 +666,30 @@ const profs=(w)=>MT.player_profiles.filter(p=>p.season===SEASON&&p.window===w);
    this week's other games, passing efficiency both directions, a run-funnel
    read (bad rush offense + the opponent's strong run defense pushes a team
    to pass more), and both starters' QB grade. */
-const qbPool=win=>profs(win).filter(p=>p.position==='QB'&&p.pass_att_pg>=10&&p.pass_epa_per_att!=null);
-function qbGrade(team,win){
-  const pool=qbPool(win);
+/* QB grade always blends full 2025 season + 2026 season-to-date, weighted
+   by actual attempt volume -- NOT whatever window the rest of the panel
+   has selected. A single early-season game (e.g. Jared Goff's Week 1: 0.15
+   EPA/att but a rough -2.91 CPOE game) was swinging the grade on ~40
+   attempts with nothing to weigh it against. Blending in a full prior
+   season fixes that by construction, no credibility-shrink math needed. */
+function qbSample(){
+  const rows=MT.player_profiles.filter(p=>
+    p.position==='QB'&&p.window==='season'&&(p.season===2025||p.season===2026)&&
+    p.pass_epa_per_att!=null&&p.pass_att_pg!=null&&p.games);
+  const byPlayer={};
+  rows.forEach(p=>{
+    const w=p.pass_att_pg*p.games;
+    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0});
+    e.atts+=w; e.epaSum+=(p.pass_epa_per_att||0)*w; e.cpoeSum+=(p.cpoe||0)*w;
+    if(p.season===2026)e.team=p.team_current;   // attribute to this year's team (trades, etc.)
+  });
+  return Object.values(byPlayer).filter(x=>x.atts>=60).map(x=>
+    ({player:x.player,team:x.team,pass_epa_per_att:x.epaSum/x.atts,cpoe:x.cpoeSum/x.atts,atts:x.atts}));
+}
+function qbGrade(team){
+  const pool=qbSample();
   if(!pool.length)return null;
-  const me=pool.filter(p=>p.team_current===team).sort((a,b)=>b.pass_att_pg-a.pass_att_pg)[0];
+  const me=pool.filter(p=>p.team===team).sort((a,b)=>b.atts-a.atts)[0];
   if(!me)return null;
   const score=p=>0.7*(p.pass_epa_per_att??0)+0.3*((p.cpoe??0)/10);
   const s=score(me), all=pool.map(score).sort((a,b)=>a-b);
@@ -682,21 +701,52 @@ const rShoot=(rank,n=32)=>rank==null?0.5:1-(rank-1)/(n-1);   // rank1 -> 1 (best
 // good/bad -- a bend-but-don't-break defense can allow a lot of plays
 // while still eating clock efficiently), so it's min-max scaled across
 // the league instead of ranked.
-function leagueMinMax(field,win){
-  const vals=Object.values(MT.teams).map(t=>{
-    const p=(t.profile||[]).find(pr=>pr.season===SEASON&&pr.window===win);
-    return p?p[field]:null;
-  }).filter(v=>v!=null);
-  return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:0,max:1};
-}
 const scaleTo01=(v,range)=>v==null||range.max===range.min?0.5:(v-range.min)/(range.max-range.min);
-function shootoutScore(o,d,mkt){
+/* Shootout Potential's team-level inputs also always blend full 2025 +
+   2026-to-date, games-weighted, for every team -- same reasoning as QB
+   grade: 2026 alone will never have enough sample on its own, and this
+   score should read as a stable "is this a shootout matchup" assessment,
+   not swing with whatever window happens to be selected elsewhere. The 6
+   panels above it (Pace, Efficiency, etc.) intentionally keep following
+   the selected window -- that's still the right behavior there. */
+const SHOOT_HIGH_GOOD=['plays_pg','off_epa_pp','off_success','off_pass_epa_pp','off_rush_epa_pp'];
+const SHOOT_LOW_GOOD=['def_epa_pp','def_success','def_pass_epa_pp','def_rush_epa_pp'];
+const SHOOT_NEUTRAL=['def_plays_pg'];
+function shootWideBlend(){
+  const fields=[...SHOOT_HIGH_GOOD,...SHOOT_LOW_GOOD,...SHOOT_NEUTRAL];
+  const byTeam={};
+  Object.entries(MT.teams).forEach(([team,obj])=>{
+    const acc={}; let w=0;
+    (obj.profile||[]).forEach(p=>{
+      if(p.window==='season'&&(p.season===2025||p.season===2026)&&p.games){
+        w+=p.games;
+        fields.forEach(f=>{if(p[f]!=null)acc[f]=(acc[f]||0)+p[f]*p.games;});
+      }
+    });
+    if(w>0){const row={}; fields.forEach(f=>{if(acc[f]!=null)row[f]=acc[f]/w;}); byTeam[team]=row;}
+  });
+  const out={};
+  fields.forEach(f=>{
+    const lowGood=SHOOT_LOW_GOOD.includes(f);
+    const entries=Object.entries(byTeam).filter(([,r])=>r[f]!=null)
+      .sort((a,b)=>lowGood?a[1][f]-b[1][f]:b[1][f]-a[1][f]);
+    entries.forEach(([t],i)=>{(out[t]=out[t]||{})[f+'_rk']=i+1;});
+  });
+  Object.entries(byTeam).forEach(([t,row])=>{Object.assign(out[t]=out[t]||{},row);});
+  return out;   // {team: {plays_pg, plays_pg_rk, off_epa_pp, off_epa_pp_rk, ...}}
+}
+function shootoutScore(mkt){
+  const wide=shootWideBlend();
+  const o=wide[IQ.off]||{}, d=wide[IQ.def]||{};
+  const range=(()=>{
+    const vals=Object.values(wide).map(r=>r.def_plays_pg).filter(v=>v!=null);
+    return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:0,max:1};
+  })();
   const totalPct=(()=>{
     const totals=(MT.games||[]).map(g=>g.total).filter(v=>v!=null);
     if(!mkt||mkt.total==null||totals.length<2)return 0.5;
     return totals.filter(t=>t<mkt.total).length/(totals.length-1);
   })();
-  const range=leagueMinMax('def_plays_pg',IQ.win);
   const paceA=(rShoot(o.plays_pg_rk)+scaleTo01(d.def_plays_pg,range))/2;   // our tempo x their plays allowed
   const paceB=(rShoot(d.plays_pg_rk)+scaleTo01(o.def_plays_pg,range))/2;
   const pace=(paceA+paceB)/2;
@@ -707,7 +757,7 @@ function shootoutScore(o,d,mkt){
   const funnelA=((1-rShoot(o.off_rush_epa_pp_rk))+rShoot(d.def_rush_epa_pp_rk))/2;
   const funnelB=((1-rShoot(d.off_rush_epa_pp_rk))+rShoot(o.def_rush_epa_pp_rk))/2;
   const funnel=(funnelA+funnelB)/2;
-  const qA=qbGrade(IQ.off,IQ.win), qB=qbGrade(IQ.def,IQ.win);
+  const qA=qbGrade(IQ.off), qB=qbGrade(IQ.def);
   const qb=(qA&&qB)?(qA.grade+qB.grade)/200:0.5;
   const W={total:0.25,pace:0.12,offEff:0.15,defEff:0.15,passEff:0.15,funnel:0.08,qb:0.10};
   const parts={total:totalPct,pace,offEff,defEff,passEff,funnel,qb};
@@ -1266,7 +1316,7 @@ function renderIQStrip(tp){
   // from the display (not useful to a reader) and each row is framed as
   // "/100" like the headline score, not a bare "%", since that read as an
   // unexplained rate rather than a 0-100 friendliness score.
-  const shoot=shootoutScore(o,d,mkt);
+  const shoot=shootoutScore(mkt);
   const score100=v=>Math.round(v*100);
   const shootRows=[
     ['Game total',shoot.parts.total],['Pace',shoot.parts.pace],
@@ -1280,10 +1330,10 @@ function renderIQStrip(tp){
     `<div class="shootScore">${shoot.score}<span>/100</span></div>`+
     `<div class="iqrow"><span class="iqlbl">Game total</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center">${mkt?`O/U ${f(mkt.total,1)} · ${esc(IQ.off)} ${f(mkt.implied,1)} – ${esc(IQ.def)} ${f(mkt.opp_implied,1)}`:'no line for this matchup'}</span></div>`+
-    (shoot.qA&&shoot.qB?`<div class="iqrow"><span class="iqlbl">QBs</span>
-       <span class="iqoff" style="grid-column:2/4;text-align:center">${esc(shoot.qA.player)} ${shoot.qA.grade} · ${esc(shoot.qB.player)} ${shoot.qB.grade}</span></div>`:'')+
     `<details class="shootDetail"><summary>What's in this score?</summary>
        <div class="shootNote">Each row below is that input's own read, 0-100 (higher = more shootout-friendly).</div>
+       ${shoot.qA&&shoot.qB?`<div class="iqrow"><span class="iqlbl">QBs</span>
+         <span class="iqoff" style="grid-column:2/4;text-align:center">${esc(shoot.qA.player)} ${shoot.qA.grade} · ${esc(shoot.qB.player)} ${shoot.qB.grade}</span></div>`:''}
        ${shootRows}</details>`);
 
   el.innerHTML=`<div class="stripHead">
