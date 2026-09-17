@@ -1327,11 +1327,11 @@ function renderIQStrip(tp){
   const runP=panel('Run Game',
     row('Rush EPA',o.off_rush_epa_pp,null,d.def_rush_epa_pp,d.def_rush_epa_pp_rk,sg)+
     `<div class="iqrow"><span class="iqlbl">Script</span>
-       <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'leading').pass_rate!=null?`${pct0(1-sp(IQ.off,IQ.win,'leading').pass_rate)} run w/ lead`:'–'}</span></div>`);
+       <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'leading').pass_rate!=null?`${pct0(1-sp(IQ.off,IQ.win,'leading').pass_rate)} run w/ lead`:'No lead snaps in window'}</span></div>`);
   const passP=panel('Pass Game',
     row('Pass EPA',o.off_pass_epa_pp,null,d.def_pass_epa_pp,d.def_pass_epa_pp_rk,sg)+
     `<div class="iqrow"><span class="iqlbl">Script</span>
-       <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'trailing').pass_rate!=null?`${pct0(sp(IQ.off,IQ.win,'trailing').pass_rate)} pass trailing`:'–'}</span></div>`);
+       <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'trailing').pass_rate!=null?`${pct0(sp(IQ.off,IQ.win,'trailing').pass_rate)} pass trailing`:'No trailing snaps in window'}</span></div>`);
   // Real composite (see shootoutScore) with an optional, collapsed-by-
   // default breakdown -- the score alone is a black box, but showing all
   // 7 rows open by default blew out the panel height. Weights are dropped
