@@ -1317,16 +1317,20 @@ function renderIQStrip(tp){
   // this window/matchup" (not a real zero) -- a bare dash reads as
   // ambiguous, so it gets a title explaining that on hover.
   const blank=`<span title="No qualifying sample for this stat yet">–</span>`;
+  // Rank first, raw value small and secondary -- same pattern as the
+  // Matchups position tables. People read "#3" faster than "77.0" on its
+  // own; the number is there for whoever wants it, just not fighting for
+  // top billing anymore.
   const row=(label,offV,offRk,defV,defRk,fmt)=>`
       <div class="iqrow"><span class="iqlbl">${label}</span>
-        <span class="iqoff">${offV==null?blank:fmt(offV)} ${rk2(offRk)}</span>
-        <span class="iqdef">${defV==null?blank:fmt(defV)} ${rk2(defRk)}</span></div>`;
+        <span class="iqoff">${rk2(offRk)} <span class="rksub">(${offV==null?blank:fmt(offV)})</span></span>
+        <span class="iqdef">${rk2(defRk)} <span class="rksub">(${defV==null?blank:fmt(defV)})</span></span></div>`;
   const panel=(title,body)=>`<div class="iqpanel"><h4>${title}</h4>${body}</div>`;
   const pct=v=>pct0(v), sg=v=>sgn(v,3), s1=v=>f(v,1);
 
   const paceP=panel('Pace',
-    row('Plays/g',o.plays_pg,o.plays_pg_rk,d.def_plays_pg,null,s1)+
-    row('Sec/play',o.neutral_sec_per_play,null,d.def_neutral_sec_per_play,null,v=>v==null?'–':f(v,1)+'s'));
+    row('Plays/g',o.plays_pg,o.plays_pg_rk,d.def_plays_pg,d.def_plays_pg_rk,s1)+
+    row('Sec/play',o.neutral_sec_per_play,o.neutral_sec_per_play_rk,d.def_neutral_sec_per_play,d.def_neutral_sec_per_play_rk,v=>v==null?'–':f(v,1)+'s'));
   const effP=panel('Efficiency',
     row('EPA/play',o.off_epa_pp,o.off_epa_pp_rk,d.def_epa_pp,d.def_epa_pp_rk,sg)+
     row('Success%',o.off_success,o.off_success_rk,d.def_success,d.def_success_rk,pct));
@@ -1334,11 +1338,11 @@ function renderIQStrip(tp){
     row('Expl pass%',o.explosive_pass_rate,o.explosive_pass_rate_rk,d.def_explosive_pass_rate,d.def_explosive_pass_rate_rk,pct)+
     row('Expl run%',o.explosive_rush_rate,o.explosive_rush_rate_rk,d.def_explosive_rush_rate,d.def_explosive_rush_rate_rk,pct));
   const runP=panel('Run Game',
-    row('Rush EPA',o.off_rush_epa_pp,null,d.def_rush_epa_pp,d.def_rush_epa_pp_rk,sg)+
+    row('Rush EPA',o.off_rush_epa_pp,o.off_rush_epa_pp_rk,d.def_rush_epa_pp,d.def_rush_epa_pp_rk,sg)+
     `<div class="iqrow"><span class="iqlbl">Script</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'leading').pass_rate!=null?`${pct0(1-sp(IQ.off,IQ.win,'leading').pass_rate)} run w/ lead`:'No lead snaps in window'}</span></div>`);
   const passP=panel('Pass Game',
-    row('Pass EPA',o.off_pass_epa_pp,null,d.def_pass_epa_pp,d.def_pass_epa_pp_rk,sg)+
+    row('Pass EPA',o.off_pass_epa_pp,o.off_pass_epa_pp_rk,d.def_pass_epa_pp,d.def_pass_epa_pp_rk,sg)+
     `<div class="iqrow"><span class="iqlbl">Script</span>
        <span class="iqoff" style="grid-column:2/4;text-align:center;font-weight:500;color:var(--dim)">${sp(IQ.off,IQ.win,'trailing').pass_rate!=null?`${pct0(sp(IQ.off,IQ.win,'trailing').pass_rate)} pass trailing`:'No trailing snaps in window'}</span></div>`);
   // Real composite (see shootoutScore) with an optional, collapsed-by-
