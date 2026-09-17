@@ -682,19 +682,34 @@ function qbSample(){
   const byPlayer={};
   rows.forEach(p=>{
     const w=p.pass_att_pg*p.games;
-    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0});
+    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0,games:0,xfpSum:0});
     e.atts+=w; e.epaSum+=(p.pass_epa_per_att||0)*w; e.cpoeSum+=(p.cpoe||0)*w;
+    e.games+=p.games; e.xfpSum+=(p.xfp_pg||0)*p.games;   // xfp_pg is already per-game, so weight by games not attempts
     if(p.season===2026)e.team=p.team_current;   // attribute to this year's team (trades, etc.)
   });
   return Object.values(byPlayer).filter(x=>x.atts>=60).map(x=>
-    ({player:x.player,team:x.team,pass_epa_per_att:x.epaSum/x.atts,cpoe:x.cpoeSum/x.atts,atts:x.atts}));
+    ({player:x.player,team:x.team,pass_epa_per_att:x.epaSum/x.atts,cpoe:x.cpoeSum/x.atts,
+      xfp_pg:x.games?x.xfpSum/x.games:null,atts:x.atts}));
 }
+// Three components, each min-max scaled within the qualifying pool before
+// combining -- raw EPA/CPOE/xFP live on completely different scales (~0.3,
+// ~10, ~20), so blending raw units the old way let CPOE dominate by
+// accident. xFP is production/opportunity, not just rate efficiency: a
+// backup with a hot but tiny sample (Malik Willis, Tyler Huntley outranking
+// Josh Allen on EPA/CPOE alone) has low volume and so a low xFP/game,
+// which pulls them back down here.
 function qbGrade(team){
   const pool=qbSample();
   if(!pool.length)return null;
   const me=pool.filter(p=>p.team===team).sort((a,b)=>b.atts-a.atts)[0];
   if(!me)return null;
-  const score=p=>0.7*(p.pass_epa_per_att??0)+0.3*((p.cpoe??0)/10);
+  const mm=field=>{
+    const vals=pool.map(p=>p[field]).filter(v=>v!=null);
+    const min=Math.min(...vals), max=Math.max(...vals);
+    return v=>v==null||max===min?0.5:(v-min)/(max-min);
+  };
+  const epaN=mm('pass_epa_per_att'), cpoeN=mm('cpoe'), xfpN=mm('xfp_pg');
+  const score=p=>0.42*epaN(p.pass_epa_per_att)+0.08*cpoeN(p.cpoe)+0.5*xfpN(p.xfp_pg);
   const s=score(me), all=pool.map(score).sort((a,b)=>a-b);
   return {grade:Math.round(100*all.filter(x=>x<=s).length/all.length),
           player:me.player,epa:me.pass_epa_per_att,cpoe:me.cpoe};
@@ -1341,8 +1356,10 @@ function renderIQStrip(tp){
       </div>`:`<div class="shootTotals"><div class="itotals">no line for this matchup</div></div>`)+
     `<details class="shootDetail"><summary>What's in this score?</summary>
        <div class="shootNote">Each row below is that input's own read, 0-100 (higher = more shootout-friendly).</div>
-       ${shoot.qA&&shoot.qB?`<div class="iqrow"><span class="iqlbl">QBs</span>
-         <span class="iqoff" style="grid-column:2/4;text-align:center">${esc(shoot.qA.player)} ${shoot.qA.grade} · ${esc(shoot.qB.player)} ${shoot.qB.grade}</span></div>`:''}
+       ${shoot.qA?`<div class="iqrow"><span class="iqlbl">${esc(IQ.off)} QB</span>
+         <span class="iqoff" style="grid-column:2/4;text-align:right">${esc(shoot.qA.player)} — ${shoot.qA.grade}/100</span></div>`:''}
+       ${shoot.qB?`<div class="iqrow"><span class="iqlbl">${esc(IQ.def)} QB</span>
+         <span class="iqoff" style="grid-column:2/4;text-align:right">${esc(shoot.qB.player)} — ${shoot.qB.grade}/100</span></div>`:''}
        ${shootRows}</details>`);
 
   el.innerHTML=`<div class="stripHead">
