@@ -179,7 +179,7 @@ button.gm.on b{color:var(--ink)}
 .iqpanel{background:var(--panel);padding:9px 16px}
 .iqpanel h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
   color:var(--dim);margin-bottom:5px}
-.iqrow{display:grid;grid-template-columns:minmax(48px,auto) 1fr 1fr;align-items:center;gap:4px 6px;
+.iqrow{display:grid;grid-template-columns:84px 1fr 1fr;align-items:center;gap:4px 6px;
   font-size:12.5px;padding:2px 0}
 .iqlbl{color:var(--faint);font-size:11px;overflow-wrap:break-word}
 .iqlbl i{font-style:normal;opacity:.7}
@@ -689,28 +689,40 @@ function qbSample(){
   const rows=MT.player_profiles.filter(p=>
     p.position==='QB'&&p.window==='season'&&(p.season===2025||p.season===2026)&&
     p.pass_epa_per_att!=null&&p.pass_att_pg!=null&&p.games);
+  // No recency multiplier -- amplifying a single 2026 game 4x was just the
+  // original single-game-noise problem wearing a different hat (a hot or
+  // lucky one-game read would've been just as overweighted as a rough one).
+  // Full equal-by-games blend of both seasons instead. Current-week
+  // "how's he playing right now" comes from RG's own projection below
+  // instead, which is forward-looking and isn't dependent on how many 2026
+  // games have happened yet.
   const byPlayer={};
   rows.forEach(p=>{
     const w=p.pass_att_pg*p.games;
-    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0,games:0,fpSum:0});
+    const e=byPlayer[p.player_id]||(byPlayer[p.player_id]={player:p.player,team:null,atts:0,epaSum:0,cpoeSum:0,games:0,fpSum:0,rg_proj:null});
     e.atts+=w; e.epaSum+=(p.pass_epa_per_att||0)*w; e.cpoeSum+=(p.cpoe||0)*w;
-    e.games+=p.games; e.fpSum+=(p.fp_ppr_pg||0)*p.games;   // actual production, not modeled -- and per-game already, so weight by games not attempts
-    if(p.season===2026)e.team=p.team_current;   // attribute to this year's team (trades, etc.)
+    e.games+=p.games; e.fpSum+=(p.fp_ppr_pg||0)*p.games;   // actual production, not modeled
+    if(p.season===2026){ e.team=p.team_current; e.rg_proj=p.rg_proj??null; }   // this week's own projection, not blended across seasons
   });
   // 150 weighted attempts excludes backups/spot duty (a fragmented ~60-attempt
   // sample -- e.g. a few relief series in 2025 plus one spot start in 2026 --
   // was still clearing the old, lower floor and outranking real starters).
   return Object.values(byPlayer).filter(x=>x.atts>=150).map(x=>
     ({player:x.player,team:x.team,pass_epa_per_att:x.epaSum/x.atts,cpoe:x.cpoeSum/x.atts,
-      fp_pg:x.games?x.fpSum/x.games:null,atts:x.atts}));
+      fp_pg:x.games?x.fpSum/x.games:null,rg_proj:x.rg_proj,atts:x.atts}));
 }
-// Three components, each min-max scaled within the qualifying pool before
-// combining -- raw EPA/CPOE/FP live on completely different scales (~0.3,
-// ~10, ~20), so blending raw units the old way let CPOE dominate by
-// accident. Actual FP/game (not xFP) is the volume+production signal here:
-// it's what really happened, not a model's opportunity-based estimate --
-// and it's what correctly credits Josh Allen's rushing floor, which xFP
-// was underrating.
+// Four components, each min-max scaled within the qualifying pool before
+// combining -- raw EPA/CPOE/FP/rg_proj live on completely different scales,
+// so blending raw units would let one dominate by accident. Actual FP/game
+// (not xFP) is the season-long volume+production signal -- what really
+// happened, not a model's opportunity-based estimate, and it's what
+// correctly credits Josh Allen's rushing floor, which xFP was underrating.
+// rg_proj is this week's own live DK projection -- the "how's he playing
+// right now" signal, forward-looking and not dependent on 2026 sample size
+// the way a recency-weighted box-score blend would be. A QB without a
+// current-week projection (bye, hasn't been added to the slate yet) just
+// falls back to a neutral 0.5 on this one component rather than losing a
+// grade entirely.
 function qbGrade(team){
   const pool=qbSample();
   if(!pool.length)return null;
@@ -721,8 +733,8 @@ function qbGrade(team){
     const min=Math.min(...vals), max=Math.max(...vals);
     return v=>v==null||max===min?0.5:(v-min)/(max-min);
   };
-  const epaN=mm('pass_epa_per_att'), cpoeN=mm('cpoe'), fpN=mm('fp_pg');
-  const score=p=>0.42*epaN(p.pass_epa_per_att)+0.08*cpoeN(p.cpoe)+0.5*fpN(p.fp_pg);
+  const epaN=mm('pass_epa_per_att'), cpoeN=mm('cpoe'), fpN=mm('fp_pg'), rgN=mm('rg_proj');
+  const score=p=>0.30*epaN(p.pass_epa_per_att)+0.05*cpoeN(p.cpoe)+0.35*fpN(p.fp_pg)+0.30*rgN(p.rg_proj);
   const s=score(me), all=pool.map(score).sort((a,b)=>a-b);
   return {grade:Math.round(100*all.filter(x=>x<=s).length/all.length),
           player:me.player,epa:me.pass_epa_per_att,cpoe:me.cpoe};
