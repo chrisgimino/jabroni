@@ -173,15 +173,15 @@ button.gm.on b{color:var(--ink)}
 .stripHead>span{color:var(--faint);font-size:12px;font-weight:700;text-align:center;white-space:nowrap}
 .script{font-size:12px;color:var(--faint);padding:6px 18px;border-left:1px solid var(--line);
   border-right:1px solid var(--line);background:var(--panel)}
-.iqgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1px;
+.iqgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;
   background:var(--line);border:1px solid var(--line);border-top:none;
   border-radius:0 0 10px 10px;overflow:hidden;margin-bottom:16px}
 .iqpanel{background:var(--panel);padding:9px 16px}
 .iqpanel h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;
   color:var(--dim);margin-bottom:5px}
-.iqrow{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:6px;
+.iqrow{display:grid;grid-template-columns:minmax(48px,auto) 1fr 1fr;align-items:center;gap:4px 6px;
   font-size:12.5px;padding:2px 0}
-.iqlbl{color:var(--faint);font-size:11px}
+.iqlbl{color:var(--faint);font-size:11px;overflow-wrap:break-word}
 .iqlbl i{font-style:normal;opacity:.7}
 .shootScore{font-size:28px;font-weight:800;color:var(--gold);text-align:center;
   margin-bottom:4px;line-height:1}
@@ -199,6 +199,10 @@ button.gm.on b{color:var(--ink)}
 .shootNote{font-size:11px;color:var(--faint);margin:6px 0;line-height:1.4}
 .iqoff,.iqdef{font-weight:700;color:var(--ink);text-align:left}
 .iqdef{text-align:left}
+@media (max-width:520px){
+  .iqrow{font-size:11.5px;gap:3px 4px}
+  .iqpanel{padding:8px 12px}
+}
 @media (max-width:640px){
   .stripHead{grid-template-columns:1fr;text-align:center;gap:4px}
   .stripHead>div:last-child{justify-content:center}
@@ -224,11 +228,11 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
 <header>
   <div class="brand">NFL <em>Matchups Tool</em></div>
   <nav>
+    <button data-t="iq" class="on">Matchups</button>
     <button data-t="team">Team usage</button>
-    <button data-t="tshort" class="on">Team short</button>
+    <button data-t="tshort">Team short</button>
     <button data-t="player">Player usage</button>
     <button data-t="pshort">Player short</button>
-    <button data-t="iq">Matchups</button>
   </nav>
   <div class="hctl">
     <span id="stamp"></span>
@@ -248,7 +252,7 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <p class="note">Click a team for its leading / trailing / tied / final-2:00 splits. Game-by-game stacks each matchup's two teams together, away on top. Shading compares the teams currently shown; hover a dotted header for what the number means.</p>
   </section>
 
-  <section class="pane on" id="p-tshort">
+  <section class="pane" id="p-tshort">
     <div class="ctl">
       <span class="lbl">Window</span><span class="seg" id="t2-win"></span>
       <input id="t2-q" placeholder="Find a team" size="12">
@@ -292,7 +296,7 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <p class="note">Ten to twelve position-shaped numbers on top of projection, salary and ownership. Click a player for his window progression; the full tab has everything else.</p>
   </section>
 
-  <section class="pane" id="p-iq">
+  <section class="pane on" id="p-iq">
     <div id="iq-games"></div>
     <div class="ctl">
       <span class="lbl">Offense</span><select id="iq-off"></select>
@@ -513,7 +517,7 @@ const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
 
 /* -------- shared sortable table engine: cols {k,h,l,num,f,style,grp} ------ */
 const TSTATE=new WeakMap();
-const GRPLABEL_MAP={situational:'Situational',redzone:'Red zone',efficiency:'Efficiency',
+const GRPLABEL_MAP={pace:'Pace',passtend:'Pass Tendencies',redzone:'Red zone',efficiency:'Efficiency',
   explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck',odds:'Odds'};
 function GRPLABEL(g){return GRPLABEL_MAP[g]||g;}
 function table(el,cols,rows,opts={}){
@@ -597,13 +601,13 @@ function download(name,text){
 
 /* ============================== state ============================== */
 let MT=null;
-var SEASON=null, SEASONS_AVAIL=[], TWIN='season', PWIN='season', PPOS='RB', TAB='tshort';
+var SEASON=null, SEASONS_AVAIL=[], TWIN='season', PWIN='season', PPOS='RB', TAB='iq';
 /* Positions are multi-select. PPOS stays the single "primary" position that
    decides the column set when exactly one is chosen; PSEL holds the selection. */
 var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
-var TGRPS={situational:1,redzone:0,efficiency:0,explosive:0,odds:1};
+var TGRPS={pace:1,passtend:0,redzone:0,efficiency:0,explosive:0,odds:1};
 var PGRPS={usage:1,redzone:0,explosive:0,efficiency:0,ratings:1};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
@@ -869,7 +873,7 @@ function renderSlate(){
 }
 
 /* ============================== team usage ============================== */
-const T_GRPDEF=[['odds','Odds'],['situational','Situational'],['redzone','Red zone'],
+const T_GRPDEF=[['odds','Odds'],['pace','Pace'],['passtend','Pass Tendencies'],['redzone','Red zone'],
                 ['efficiency','Efficiency'],['explosive','Explosives']];
 var GAMEVIEW=true;
 /* Short tabs: the 10-12 numbers that decide most research questions. Identity
@@ -951,29 +955,29 @@ function renderTeam(short=false){
     {k:'games',h:'G',f:(v,r)=>r._gid?`<span class="gcell" title="Jump to this matchup">${v??'–'}</span>`:esc(v??'–')},
 
     // ---- SITUATIONAL: baseline identity, then how it moves with the script
-    {grp:'situational',k:'plays_pg',h:'Plays/g',f:v=>f(v,1),style:S('plays_pg',true)},
-    {grp:'situational',k:'_pace',h:'Pace',f:v=>f(v,1),style:S('_pace',false)},
-    {grp:'situational',k:'_paceL',h:'Pace (up 7+)',f:v=>f(v,1),style:S('_paceL',false)},
-    {grp:'situational',k:'_paceT',h:'Pace (down 7+)',f:v=>f(v,1),style:S('_paceT',false)},
-    {grp:'situational',k:'_paceD',h:'Pace Δ',f:v=>sgn(v,1),style:S('_paceD',false)},
-    {grp:'situational',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
-    {grp:'situational',k:'_prL',h:'Pass% (up 7+)',f:pct0,style:S('_prL',true)},
-    {grp:'situational',k:'_prT',h:'Pass% (down 7+)',f:pct0,style:S('_prT',true)},
-    {grp:'situational',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
-    {grp:'situational',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
-    {grp:'situational',k:'_rrL',h:'Run% (up 7+)',f:pct0,style:S('_rrL',true)},
-    {grp:'situational',k:'_rrT',h:'Run% (down 7+)',f:pct0,style:S('_rrT',true)},
-    {grp:'situational',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
-    {grp:'situational',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
-    {grp:'situational',k:'_proeL',h:'PROE (up 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
-    {grp:'situational',k:'_proeT',h:'PROE (down 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
-    {grp:'situational',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
-    {grp:'situational',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
-    {grp:'situational',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
+    {grp:'pace',k:'plays_pg',h:'Plays/g',f:v=>f(v,1),style:S('plays_pg',true)},
+    {grp:'pace',k:'_pace',h:'Pace',f:v=>f(v,1),style:S('_pace',false)},
+    {grp:'pace',k:'_paceL',h:'Pace (up 7+)',f:v=>f(v,1),style:S('_paceL',false)},
+    {grp:'pace',k:'_paceT',h:'Pace (down 7+)',f:v=>f(v,1),style:S('_paceT',false)},
+    {grp:'pace',k:'_paceD',h:'Pace Δ',f:v=>sgn(v,1),style:S('_paceD',false)},
+    {grp:'passtend',k:'_pr',h:'Pass%',f:pct0,style:S('_pr',true)},
+    {grp:'passtend',k:'_prL',h:'Pass% (up 7+)',f:pct0,style:S('_prL',true)},
+    {grp:'passtend',k:'_prT',h:'Pass% (down 7+)',f:pct0,style:S('_prT',true)},
+    {grp:'passtend',k:'_prD',h:'Pass% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_prD',true)},
+    {grp:'passtend',k:'_rr',h:'Run%',f:pct0,style:S('_rr',true)},
+    {grp:'passtend',k:'_rrL',h:'Run% (up 7+)',f:pct0,style:S('_rrL',true)},
+    {grp:'passtend',k:'_rrT',h:'Run% (down 7+)',f:pct0,style:S('_rrT',true)},
+    {grp:'passtend',k:'_rrD',h:'Run% Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_rrD',true)},
+    {grp:'passtend',k:'_proe',h:'PROE',f:v=>sgn(v==null?null:v*100,1),style:S('_proe',true)},
+    {grp:'passtend',k:'_proeL',h:'PROE (up 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeL',true)},
+    {grp:'passtend',k:'_proeT',h:'PROE (down 7+)',f:v=>sgn(v==null?null:v*100,1),style:S('_proeT',true)},
+    {grp:'passtend',k:'_proeD',h:'PROE Δ',f:v=>sgn(v==null?null:v*100,1),style:S('_proeD',true)},
+    {grp:'passtend',k:'neutral_pass_rate',h:'Neutral pass%',f:pct0,style:S('neutral_pass_rate',true)},
+    {grp:'passtend',k:'early_down_pass_rate',h:'Early-down pass%',f:pct0,style:S('early_down_pass_rate',true)},
+    {grp:'passtend',k:'rz_td_rate',h:'RZ TD%',f:pct0,style:S('rz_td_rate',true)},
 
     // ---- RED ZONE
     {grp:'redzone',k:'rz_trips_pg',h:'RZ trips/g',f:v=>f(v,2),style:S('rz_trips_pg',true)},
-    {grp:'redzone',k:'rz_td_rate',h:'RZ TD%',f:pct0,style:S('rz_td_rate',true)},
     {grp:'redzone',k:'rz_pass_rate',h:'RZ pass%',f:pct0,style:S('rz_pass_rate',true)},
 
     // ---- EXPLOSIVES
@@ -1518,14 +1522,25 @@ function segs(el,items,cur,on){
   el.innerHTML=items.map(([v,l])=>`<button data-v="${v}" class="${v===cur?'on':''}">${l}</button>`).join('');
   el.querySelectorAll('button').forEach(b=>b.onclick=()=>on(b.dataset.v));
 }
-function grpChips(el,defs,state,on){
+function grpChips(el,defs,state,on,exclusiveKeys){
   if(!el)return;
   const draw=()=>{
     el.innerHTML=defs.map(([v,l])=>`<button data-v="${v}" class="${state[v]?'on':''}">${l}</button>`).join('');
     // re-bind after every redraw: innerHTML replaces the nodes, so handlers
     // attached to the old ones are gone
     el.querySelectorAll('button').forEach(b=>b.onclick=()=>{
-      state[b.dataset.v]=state[b.dataset.v]?0:1;
+      const v=b.dataset.v;
+      if(exclusiveKeys&&exclusiveKeys.includes(v)){
+        // Mutually exclusive among exclusiveKeys only -- e.g. Pace vs Pass
+        // Tendencies vs Efficiency clear each other out (that's what was
+        // turning the table into an ever-accumulating wall of columns),
+        // but a key left OUT of exclusiveKeys (Odds) keeps toggling
+        // independently since it's context, not a stat-view choice.
+        exclusiveKeys.forEach(k=>state[k]=0);
+        state[v]=1;
+      } else {
+        state[v]=state[v]?0:1;
+      }
       draw();          // <- the missing piece: reflect the new state
       on();
     });
@@ -1550,7 +1565,8 @@ function wire(){
   wireWinSeg('iq-win',()=>IQ.win,setIQWIN);
   segs($('#iq-mode'),[['pass','Pass game'],['run','Run game']],IQ.mode,v=>{IQ.mode=v;renderIQ();wireSegs('iq-mode',v);});
   const syncOddsUI=()=>{const t2o=$('#t2-odds'); if(t2o)t2o.className=TGRPS.odds?'on':'';};
-  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>{renderTeams();syncOddsUI();});
+  grpChips($('#t-grps'),T_GRPDEF,TGRPS,()=>{renderTeams();syncOddsUI();},
+    ['pace','passtend','redzone','efficiency','explosive']);
   const t2o=$('#t2-odds');
   if(t2o){
     t2o.className=TGRPS.odds?'on':'';
