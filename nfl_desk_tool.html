@@ -197,8 +197,8 @@ button.gm.on b{color:var(--ink)}
 .shootDetail[open] summary::before{content:'▾ '}
 .shootDetail summary:hover{color:var(--gold)}
 .shootNote{font-size:11px;color:var(--faint);margin:6px 0;line-height:1.4}
-.iqoff,.iqdef{font-weight:700;color:var(--ink);text-align:right}
-.iqdef{text-align:right}
+.iqoff,.iqdef{font-weight:700;color:var(--ink);text-align:left}
+.iqdef{text-align:left}
 @media (max-width:640px){
   .stripHead{grid-template-columns:1fr;text-align:center;gap:4px}
   .stripHead>div:last-child{justify-content:center}
@@ -770,7 +770,7 @@ function shootoutScore(mkt){
     return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:0,max:1};
   })();
   const totalPct=(()=>{
-    const totals=(MT.games||[]).map(g=>g.total).filter(v=>v!=null);
+    const totals=(MT.games||[]).map(g=>g.total_line).filter(v=>v!=null);
     if(!mkt||mkt.total==null||totals.length<2)return 0.5;
     return totals.filter(t=>t<mkt.total).length/(totals.length-1);
   })();
