@@ -786,9 +786,17 @@ function shootoutScore(mkt){
     return vals.length?{min:Math.min(...vals),max:Math.max(...vals)}:{min:0,max:1};
   })();
   const totalPct=(()=>{
+    if(!mkt||mkt.total==null)return 0.5;
     const totals=(MT.games||[]).map(g=>g.total_line).filter(v=>v!=null);
-    if(!mkt||mkt.total==null||totals.length<2)return 0.5;
-    return totals.filter(t=>t<mkt.total).length/(totals.length-1);
+    // Within-week percentile alone means the single highest total of a
+    // quiet week automatically hits 100 -- there's no ceiling above "best
+    // of 16 games." Blending in an absolute scale (typical NFL total range)
+    // means a genuinely modest week can't produce a false 100, and an
+    // exceptional total still reads as exceptional even in a high-scoring
+    // week where it wouldn't stand out by rank alone.
+    const weekPct=totals.length>=2?totals.filter(t=>t<mkt.total).length/(totals.length-1):0.5;
+    const absPct=Math.max(0,Math.min(1,(mkt.total-36.5)/(58-36.5)));
+    return (weekPct+absPct)/2;
   })();
   const paceA=(rShoot(o.plays_pg_rk)+scaleTo01(d.def_plays_pg,range))/2;   // our tempo x their plays allowed
   const paceB=(rShoot(d.plays_pg_rk)+scaleTo01(o.def_plays_pg,range))/2;
