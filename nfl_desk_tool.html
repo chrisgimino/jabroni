@@ -180,6 +180,9 @@ button.gm.on b{color:var(--ink)}
 .shootScore{font-size:28px;font-weight:800;color:var(--gold);text-align:center;
   margin-bottom:4px;line-height:1}
 .shootScore span{font-size:14px;font-weight:600;color:var(--faint)}
+.shootTotals{text-align:center;margin-bottom:6px}
+.shootTotals .gtotal{font-size:13px;font-weight:700;color:var(--ink)}
+.shootTotals .itotals{font-size:11.5px;color:var(--faint);margin-top:1px}
 .shootDetail{margin-top:6px;border-top:1px solid var(--line);padding-top:6px}
 .shootDetail summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--dim);
   list-style:none}
@@ -347,7 +350,7 @@ function pctShade(rows,k,goodHigh=true){
 /* ---- rank conventions (continuity note §5 — ranks are never transformed) */
 function rkColor(t){return `background:${mix('#7a3a31','#2c6a48',t)};color:#fff`;}
 function rk2(rank,allowed=false,n=32){
-  if(rank==null||isNaN(rank))return'<span class="rk" style="color:var(--faint)">–</span>';
+  if(rank==null||isNaN(rank))return'<span class="rk" style="color:var(--faint)" title="Not ranked for this stat">–</span>';
   const t=allowed?(rank-1)/(n-1):1-(rank-1)/(n-1);
   return `<span class="rk" style="${rkColor(t)}">#${rank}</span>`;
 }
@@ -1286,10 +1289,14 @@ function renderIQStrip(tp){
   // Potential" is deliberately shown as its real inputs (total, implied,
   // combined pace/efficiency) rather than one invented composite score --
   // a blended number here would be a guess dressed up as a stat.
+  // A blank cell here always means "no qualifying sample for this stat in
+  // this window/matchup" (not a real zero) -- a bare dash reads as
+  // ambiguous, so it gets a title explaining that on hover.
+  const blank=`<span title="No qualifying sample for this stat yet">–</span>`;
   const row=(label,offV,offRk,defV,defRk,fmt)=>`
       <div class="iqrow"><span class="iqlbl">${label}</span>
-        <span class="iqoff">${fmt(offV)} ${rk2(offRk)}</span>
-        <span class="iqdef">${fmt(defV)} ${rk2(defRk)}</span></div>`;
+        <span class="iqoff">${offV==null?blank:fmt(offV)} ${rk2(offRk)}</span>
+        <span class="iqdef">${defV==null?blank:fmt(defV)} ${rk2(defRk)}</span></div>`;
   const panel=(title,body)=>`<div class="iqpanel"><h4>${title}</h4>${body}</div>`;
   const pct=v=>pct0(v), sg=v=>sgn(v,3), s1=v=>f(v,1);
 
@@ -1328,8 +1335,10 @@ function renderIQStrip(tp){
        <span class="iqoff" style="grid-column:2/4;text-align:right">${score100(v)}/100</span></div>`).join('');
   const shootP=panel('Shootout Potential',
     `<div class="shootScore">${shoot.score}<span>/100</span></div>`+
-    `<div class="iqrow"><span class="iqlbl">Game total</span>
-       <span class="iqoff" style="grid-column:2/4;text-align:center">${mkt?`O/U ${f(mkt.total,1)} · ${esc(IQ.off)} ${f(mkt.implied,1)} – ${esc(IQ.def)} ${f(mkt.opp_implied,1)}`:'no line for this matchup'}</span></div>`+
+    (mkt?`<div class="shootTotals">
+        <div class="gtotal">O/U ${f(mkt.total,1)}</div>
+        <div class="itotals">${esc(IQ.off)} ${f(mkt.implied,1)} – ${esc(IQ.def)} ${f(mkt.opp_implied,1)}</div>
+      </div>`:`<div class="shootTotals"><div class="itotals">no line for this matchup</div></div>`)+
     `<details class="shootDetail"><summary>What's in this score?</summary>
        <div class="shootNote">Each row below is that input's own read, 0-100 (higher = more shootout-friendly).</div>
        ${shoot.qA&&shoot.qB?`<div class="iqrow"><span class="iqlbl">QBs</span>
