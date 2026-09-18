@@ -594,7 +594,7 @@ var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
 var TGRPS={pace:1,passlead:0,passtrail:0,passneutral:0,redzone:0,offeff:0,defeff:0,explosive:0,odds:0};
-var PGRPS={dfs:0,basic:1,share:0,redzone:0,explosive:0,efficiency:0,ratings:1};
+var PGRPS={dfs:0,basic:1,share:0,redzone:0,explosive:0,efficiency:0,ratings:0};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
 const WINDOWS=['season','last6','last4','last2'];
@@ -1619,7 +1619,7 @@ function wire(){
       renderTeams();};
   }
   grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false),
-    ['dfs','basic','share','redzone','explosive','efficiency']);
+    ['dfs','basic','share','redzone','explosive','efficiency','ratings']);
   /* Multi-select positions. A plain click selects just that position (the
      common case); ctrl/cmd/shift-click adds or removes one. Never lets the
      selection go empty. */
