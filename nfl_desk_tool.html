@@ -51,6 +51,10 @@ main{padding:14px 16px 8px;max-width:1560px;margin:0 auto}
   .ctl{gap:6px}
   .ctl .lbl{font-size:11.5px}
   .seg button{padding:4px 8px;font-size:11.5px}
+  select,input{padding:4px 6px;font-size:12.5px}
+  input[type=number]{width:44px}
+  select{max-width:88px}
+  #iq-off,#iq-def{max-width:70px}
 }
 .seg button.on{background:var(--panel2);color:var(--gold)}
 .chips{display:inline-flex;gap:5px;flex-wrap:wrap}
@@ -131,9 +135,9 @@ thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)
 .cards{display:flex;gap:4px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .gm{background:var(--panel);border:1px solid var(--line);border-radius:5px;
   padding:4px 6px;font-size:11px;line-height:1.3;text-align:left;
-  flex:0 0 132px;width:132px}
-.gm .row1{display:flex;justify-content:space-between;align-items:baseline;gap:4px}
-.gm .when{color:var(--faint);font-size:9.5px;white-space:nowrap}
+  flex:0 0 148px;width:148px}
+.gm .row1{display:flex;align-items:baseline;gap:4px;flex-wrap:nowrap}
+.gm .when{color:var(--faint);font-size:9.5px;white-space:nowrap;margin-bottom:1px}
 .gm .row2{display:flex;justify-content:space-between;color:var(--faint);font-size:10px}
 .gm b{color:var(--dim);font-weight:600}
 .gm .tm{font-size:10.5px;padding:0 4px;border-radius:3px}
@@ -859,8 +863,8 @@ function gameCard(g,sel){
   const on=(sel&&IQ.game===gameKey(g))?' on':'';
   const pick=sel?` data-sid="${esc(gameKey(g))}"`:'';
   return `<${tag} class="gm${on}"${pick}>
-    <div class="row1"><span>${tmChip(a)} <span style="color:var(--faint)">@</span> ${tmChip(h)}</span>
-      <span class="when">${esc(etDay(g.date,g.weekday))} ${esc(etTime(g.time,true))}</span></div>
+    <div class="row1"><span>${tmChip(a)} <span style="color:var(--faint)">@</span> ${tmChip(h)}</span></div>
+    <div class="when">${esc(etDay(g.date,g.weekday))} ${esc(etTime(g.time,true))}</div>
     <div class="row2"><span>${esc(h)} <b>${spreadTxt(g.spread_line==null?null:-g.spread_line)}</b></span>
       <span>O/U <b>${f(g.total_line,1)}</b></span></div>
     <div class="row2"><span>${esc(a)} <b>${f(g.away_implied,1)}</b></span>
@@ -1615,8 +1619,21 @@ function wire(){
       for(const j of ['t-gameview','t2-gameview']){const e=$('#'+j);if(e)e.className=GAMEVIEW?'on':'';}
       renderTeams();};
   }
-  grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false),
-    ['dfs','basic','share','redzone','explosive','efficiency','ratings']);
+  const drawPlGrps=()=>{
+    // Flex has no explosive-play or efficiency columns at all (PL_MIXED
+    // doesn't define any) -- showing those chips there just clicks through
+    // to an empty table. Hide them instead of leaving a dead option, and if
+    // one was already active when the user switches into Flex, fall back
+    // to Basic rather than silently rendering nothing.
+    const hideInFlex=['efficiency','explosive'];
+    const defs=isFlex()?PL_GRPDEF.filter(([k])=>!hideInFlex.includes(k)):PL_GRPDEF;
+    if(isFlex()&&hideInFlex.some(k=>PGRPS[k])){
+      hideInFlex.forEach(k=>PGRPS[k]=0);
+      PGRPS.basic=1;
+    }
+    grpChips($('#pl-grps'),defs,PGRPS,()=>{renderPlayers(false);},
+      ['dfs','basic','share','redzone','explosive','efficiency','ratings']);
+  };
   /* Multi-select positions. A plain click selects just that position (the
      common case); ctrl/cmd/shift-click adds or removes one. Never lets the
      selection go empty. */
@@ -1632,9 +1649,9 @@ function wire(){
       else if(add){ PSEL.has(v)?PSEL.delete(v):PSEL.add(v); if(!PSEL.size)PSEL.add(v); }
       else { PSEL=new Set([v]); }
       PPOS=[...PSEL][0];
-      drawPos(); renderPlayerTabs();    });
+      drawPos(); drawPlGrps(); renderPlayerTabs();    });
   });
-  drawPos();
+  drawPos(); drawPlGrps();
   const on=(sel,ev,fn)=>{const e=$(sel);if(e)e[ev]=fn;};
   on('#t-q','oninput',()=>renderTeam(false)); on('#t2-q','oninput',()=>renderTeam(true));
   on('#pl-team','onchange',()=>renderPlayers(false)); on('#pl-q','oninput',()=>renderPlayers(false));
