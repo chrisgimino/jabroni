@@ -266,7 +266,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
       <span class="chips" id="pl-pos"></span>
       <span class="lbl">Window</span><span class="seg" id="pl-win"></span>
       <select id="pl-team"><option value="">All teams</option></select>
-      <select id="pl-luck"><option value="">Any luck</option><option>OVER</option><option>UNDER</option><option>NEUTRAL</option></select>
       <input id="pl-q" placeholder="Find a player" size="14">
       <span class="lbl">Min games <input type="number" id="pl-ming" value="1" min="0" max="18"></span>
       <span class="lbl">Min opps <input type="number" id="pl-mino" value="0" min="0" step="5"></span>
@@ -1191,7 +1190,7 @@ const PL_MIXED=[['carries_pg','Car/g',1,'basic'],['targets_pg','Tgt',1,'basic'],
   ['routes_pg','Routes/g',1,'basic'],
   ['carry_share','Rush%','p','share'],['target_share','Tgt sh','p','share'],
   ['tprr','TPRR','p','share'],['snap_pct','Snap%','p','share'],
-  ['ypt','YPT',2,'efficiency']];
+  ['ypt','YPT',2,'share']];
 function defaultSortKey(pos,mixed){
   if(mixed)return'fp_ppr_pg';
   return pos==='QB'?'pass_att_pg':pos==='RB'?'workhorse':'dominator';
@@ -1204,12 +1203,10 @@ function renderPlayers(short=false){
   const wanted=new Set([...sel].flatMap(p=>p==='RB'?['RB','FB']:[p]));
   let rows=profs(PWIN).filter(p=>wanted.has(p.position));
   const tf=$('#'+px+'-team')?.value||'', q=($('#'+px+'-q')?.value||'').toLowerCase(),
-    lf=short?'':($('#pl-luck')?.value||''),
     ming=short?defaultMinGames():+($('#pl-ming')?.value||0), mino=short?0:+($('#pl-mino')?.value||0),
     minp=+($('#'+px+'-minp')?.value||0);
   if(tf)rows=rows.filter(r=>r.team===tf);
   if(q)rows=rows.filter(r=>(r.player||'').toLowerCase().includes(q));
-  if(lf)rows=rows.filter(r=>r.luck_label===lf);
   rows=rows.filter(r=>r.games>=ming&&r.opportunities>=mino);
   if(HASPROJ&&minp>0)rows=rows.filter(r=>r.rg_proj!=null&&r.rg_proj>minp);
   if($('#'+px+'-slate')?.checked)rows=rows.filter(r=>r.opp);
@@ -1644,7 +1641,6 @@ function wire(){
   on('#pl2-team','onchange',()=>renderPlayers(true)); on('#pl2-q','oninput',()=>renderPlayers(true));
   on('#pl2-slate','onchange',()=>renderPlayers(true));
   const mp2=$('#pl2-minp'); if(mp2)mp2.oninput=()=>renderPlayers(true);
-  on('#pl-luck','onchange',()=>renderPlayers(false));
   on('#pl-ming','oninput',()=>renderPlayers(false)); on('#pl-mino','oninput',()=>renderPlayers(false));
   const mp=$('#pl-minp'); if(mp)mp.oninput=()=>renderPlayers(false);
   on('#pl-slate','onchange',()=>renderPlayers(false));
@@ -1667,7 +1663,16 @@ const WINDOW_MIN_GAMES=1;
 function seasonGames(s){
   const rows=Object.values(MT.teams)
     .map(t=>(t.profile||[]).find(p=>p.season===s&&p.window==='season')).filter(Boolean);
-  return {teams:rows.length, max:rows.length?Math.max(...rows.map(p=>p.games)):0};
+  // Mode (most common games-played count), not max -- max gets thrown off
+  // the moment a single early game (Thursday night, say) puts one or two
+  // teams a game ahead of the other 30, which was wrongly bumping the
+  // Min-games filter up for the whole league before most teams had even
+  // played their week yet.
+  const counts={};
+  rows.forEach(p=>{counts[p.games]=(counts[p.games]||0)+1;});
+  let mode=0,modeCount=0;
+  Object.entries(counts).forEach(([g,c])=>{if(c>modeCount){mode=+g;modeCount=c;}});
+  return {teams:rows.length, max:rows.length?Math.max(...rows.map(p=>p.games)):0, mode};
 }
 function defaultSeason(seasons){
   const cur=MT.meta.current_season;
@@ -1680,7 +1685,7 @@ function defaultSeason(seasons){
 /* A fixed "min 3 games" empties both player tabs in week 1, when nobody has
    three. Cap the default at what the current window can actually supply. */
 function defaultMinGames(){
-  return Math.max(1, Math.min(3, seasonGames(SEASON).max || 1));
+  return Math.max(1, Math.min(3, seasonGames(SEASON).mode || 1));
 }
 function defaultWindow(){
   return seasonGames(SEASON).max>=WINDOW_MIN_GAMES?'season':'last6';
