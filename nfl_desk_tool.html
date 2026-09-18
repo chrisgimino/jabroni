@@ -233,9 +233,7 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <button data-t="tshort">Team short</button>
     <button data-t="player">Player usage</button>
   </nav>
-  <div class="hctl">
-    <span id="stamp"></span>
-  </div>
+  <div class="hctl"></div>
 </header>
 <main>
   <div id="slate"></div>
@@ -1738,8 +1736,6 @@ function boot(data){
   if(pw2)pw2.innerHTML=HASPROJ
     ?'Min proj <input type="number" id="pl2-minp" value="4" min="0" step="0.5">'
     :'';
-  const wk=MT.meta.current_week;
-  $('#stamp').textContent=(wk?`Week ${wk} · `:'')+'data '+(MT.meta.generated_at||'').slice(0,10)+seasonNote();
   wire(); setTab(TAB); renderAll();
 }
 (function load(){
