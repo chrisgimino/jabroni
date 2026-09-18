@@ -108,7 +108,7 @@ thead tr.grow th.stick{position:sticky;left:0;z-index:4;background:var(--panel2)
 .rk{display:inline-block;min-width:30px;text-align:center;padding:0 5px;
   border-radius:4px;font-weight:700;font-size:11.5px}
 .rksub{color:var(--faint);font-size:11px;font-weight:500;margin-left:2px}
-.lk{font-weight:700;font-size:11px;padding:1px 6px;border-radius:4px}
+.lkarrow{font-size:11px;margin-left:2px;font-weight:700}
 .st{font-weight:800;font-size:9.5px;padding:1px 4px;border-radius:3px;margin-left:5px;letter-spacing:.3px}
 .st.q{background:#6b5a1f;color:#f6e7b0}.st.d{background:#7a4a25;color:#fbe0c8}
 .st.o{background:#7a3a31;color:#fbe6e2}
@@ -232,7 +232,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
     <button data-t="team">Team usage</button>
     <button data-t="tshort">Team short</button>
     <button data-t="player">Player usage</button>
-    <button data-t="pshort">Player short</button>
   </nav>
   <div class="hctl">
     <span id="stamp"></span>
@@ -280,20 +279,6 @@ footer .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertica
       <span class="count" id="pl-count"></span>
     </div>
     <div class="tblwrap"><div id="pl-table"></div></div>
-  </section>
-
-  <section class="pane" id="p-pshort">
-    <div class="ctl">
-      <span class="chips" id="pl2-pos"></span>
-      <span class="lbl">Window</span><span class="seg" id="pl2-win"></span>
-      <select id="pl2-team"><option value="">All teams</option></select>
-      <input id="pl2-q" placeholder="Find a player" size="14">
-      <span class="lbl" id="pl2-projwrap"></span>
-      <span class="lbl"><input type="checkbox" id="pl2-slate" checked> playing this week</span>
-      <span class="count" id="pl2-count"></span>
-    </div>
-    <div class="tblwrap"><div id="pl2-table"></div></div>
-    <p class="note">Ten to twelve position-shaped numbers on top of projection, salary and ownership. Click a player for his window progression; the full tab has everything else.</p>
   </section>
 
   <section class="pane on" id="p-iq">
@@ -404,9 +389,9 @@ const TIER_COLOR={'Bell cow':'#2c6a48','Alpha':'#2c6a48','Lead':'#3d6a4a','Prima
   'Marginal':'#5a3630'};
 const tierChip=t=>t?`<span class="lk" style="background:${TIER_COLOR[t]||'#333'};color:#e7ebf1">${esc(t)}</span>`
   :'<span class="lk" style="color:var(--faint)">–</span>';
-const luckChip=l=>l==='OVER'?'<span class="lk" style="background:#7a3a31;color:#fff">OVER</span>'
-  :l==='UNDER'?'<span class="lk" style="background:#2c6a48;color:#fff">UNDER</span>'
-  :'<span class="lk" style="color:var(--faint)">–</span>';
+const luckArrow=l=>l==='OVER'?'<span class="lkarrow" style="color:var(--clay)" title="OVER -- production ran ahead of usage, regression risk">▼</span>'
+  :l==='UNDER'?'<span class="lkarrow" style="color:var(--turf)" title="UNDER -- usage says buy low">▲</span>'
+  :'';
 
 /* header tooltips — plain language, one job each */
 const TIP={
@@ -520,7 +505,8 @@ const tip=k=>TIP[k]?` title="${esc(TIP[k])}"`:'';
 const TSTATE=new WeakMap();
 const GRPLABEL_MAP={pace:'Pace',passlead:'Pass — Lead',passtrail:'Pass — Trail',passneutral:'Pass — Neutral',
   redzone:'Red zone',offeff:'Off Efficiency',defeff:'Def Efficiency',
-  explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck',odds:'Odds'};
+  explosive:'Explosives',usage:'Usage',ratings:'Ratings & luck',odds:'Odds',
+  dfs:'DFS',basic:'Basic',share:'Share',efficiency:'Efficiency'};
 function GRPLABEL(g){return GRPLABEL_MAP[g]||g;}
 function table(el,cols,rows,opts={}){
   if(!el)return;
@@ -610,7 +596,7 @@ var PSEL=new Set(['RB']);
 const POS_FAMILY=p=>['RB','FB'].includes(p)?'RB':p==='QB'?'QB':'REC';
 const selFamilies=()=>new Set([...PSEL].map(POS_FAMILY));
 var TGRPS={pace:1,passlead:0,passtrail:0,passneutral:0,redzone:0,offeff:0,defeff:0,explosive:0,odds:0};
-var PGRPS={usage:1,redzone:0,explosive:0,efficiency:0,ratings:1};
+var PGRPS={dfs:0,basic:1,share:0,redzone:0,explosive:0,efficiency:0,ratings:1};
 var IQ={off:null,def:null,mode:'pass',win:'season',game:null};
 var HASPROJ=false, HASSTATUS=false, IQ_BOOTED=false;
 const WINDOWS=['season','last6','last4','last2'];
@@ -917,15 +903,6 @@ var GAMEVIEW=true;
    switching between them keeps your context. */
 const T_SHORT=['_spread','_total','_implied','plays_pg','_pace','_pr','_proe','_prD',
                'rz_td_rate','off_epa_pp','def_pass_epa_pp','def_rush_epa_pp'];
-const P_SHORT={
-  QB:['pass_att_pg','pass_yds_pg','pass_ypa','cpoe','pass_epa_per_att','carries_pg',
-      'rush_yds_pg','rz_tds','fp_ppr_pg','luck_fp_pg'],
-  RB:['carries_pg','carry_share','targets_pg','target_share','rz_share','snap_pct',
-      'ypc','tprr','workhorse','fp_ppr_pg','luck_fp_pg'],
-  WR:['targets_pg','target_share','route_rate','tprr','yprr','air_yards_share','rz_share',
-      'adot','dominator','fp_ppr_pg','luck_fp_pg'],
-};
-P_SHORT.TE=P_SHORT.WR;
 const P_IDENTITY=['player','team_current','opp','rg_proj','rg_salary','rg_own','team_implied'];
 const T_IDENTITY=['team','_opp','_kick'];
 /* Baseline / leading / trailing / differential for the script-sensitive
@@ -1125,30 +1102,33 @@ function toggleSplits(team,tr,span){
 }
 
 /* ============================== player usage ============================== */
-const PL_GRPDEF=[['usage','Usage'],['redzone','Red zone'],['explosive','Explosives'],
-                 ['efficiency','Efficiency'],['ratings','Ratings & luck']];
+const PL_GRPDEF=[['dfs','DFS'],['basic','Basic'],['share','Share'],['redzone','Red zone'],
+                 ['explosive','Explosive'],['efficiency','Efficiency'],['ratings','Ratings']];
 const PL_COLS={
-  QB:[['pass_att_pg','Att/g',1,'usage'],['pass_yds_pg','Pass Y/g',1,'usage'],
-      ['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
+  QB:[['pass_att_pg','Att/g',1,'basic'],['pass_yds_pg','Pass Y/g',1,'basic'],
+      ['carries_pg','Car/g',1,'basic'],['rush_yds_pg','Rush Y/g',1,'basic'],
       ['pass_ypa','Y/A',2,'efficiency'],
       ['pass_adot','aDOT',1,'efficiency'],['cpoe','CPOE',1,'efficiency'],
       ['pass_epa_per_att','EPA/att',3,'efficiency'],['sack_rate','Sack%','p','efficiency'],
-      ['ypc','Y/C',2,'efficiency']],
-  RB:[['carries_pg','Car/g',1,'usage'],['rush_yds_pg','Rush Y/g',1,'usage'],
-      ['carry_share','Rush%','p','usage'],
-      ['targets_pg','Tgt%',1,'usage'],['target_share','Tgt sh','p','usage'],
-      ['route_rate','Route%','p','usage'],['tprr','TPRR','p','usage'],
-      ['snap_pct','Snap%','p','usage'],
-      ['ypc','Y/C',2,'efficiency'],['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
+      ['ypc','Y/C',2,'basic']],
+  RB:[['carries_pg','Car/g',1,'basic'],['rush_yds_pg','Rush Y/g',1,'basic'],
+      ['targets_pg','Tgt',1,'basic'],['ypc','Y/C',2,'basic'],
+      ['carry_share','Rush%','p','share'],
+      ['target_share','Tgt sh','p','share'],
+      ['route_rate','Route%','p','share'],['tprr','TPRR','p','share'],
+      ['snap_pct','Snap%','p','share'],
+      ['rush_epa_per_att','Rush EPA/att',3,'efficiency'],
       ['yprr','YPRR',2,'efficiency'],
       ['catch_rate','Catch%','p','efficiency'],['ypt','YPT',2,'efficiency']],
-  WR:[['targets_pg','Tgt%',1,'usage'],['rec_yds_pg','Rec Y/g',1,'usage'],
-      ['target_share','Tgt sh','p','usage'],
-      ['routes_pg','Routes/g',1,'usage'],['route_games','Route gms',0,'usage'],['route_rate','Route%','p','usage'],
-      ['tprr','TPRR','p','usage'],
-      ['air_yards_share','AirYard%','p','usage'],['wopr','WOPR',2,'usage'],
-      ['adot','aDOT',1,'usage'],
-      ['deep_targets','Deep tgt',0,'usage'],['snap_pct','Snap%','p','usage'],
+  WR:[['targets_pg','Tgt',1,'basic'],['rec_yds_pg','Rec Y/g',1,'basic'],
+      ['routes_pg','Routes/g',1,'basic'],['route_games','Route gms',0,'basic'],
+      ['deep_targets','Deep tgt',0,'basic'],
+      ['target_share','Tgt sh','p','share'],
+      ['route_rate','Route%','p','share'],
+      ['tprr','TPRR','p','share'],
+      ['air_yards_share','AirYard%','p','share'],['wopr','WOPR',2,'share'],
+      ['snap_pct','Snap%','p','share'],
+      ['adot','aDOT',1,'efficiency'],
       ['yprr','YPRR',2,'efficiency'],['catch_rate','Catch%','p','efficiency'],
       ['ypt','YPT',2,'efficiency'],['yac_per_rec','YAC/rec',1,'efficiency'],
       ['rec_epa_per_tgt','EPA/tgt',3,'efficiency']],
@@ -1171,7 +1151,7 @@ function RATING_COLS(pos,isRB){
 function RZ_COLS(pos,S){
   const common=[
     {grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
-    {grp:'redzone',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
+    {grp:'share',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
     {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}];
   if(pos==='QB')return[
     {grp:'redzone',k:'i5_carries',h:'i5 car',style:S('i5_carries')},
@@ -1209,10 +1189,11 @@ function EXPL_COLS(pos,S){
 }
 /* shared columns for a mixed selection: the ones that mean the same thing for
    a back and a receiver */
-const PL_MIXED=[['carries_pg','Car/g',1,'usage'],['carry_share','Rush%','p','usage'],
-  ['targets_pg','Tgt%',1,'usage'],['target_share','Tgt sh','p','usage'],
-  ['routes_pg','Routes/g',1,'usage'],['tprr','TPRR','p','usage'],
-  ['snap_pct','Snap%','p','usage'],['ypt','YPT',2,'efficiency']];
+const PL_MIXED=[['carries_pg','Car/g',1,'basic'],['targets_pg','Tgt',1,'basic'],
+  ['routes_pg','Routes/g',1,'basic'],
+  ['carry_share','Rush%','p','share'],['target_share','Tgt sh','p','share'],
+  ['tprr','TPRR','p','share'],['snap_pct','Snap%','p','share'],
+  ['ypt','YPT',2,'efficiency']];
 function defaultSortKey(pos,mixed){
   if(mixed)return'fp_ppr_pg';
   return pos==='QB'?'pass_att_pg':pos==='RB'?'workhorse':'dominator';
@@ -1247,43 +1228,39 @@ function renderPlayers(short=false){
     {k:'team_current',h:'Team',f:(v,r)=>tmChip(v||r.team)},
     {k:'opp',h:'Opp',f:(v,r)=>v?`${r.is_home?'vs':'@'} ${tmChip(v)}`:'–'},
     ...(HASPROJ?[
-      {k:'rg_proj',h:'Proj',num:1,f:v=>f(v,1),style:pctShade(rows,'rg_proj',true)},
-      {k:'rg_salary',h:'Salary',f:v=>v==null?'–':'$'+Math.round(v).toLocaleString()},
-      {k:'rg_own',h:'Own',f:v=>v==null?'–':pct1(v),style:pctShade(rows,'rg_own',true)},
-      {k:'rg_value',h:'Pts/$K',f:v=>f(v,2),style:pctShade(rows,'rg_value',true)},
+      {grp:'dfs',k:'rg_proj',h:'Proj',num:1,f:v=>f(v,1),style:pctShade(rows,'rg_proj',true)},
+      {grp:'dfs',k:'rg_salary',h:'Salary',f:v=>v==null?'–':'$'+Math.round(v).toLocaleString()},
+      {grp:'dfs',k:'rg_own',h:'Own',f:v=>v==null?'–':pct1(v),style:pctShade(rows,'rg_own',true)},
+      {grp:'dfs',k:'rg_value',h:'Pts/$K',f:v=>f(v,2),style:pctShade(rows,'rg_value',true)},
     ]:[]),
-    {k:'team_implied',h:'Implied',f:v=>f(v,1),style:pctShade(rows,'team_implied',true)},
+    {grp:'dfs',k:'team_implied',h:'Implied',f:v=>f(v,1),style:pctShade(rows,'team_implied',true)},
     // the usage grade is the headline number, so it sits ahead of the counts
     ...(mixed
       ?[{grp:'ratings',k:'workhorse',h:'Workhorse',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)},
         {grp:'ratings',k:'dominator',h:'Dominator',f:v=>f(v,0),style:v=>heatDir(v,0,100,true)}]
       :RATING_COLS(pos,isRB)),
-    {k:'games',h:'G'},
-    {k:'opportunities',h:'Touches'},
+    {grp:'basic',k:'games',h:'G'},
+    {grp:'basic',k:'opportunities',h:'Touches'},
     ...(mixed?PL_MIXED:PL_COLS[pos]).map(([k,h,d,g])=>({k,h,grp:g,num:k===dsk?1:0,
       f:d==='p'?pct0:(v)=>f(v,d),
       style:S(k,k!=='sack_rate')})),
     ...(mixed?[]:RZ_COLS(pos,S)),
     ...(mixed?[{grp:'redzone',k:'rz_opp_pg',h:'RZ opp/g',f:v=>f(v,2),style:S('rz_opp_pg')},
-               {grp:'redzone',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
+               {grp:'share',k:'rz_share',h:'RZ Touch%',f:pct0,style:S('rz_share')},
                {grp:'redzone',k:'rz_tds',h:'RZ TDs',style:S('rz_tds')}]:[]),
     ...(mixed?[]:EXPL_COLS(pos,S)),
     {grp:'ratings',k:'fp_ppr_pg',h:'FP/g',f:v=>f(v,1),style:S('fp_ppr_pg')},
     {grp:'ratings',k:'xfp_pg',h:'xFP/g',f:v=>f(v,1),style:S('xfp_pg')},
-    {grp:'ratings',k:'luck_fp_pg',h:'Luck',f:v=>sgn(v,1),style:v=>heatDir(v,-4,4,false)},
-    {grp:'ratings',k:'luck_label',h:'',f:v=>luckChip(v)},
+    // Luck value and its OVER/UNDER read merged into one cell (a small
+    // triangle next to the number) instead of burning a whole separate
+    // column on a label that's really just decorating the number beside it.
+    {grp:'ratings',k:'luck_fp_pg',h:'Luck',f:(v,r)=>`${sgn(v,1)} ${luckArrow(r.luck_label)}`,style:v=>heatDir(v,-4,4,false)},
   ];
   // participation posts later than the box scores; with no coverage in this
   // window the route columns would be an empty stripe, so drop them and say why
   const ROUTE_KEYS=['routes_pg','route_games','route_rate','tprr','yprr'];
   const routeCov=rows.some(r=>(r.route_games||0)>0);
-  const shortKeys=mixed
-    ?['position','carries_pg','carry_share','targets_pg','target_share','rz_share',
-      'snap_pct','tprr','workhorse','dominator','fp_ppr_pg','luck_fp_pg']
-    :(P_SHORT[pos]||[]);
-  cols=short
-    ?cols.filter(c=>P_IDENTITY.includes(c.k)||shortKeys.includes(c.k))
-    :cols.filter(c=>!c.grp||PGRPS[c.grp]);
+  cols=cols.filter(c=>!c.grp||PGRPS[c.grp]);
   if(!routeCov)cols=cols.filter(c=>!ROUTE_KEYS.includes(c.k));
   table($('#'+px+'-table'),cols,rows,{reset:true,rowClick:(r,tr)=>togglePlayer(r,tr,cols.length)});
   const pc=$('#'+px+'-count'); if(pc)pc.textContent=rows.length+' players';
@@ -1296,7 +1273,7 @@ function togglePlayer(row,tr,span){
   const w=n=>all.find(p=>p.window===n)||{};
   const keys=row.position==='QB'
     ?[['pass_att_pg','Att/g',1],['pass_ypa','Y/A',2],['cpoe','CPOE',1],['pass_epa_per_att','EPA/att',3],['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']]
-    :[['carries_pg','Car/g',1],['carry_share','Rush%','p'],['targets_pg','Tgt%',1],['target_share','Tgt sh','p'],
+    :[['carries_pg','Car/g',1],['carry_share','Rush%','p'],['targets_pg','Tgt',1],['target_share','Tgt sh','p'],
       ...(['RB','FB'].includes(row.position)?[['workhorse','Workhorse',0]]:[['dominator','Dominator',0]]),
       ['fp_ppr_pg','FP/g',1],['xfp_pg','xFP/g',1],['luck_fp_pg','Luck','s']];
   const fmt=(v,d)=>d==='p'?pct0(v):d==='s'?sgn(v,1):f(v,d);
@@ -1643,7 +1620,8 @@ function wire(){
       for(const j of ['t-gameview','t2-gameview']){const e=$('#'+j);if(e)e.className=GAMEVIEW?'on':'';}
       renderTeams();};
   }
-  grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false));
+  grpChips($('#pl-grps'),PL_GRPDEF,PGRPS,()=>renderPlayers(false),
+    ['dfs','basic','share','redzone','explosive','efficiency']);
   /* Multi-select positions. A plain click selects just that position (the
      common case); ctrl/cmd/shift-click adds or removes one. Never lets the
      selection go empty. */
@@ -1681,7 +1659,7 @@ function wire(){
 }
 function wireSegs(id,v){const e=$('#'+id);if(e)e.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));}
 function renderTeams(){renderTeam(false);renderTeam(true);}
-function renderPlayerTabs(){renderPlayers(false);renderPlayers(true);}
+function renderPlayerTabs(){renderPlayers(false);}
 function renderAll(){renderSlate();renderTeams();renderPlayerTabs();renderIQ();}
 /* The current season is the default as soon as it has any games, because the
    lastN windows roll back into the prior season and stay meaningful. What has
