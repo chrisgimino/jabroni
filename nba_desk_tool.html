@@ -504,7 +504,8 @@ select{background:var(--panel2);border:1px solid var(--rule);border-radius:6px;p
 .tabs button:hover{color:var(--ink)}
 .tabs button[aria-selected="true"]{background:var(--panel2);color:var(--accent);border:0}
 .pgs{display:flex;align-items:center;gap:12px;min-height:30px;flex-wrap:nowrap}
-.pgs .use{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.pgs .use{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.rosf{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);white-space:nowrap;flex:0 0 auto}
 .pgs .ct{background:var(--accent);color:#fff;border-radius:9px;padding:0 6px;font-size:.68rem;margin-left:3px}
 .seg{background:var(--surface);border:1px solid var(--rule);border-radius:6px;flex:0 0 auto}
 .seg button{padding:4px 11px;color:var(--muted);font-weight:600;font-size:.82rem}
@@ -658,7 +659,7 @@ const IOK={DK:"dk",FD:"fd",PTS:"pts",REB:"reb",AST:"ast",FG3A:"fg3a",RIM_FGA:"ri
 const LIVE=D.slate_mode==="live";
 const onRoster=(team,id)=>!LIVE||D.teams[team].players.some(p=>p.id===id);
 const rosterRegs=team=>D.teams[team].onoff.filter(x=>onRoster(team,x.id));
-const tagS=p=>(p.starter?'<span class="badge g1" title="Projected starter (RG)">Starter</span> ':"")+(p.new_team?'<span class="badge lo" title="Played for another team in 2025-26">New team</span> ':"")+(p.nodata?'<span class="badge mid">No NBA data yet</span> ':"");
+const tagS=p=>(p.starter?'<span class="badge g1" title="Projected starter (RG)">Starter</span> ':"")+(p.new_team?'<span class="badge lo" title="Played for another team in ${D.season_label}">New team</span> ':"")+(p.nodata?'<span class="badge mid">No NBA data yet</span> ':"");
 function rosterChange(team){
   const T=D.teams[team], nu=T.players.filter(p=>p.new_team&&p.gp>0).sort((a,b)=>(b.mpg||0)*(b.gp||0)-(a.mpg||0)*(a.gp||0));
   const gone=T.onoff.filter(x=>!onRoster(team,x.id)).sort((a,b)=>b.mpg*b.gp-a.mpg*a.gp);
@@ -774,9 +775,9 @@ function renderBoard(){
   const g=game(), {a,h,A,H}=teams(), pa=A.profile.season, ph=H.profile.season;
   const E=edges(); INS.E=E;
   $("board").innerHTML=`<div class="teams">
-    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">${LIVE?"2025-26: ":""}${pa.wins}-${pa.losses} · net ${sgn(pa.net)} (${ord(pa.net_rank)})</span></div>
+    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">${LIVE?D.season_label+": ":""}${pa.wins}-${pa.losses} · net ${sgn(pa.net)} (${ord(pa.net_rank)})</span></div>
     <div class="mid"><span>Avg pace</span><strong>${((pa.pace+ph.pace)/2).toFixed(1)}</strong><span>${g.tip} PM ET${g.as_!=null?` · final ${g.as_}–${g.hs}`:""}</span></div>
-    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">${LIVE?"2025-26: ":""}${ph.wins}-${ph.losses} · net ${sgn(ph.net)} (${ord(ph.net_rank)})</span></div></div>
+    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">${LIVE?D.season_label+": ":""}${ph.wins}-${ph.losses} · net ${sgn(ph.net)} (${ord(ph.net_rank)})</span></div></div>
     ${E.length?`<details class="qi" id="qi" ${st.qi===false?"":"open"}><summary>Quick insights <span>${E.length}</span></summary><div class="edges">${E.map(([k,t,s])=>`<div class="edge ${k}"><i></i><div><b>${t}</b><small>${s}</small></div></div>`).join("")}</div></details>`:""}`;
   const qi=$("qi"); if(qi) qi.ontoggle=()=>{st.qi=qi.open; save();};
   const notes=(D.slate_notes||[]).filter(n=>n.includes(" "+a)||n.includes(" "+h)||n.includes("("+a)||n.includes("("+h));
@@ -799,8 +800,9 @@ function applyPage(){
   v.dataset.t=st.tab; v.dataset.p=cur;
   if(st.tab==="overview"){ const o=v.querySelector(".ov-ins"); if(o) o.remove(); v.insertAdjacentHTML("beforeend",insightsHTML()); }
   const bar=$("pgs"), use=(pages.find(p=>p[0]===cur)||[])[2]||"";
-  bar.innerHTML=(pages.length>1?`<div class="seg">${pages.map(([k,l])=>`<button aria-pressed="${k===cur}" data-k="${k}">${l}${k==="insights"&&INS.E.length?` <b class="ct">${INS.E.length}</b>`:""}</button>`).join("")}</div>`:"")+`<span class="use">${use}</span>`;
-  bar.querySelectorAll("button").forEach(b=>b.onclick=()=>{st.pg[st.tab]=b.dataset.k; applyPage(); save();});
+  bar.innerHTML=(pages.length>1?`<div class="seg">${pages.map(([k,l])=>`<button aria-pressed="${k===cur}" data-k="${k}">${l}${k==="insights"&&INS.E.length?` <b class="ct">${INS.E.length}</b>`:""}</button>`).join("")}</div>`:"")+`<span class="use">${use}</span>`+(LIVE&&(st.tab==="onoff"||st.tab==="rotations")?`<span class="rosf">Show ${seg("ros",[["Current roster","cur"],["Include players who left","all"]],st.ros==="all"?"all":"cur")}</span>`:"");
+  bar.querySelectorAll(".seg:not(#ros) button").forEach(b=>b.onclick=()=>{st.pg[st.tab]=b.dataset.k; applyPage(); save();});
+  wire("ros",v=>{st.ros=v;});
   fit();
 }
 // one screen, no vertical page scroll: if the page is taller than the window, shrink it to fit (floor 60%)
@@ -840,11 +842,10 @@ function rotCard(t,o,S,side,KS){
   const {nu,gone}=LIVE?rosterChange(t):{nu:[],gone:[]};
   const isSt=p=>LIVE?p.starter:false;
   return `<div class="card ov-team" style="--tcol:${tc(t)}"><div class="card-h"><h3>${dot(t)}${t} rotation <span class="hint">${side}</span></h3><span class="hint"><i class="stmark"></i> ${LIVE?"RG expected starter":""}</span></div>
-    <table class="ctbl kp"><thead><tr><th class="l">Player</th><th title="RG projected minutes; ${D.season_label} average when not posted">Min</th><th title="RG ${KS} projection; ${D.season_label} average when not posted">${KS}</th><th title="${D.season_label}">FPPM</th><th title="${D.season_label}">Usg</th><th title="RG projected ownership">Own%</th><th title="${o} ${KS} allowed to his archetype vs. expected, per 36 · league rank (1st = most allowed)">DvA</th></tr></thead><tbody>
+    <table class="ctbl kp"><thead><tr><th class="l">Player</th><th title="RG projected minutes; ${D.season_label} average when not posted">Min</th><th title="RG ${KS} projection; ${D.season_label} average when not posted">${KS}</th><th title="${D.season_label}">FPPM</th><th title="${D.season_label}">Usg</th><th title="${o} ${KS} allowed to his archetype vs. expected, per 36 · league rank (1st = most allowed)">DvA</th></tr></thead><tbody>
     ${ps.map(p=>{ const c=dvaFor(o,t)[KS]?.cells[`${p.arch}|${p.tier}`]; const cls=c?(c[3]<=10?"good":c[3]>=21?"bad":""):"", own=p.dfs?.[ks+"_own"];
       return `<tr class="${isSt(p)?"st":""}"><td class="l"><span class="pname">${nm(p.id)}</span> ${sbadge(S[p.id])}${p.nodata?' <span class="badge mid">No NBA data</span>':""}<small>${p.arch||""}</small></td>
         <td>${pv(projMin(p),1)}</td><td>${pv(projF(p,ks),1)}</td><td>${p.mpg?(p[ks]/p.mpg).toFixed(2):"–"}</td><td>${p.usage!=null?pct(p.usage):"–"}</td>
-        <td>${own!=null?own.toFixed(1)+"%":'<span class="dim">–</span>'}</td>
         <td>${c?RK(c[3],1,sgn(c[0],1)):"–"}</td></tr>`;}).join("")}</tbody></table>
     <div class="rot-foot"><div><div class="mini-h">Injuries</div>
     ${inj.length?`<ul class="injl">${inj.map(x=>`<li>${sbadge(x.s)} <b>${x.name||nm(x.id)}</b><span>${[x.part,x.imp!=null?"impact "+x.imp:null].filter(Boolean).join(" · ")}</span></li>`).join("")}</ul>`:'<p class="hint">None listed</p>'}</div>
@@ -1276,7 +1277,7 @@ function renderOnOff(){
   const pctK=k=>k==="use"||k.endsWith("_sh")||k==="ast_pct";
   const SC={use:.08,pts_sh:.08,reb_sh:.06,ast_pct:.08,fg3a_sh:.06,fga_sh:.08,rim_sh:.08,
     dk:R==="min"?.2:8,fd:R==="min"?.2:8,pts:R==="min"?.15:6,reb:R==="min"?.08:3,ast:R==="min"?.07:2.5,fg3a:R==="min"?.07:2.5,fga:R==="min"?.14:5,rim:R==="min"?.07:2.5,stl:R==="min"?.03:1,blk:R==="min"?.03:1,tov:R==="min"?.04:1.5,min:300};
-  const ROS=LIVE&&st.ooros!=="all";
+  const ROS=LIVE&&st.ros!=="all";
   const dataAll=X.mates.map(m=>{const ww=m.w[W]||[null,null,null]; return {m, on:ww[0], off:ww[1], bench:ww[2], mi:MISS?MISS.mates.find(z=>z.id===m.id):null};}).filter(r=>r.on||r.off);
   const data=ROS?dataAll.filter(r=>onRoster(tm,r.m.id)):dataAll;
   const val=(arr,k,r)=>{ if(!arr) return null;
@@ -1295,8 +1296,7 @@ function renderOnOff(){
   const unit=k=>k==="min"?"":pctK(k)?"":R==="36"?" /36":R==="min"?" /min":R==="game"?" /g":" /36";
   const isThin=r=>!r.on||!r.off||r.on[OI.min]<100||r.off[OI.min]<100;
   const hidden=dataAll.length-data.length;
-  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("site",[["DK","DK"],["FD","FD"]],st.site)}${X.combo?`<span class="seg-note">Season only for combinations</span>`:seg("oowin",[["Season","season"],["Last 20","l20"],["Last 10","l10"]],W)}${seg("oorate",[["Per 36","36"],["Per minute","min"],["Per game","game"],["Shares %","share"]],R)}
-      ${LIVE?seg("ooros",[["Tonight's roster","ros"],["All 2025-26 teammates","all"]],ROS?"ros":"all"):""}</div>
+  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("site",[["DK","DK"],["FD","FD"]],st.site)}${X.combo?`<span class="seg-note">Season only for combinations</span>`:seg("oowin",[["Season","season"],["Last 20","l20"],["Last 10","l10"]],W)}${seg("oorate",[["Per 36","36"],["Per minute","min"],["Per game","game"],["Shares %","share"]],R)}</div>
     <div class="outbar"><span class="lbl">Players off <small>(click to add or remove)</small>:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">Clear</button>`:""}</div></div>
   ${rosterNote([tm])}
   <section class="card oo-card-main"><div class="card-h"><h3>${dot(tm)}Every split ${sel.length>1?"with all of":"for"} ${nmSel} ${sel.length===1?sbadge(S[x]):""}${sel.length>1?" off the floor":""}</h3>
@@ -1320,7 +1320,7 @@ function renderOnOff(){
       const li=z=>`<div class="sw-r"><span>${nm(z.r.m.id)}</span><span class="sw-v">${z.a.toFixed(dec)} → <b>${z.b.toFixed(dec)}</b></span><span class="sw-b"><i class="${z.d>=0?"up":"down"}" style="width:${(Math.abs(z.d)/mx*100).toFixed(0)}%"></i></span><b class="${z.d>=0?"pos":"neg"}">${sgn(z.d,dec)}</b></div>`;
       return `<div class="mini-h">Gain</div>${up.map(li).join("")||'<p class="hint">None</p>'}<div class="mini-h">Lose</div>${dn.map(li).join("")||'<p class="hint">None</p>'}`; })()}</section></div>`;
   $("view").innerHTML=h;
-  wire("side",v=>st.side=v); wire("site",v=>st.site=v); wire("oowin",v=>st.oowin=v); wire("oorate",v=>st.oorate=String(v)); wire("ooros",v=>st.ooros=v);
+  wire("side",v=>st.side=v); wire("site",v=>st.site=v); wire("oowin",v=>st.oowin=v); wire("oorate",v=>st.oorate=String(v)); 
   $("view").querySelectorAll(".pill").forEach(b=>b.onclick=()=>{
     if(b.dataset.clear){ st.ooSel[tm]=[sel[0]]; render(true); return; }
     const id=b.dataset.id, cur=st.ooSel[tm]||[];
@@ -1341,7 +1341,7 @@ function renderRotations(){
       const r=rows[p]||(rows[p]={p,c:new Array(48).fill(0),gp:0,min:0,st:0,cl:0,cg:0});
       const a=g.sec[p]||new Array(48).fill(0); a.forEach((s,i)=>r.c[i]+=s);
       r.gp++; r.min+=a.reduce((x,y)=>x+y,0)/60+(g.ot[p]||0); if(S.has(p)) r.st++; if(g.comp!==false){ r.cg++; if(a[47]>0) r.cl++; } }}
-  const list=Object.values(rows).filter(r=>r.min>=2).sort((a,b)=>b.min-a.min).slice(0,14);
+  const list=Object.values(rows).filter(r=>r.min>=2&&!(LIVE&&st.ros!=="all"&&!onRoster(tm,r.p))).sort((a,b)=>b.min-a.min).slice(0,14);
   const base={};   // minutes per game played across every game in the window, for the delta when a filter is on
   for(const g of wg) for(const p of new Set([...Object.keys(g.sec),...Object.keys(g.ot)])){ if(!played(g,p)) continue;
     const b=base[p]||(base[p]={gp:0,min:0}); b.gp++; b.min+=(g.sec[p]||[]).reduce((x,y)=>x+y,0)/60+(g.ot[p]||0); }
