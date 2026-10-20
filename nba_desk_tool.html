@@ -367,13 +367,15 @@ tr.detail td{background:var(--ground);padding:14px 16px;white-space:normal;text-
 
 /* rotations */
 .mmwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--rule);border-radius:10px}
-.mm{border-collapse:separate;border-spacing:0;min-width:920px;width:100%}
+.mm{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%}
 .mm th,.mm td{padding:0;white-space:nowrap}
 .mm thead th{height:26px;font:600 .72rem var(--cond);color:var(--muted);text-align:center;border-bottom:1px solid var(--rule-strong)}
 .mm thead th.q{color:var(--ink);font-size:.82rem}
-.mm .nm{position:sticky;left:0;background:var(--surface);z-index:1;text-align:left;padding:0 12px;min-width:150px;font-weight:500;font-size:.88rem;border-right:1px solid var(--rule)}
-.mm tbody tr{height:28px}
-.mm td.c{width:15px;min-width:12px;border-top:1px solid var(--surface)}
+.mm .nm{position:sticky;left:0;background:var(--surface);z-index:1;text-align:left;padding:0 12px;width:168px;min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:500;font-size:.88rem;border-right:1px solid var(--rule)}
+.mm tbody tr{height:25px}
+.mm td.c{border-top:1px solid var(--surface)}
+.mm thead th{overflow:visible}
+.mm thead th.q{text-align:left}
 .mm td.qs{box-shadow:inset 2px 0 0 var(--surface)}
 .mm td.st,.mm th.st{text-align:right;padding:0 10px;font-size:.86rem}
 .mm td.mpg{border-right:1px solid var(--rule);min-width:150px} .mm td.mpg b{font:600 1rem var(--cond)} .mm th.mpg{border-right:1px solid var(--rule)}
@@ -558,6 +560,13 @@ table.oo th,table.oo td{padding:3px 5px}
 table.oo td,table.oo th{font-size:.8rem}
 .oo td small{font-size:.68rem}
 
+
+.mm-sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:2px 18px;margin-top:6px}
+.ms{display:grid;grid-template-columns:1fr auto;align-items:baseline;gap:0 8px;padding:3px 0;border-bottom:1px solid var(--rule);font-size:.82rem}
+.ms .n{font-weight:600} .ms .m{font-size:.8rem;color:var(--muted)} .ms .m b{font:700 .95rem var(--cond);color:var(--ink)}
+.ms small{grid-column:1/-1;color:var(--muted);font-size:.72rem}
+.ms.gone .n{color:var(--muted)}
+.ms .mbar{width:38px}
 </style>
 
 <div class="wrap">
@@ -1358,18 +1367,22 @@ function renderRotations(){
     <div class="outbar"><span class="lbl">Only games without:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}</button>`).join("")}</div></div>
     ${rosterNote([tm])}
     <section class="card"><div class="card-h"><h3>${dot(tm)}${tm} minutes matrix</h3><span class="hint">${n} game${n===1?"":"s"}${outId?` without ${nm(outId)}`:""}${n&&n<5?" · small sample":""}${M.excluded?` · ${M.excluded} game left out because the feed listed under 5 players`:""}</span></div>
-    <div class="mmwrap"><table class="mm"><thead><tr><th class="nm">Player</th><th class="st mpg">Min / game</th>`;
+    <div class="mmwrap"><table class="mm"><thead><tr><th class="nm">Player</th>`;
   for(let m=0;m<48;m++){const q=m%12===0; h+=`<th class="${q?"q":""}">${q?"Q"+(m/12+1):(m%12===5?"6'":"")}</th>`;}
-  h+=`<th class="st">Games</th><th class="st">Starts</th><th class="st">Closes</th></tr></thead><tbody>`;
-  if(!n) h+=`<tr><td class="nm" colspan="53" style="padding:12px">No games in this window match. Widen the window.</td></tr>`;
+  h+=`</tr></thead><tbody>`;
+  if(!n) h+=`<tr><td class="nm" colspan="49" style="padding:12px">No games in this window match. Widen the window.</td></tr>`;
+  let sum="";
   for(const r of list){
     const mpg=r.min/r.gp, b=base[r.p], bm=b?b.min/b.gp:null, dl=outId&&bm!=null?mpg-bm:null;
     const gone=LIVE&&!onRoster(tm,r.p);
-    h+=`<tr class="${gone?"gone":""}"><td class="nm">${nm(r.p)}${gone?' <span class="badge mid">gone</span>':""}</td><td class="st mpg"><b>${mpg.toFixed(1)}</b>${mbar(mpg,48,tc(tm))}${dl!=null&&Math.abs(dl)>=0.5?`<span class="delta ${dl>0?"up":"down"}">${sgn(dl)}</span>`:""}</td>`;
+    h+=`<tr class="${gone?"gone":""}"><td class="nm">${nm(r.p)}${gone?' <span class="badge mid">gone</span>':""}</td>`;
     r.c.forEach((s,i)=>{const v=s/60/n; h+=`<td class="c${i%12===0&&i?" qs":""}" data-tip="${nm(r.p)}: on the floor in ${Math.round(v*100)}% of games at Q${Math.floor(i/12)+1} ${12-(i%12)}:00" style="background:${heat(v)}"></td>`;});
-    h+=`<td class="st">${r.gp}</td><td class="st">${r.st}/${r.gp}</td><td class="st"${r.cg?` data-tip="${nm(r.p)}: on the floor in the final minute of ${r.cl} of ${r.cg} competitive games"`:""}>${r.cg?Math.round(100*r.cl/r.cg)+"%":'<span class="dim">–</span>'}<span class="sub2">${r.cl}/${r.cg}</span></td></tr>`;
+    h+=`</tr>`;
+    sum+=`<div class="ms${gone?" gone":""}"><span class="n">${nm(r.p)}${gone?' <span class="badge mid">gone</span>':""}</span><span class="m"><b>${mpg.toFixed(1)}</b> min${mbar(mpg,48,tc(tm))}${dl!=null&&Math.abs(dl)>=0.5?`<span class="delta ${dl>0?"up":"down"}">${sgn(dl)}</span>`:""}</span>
+      <small>${r.gp} game${r.gp===1?"":"s"} · ${r.st}/${r.gp} starts · closes ${r.cg?Math.round(100*r.cl/r.cg)+"% ("+r.cl+"/"+r.cg+")":"–"}</small></div>`;
   }
-  h+=`</tbody></table></div><div class="legend"><span>Off the floor</span><span class="ramp">${RAMP.map(t=>`<i style="background:var(${t})"></i>`).join("")}</span><span>On the floor every game</span><span>· Min / game counts games he played${''}; with a player filter on, the delta is against every game in the window · Closes = on the floor in the final minute of regulation, counting only competitive games (within 10 points with 3:00 left, or overtime); blowouts are left out${n?` (${games.filter(g=>g.comp===false).length} of ${n} games here)`:""}</span></div></section>`;
+  h+=`</tbody></table></div><div class="mm-sum">${sum}</div>`;
+  h+=`<div class="legend"><span>Off the floor</span><span class="ramp">${RAMP.map(t=>`<i style="background:var(${t})"></i>`).join("")}</span><span>On the floor every game</span><span>· Min / game counts games he played${''}; with a player filter on, the delta is against every game in the window · Closes = on the floor in the final minute of regulation, counting only competitive games (within 10 points with 3:00 left, or overtime); blowouts are left out${n?` (${games.filter(g=>g.comp===false).length} of ${n} games here)`:""}</span></div></section>`;
   // stints, stagger and closing lineups for the same games
   if(n){
     const stt=list.slice(0,10).map(r=>{ let ns=0,gp=0; for(const g of games){ const k=g.stints?.[r.p]; if(k){ns+=k;gp++;} }
