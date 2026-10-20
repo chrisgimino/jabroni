@@ -1074,10 +1074,7 @@ function statCols(p,off){ // [header, cell] pairs for the selected stat tab, def
       ["Rim share of FGA",H("rim_share",T.rim/(T.fga||1),pr(T.rim,T.fga))]];
     case "TRIPS": return [["Min",minc],["FT trips / g",H("trips_g",T.trips/g,pg(T.trips))+l10("l10_trips",T.trips/g)],["FTA / g",H("fta_g",T.fta/g,pg(T.fta))],["FT rate",H("ft_rate",T.fta/(T.fga||1),pr(T.fta,T.fga,0))],["FT%",T.fta>=50?H("ft_pct",T.ftm/T.fta,pr(T.ftm,T.fta)):pr(T.ftm,T.fta)]];
     default: { const sk=st.stat==="FD"?"fd":"dk", F=p.dfs||{}, sal=F[sk+"_salary"], pj=F[sk+"_proj"], own=F[sk+"_own"];
-      const dfs=LIVE?[["Salary",sal!=null?"$"+Math.round(sal).toLocaleString():'<span class="dim" title="Not posted yet">–</span>'],
-        ["RG proj",pj!=null?pj.toFixed(1):'<span class="dim" title="Not posted yet">–</span>'],
-        ["Value",pj!=null&&sal?(pj/(sal/1000)).toFixed(2)+"x":'<span class="dim">–</span>'],
-        ["Own%",own!=null?own.toFixed(1)+"%":'<span class="dim" title="No ownership feed yet">–</span>']]:[];
+      const dfs=LIVE?[["Salary",sal!=null?"$"+Math.round(sal).toLocaleString():'<span class="dim" title="Not posted yet">–</span>']]:[];
       return [["Min",minc],[st.stat,`${H(sk,p[site],p[site])}<span class="sub2">L10 ${p["l10_"+site]??"–"}${trend(p["l10_"+site],p[site])}</span>`],
       [st.stat+" FPPM",`${p.mpg?H(sk+"pm",p[site]/p.mpg,(p[site]/p.mpg).toFixed(2)):"–"}${p.l10_mpg?`<span class="sub2">L10 ${(p["l10_"+site]/p.l10_mpg).toFixed(2)}</span>`:""}`],["Usage",usg],...dfs]; }
   }
@@ -1129,6 +1126,16 @@ function sortPlayersTable(){
   rows.sort((a,b)=>{ const x=key(a), y=key(b); if(x==null&&y==null) return 0; if(x==null) return 1; if(y==null) return -1;
     return (typeof x==="string"?x.localeCompare(y):x-y)*dir; });
   for(const r of rows){ const d=r.nextElementSibling&&r.nextElementSibling.classList.contains("detail")?r.nextElementSibling:null; tb.appendChild(r); if(d) tb.appendChild(d); }
+}
+// hide a roster column when no player has a value in it (e.g. RG proj / Value / Own% before projections are posted)
+function hideEmptyCols(){
+  const tb=document.querySelector("#view .ptbl"); if(!tb||!tb.tHead) return;
+  const ths=[...tb.tHead.rows[0].cells], rows=[...tb.tBodies[0].rows].filter(r=>r.classList.contains("p")&&r.cells.length===ths.length);
+  if(!rows.length) return;
+  let hidden=0;
+  ths.forEach((th,i)=>{ if(i===0) return;
+    if(rows.every(r=>{const t=r.cells[i].textContent.trim(); return t===""||t==="–";})){ th.style.display="none"; rows.forEach(r=>r.cells[i].style.display="none"); hidden++; }});
+  if(hidden) tb.querySelectorAll("tr.grp td[colspan]").forEach(td=>td.colSpan=Math.max(1,td.colSpan-hidden));
 }
 function renderPlayers(){
   const [off,def]=sideTeam(), O=D.teams[off], F=D.teams[def], S=statuses();
@@ -1182,7 +1189,7 @@ function renderPlayers(){
     const dv=`<td>${c?RK(c[3],1,sgn(c[0],1),`${def} rank ${ord(c[3])} of 30 in ${statL} allowed to this type (1st = gives up the most)`):"–"}</td>`;
     const name=`<td><span class="pname">${nm(p.id)}</span> ${sbadge(S[p.id])}${p.injury&&S[p.id]?`<span class="inj"> ${p.injury}</span>`:""} ${tagS(p)}<span class="role">${p.arch?`${p.arch} · ${(p.tier||"").toLowerCase()} usage${p.prob<0.5?' <span class="warn">· borderline</span>':""}`:"Archetype pending: no NBA minutes"}</span></td>`;
     if(p.nodata&&!floor&&!missedMode){ const sc=statCols(p,off);
-      h+=`<tr class="p dim" data-id="${p.id}">${name}${sc.map((c,i)=>i<sc.length-(LIVE&&["DK","FD"].includes(st.stat)?4:0)?'<td class="dim">–</td>':`<td class="big">${c[1]}</td>`).join("")}<td class="dim">–</td></tr>`; continue; }
+      h+=`<tr class="p dim" data-id="${p.id}">${name}${sc.map((c,i)=>i<sc.length-(LIVE&&["DK","FD"].includes(st.stat)?1:0)?'<td class="dim">–</td>':`<td class="big">${c[1]}</td>`).join("")}<td class="dim">–</td></tr>`; continue; }
     let cells;
     if(floor){
       const m=ONF?ONF.mates.find(m=>m.id===p.id):null;
@@ -1213,6 +1220,7 @@ function renderPlayers(){
   h+=`</tbody></table></div><p class="hint"><b>FPPM</b> = fantasy points per minute. <b>vs ${def}</b>: the big number is ${def}'s rank of 30 against this archetype and usage tier, per possession so pace doesn't skew it (1st = gives up the most). Beside it, what that means per 36 minutes at tonight's pace (${tonightPace(def,off).toFixed(1)} projected possessions), compared with the player's own rate: ${def}'s team-wide effect plus a type-specific part shrunk by sample; 3PA is per minute. 3PA is the most repeatable; points and assists are the noisiest. Click a player for the full breakdown; the On/Off tab has every split.</p></section>`;
   if(gx) h+=`<details class="sec oo-det gbox" ${st.gopen===false?"":"open"} id="gdet"><summary><h2>Who gains with ${nm(gx)} off the floor</h2><span class="hint">${outId?"Marked out above":flagged.includes(gx)?"Top flagged player":"Highest-minute regular"} · season, 150+ minutes each way · tonight's roster · click to hide</span></summary><div class="gwrap"><div class="card">${waterfall(off,gx)||'<p class="hint">Not enough shared minutes.</p>'}</div>${gainBoxes(off,gx)}</div></details>`;
   $("view").innerHTML=h;
+  if(!floor&&!missedMode) hideEmptyCols();
   wire("side",v=>{st.side=v;st.open=null;st.psort=null;}); wire("stat",v=>{st.stat=v;st.psort=null;}); wire("outmode",v=>{st.outmode=v;st.psort=null;});
   sortPlayersTable();
   const gd=$("gdet"); if(gd) gd.ontoggle=()=>{st.gopen=gd.open; save();};
