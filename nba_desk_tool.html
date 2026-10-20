@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>NBA Research Desk</title>
+<title>NBA Matchups</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
@@ -506,6 +506,7 @@ select{background:var(--panel2);border:1px solid var(--rule);border-radius:6px;p
 .tabs button:hover{color:var(--ink)}
 .tabs button[aria-selected="true"]{background:var(--panel2);color:var(--accent);border:0}
 .pgs{display:flex;align-items:center;gap:12px;min-height:30px;flex-wrap:nowrap}
+.pgs:empty{display:none}
 .pgs .use{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
 .rosf{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);white-space:nowrap;flex:0 0 auto}
 .pgs .ct{background:var(--accent);color:#fff;border-radius:9px;padding:0 6px;font-size:.68rem;margin-left:3px}
@@ -527,9 +528,12 @@ h3{font:700 .95rem/1.2 var(--cond);letter-spacing:0}
 .toolbar{padding:6px 10px}
 .rnote{padding:4px 10px;font-size:.78rem}
 .ov-ctl .hint{display:none}
+.ov-side{display:none} #view[data-t=overview][data-p=rot] .ov-side{display:inline-flex}
+#view[data-t=overview]>.ov-rot{display:none} #view[data-t=overview][data-p=rot]>.ov-rot{display:block}
+.ov-rot .ov-team{width:100%}
 /* ----- pages: hide everything on a tab, then show the chosen page ----- */
 #view[data-t=overview]>:not(.ov-ctl){display:none}
-#view[data-t=overview][data-p=game]>.ov-top{display:grid}
+#view[data-t=overview][data-p=game]>.ov-top{display:grid;max-width:1000px;margin:0 auto;width:100%;grid-template-columns:minmax(0,1fr)!important}
 #view[data-t=overview][data-p=matchup]>.ov-mid{display:grid}
 #view[data-t=overview][data-p=luck]>.ov-flow,#view[data-t=overview][data-p=fouls]>.ov-flow{display:grid}
 #view[data-t=overview][data-p=luck] .ov-flow>.card:nth-child(n+3){display:none}
@@ -567,11 +571,16 @@ table.oo td,table.oo th{font-size:.8rem}
 .ms small{grid-column:1/-1;color:var(--muted);font-size:.72rem}
 .ms.gone .n{color:var(--muted)}
 .ms .mbar{width:38px}
+
+/* defense: the player-type column stays put while the stat columns scroll sideways */
+.dtbl th.l,.dtbl td.l{position:sticky;left:0;background:var(--surface);box-shadow:1px 0 0 var(--rule-strong)}
+.dtbl td.l{z-index:2} .dtbl th.l{z-index:4}
+.dtbl tr.tw td.l{background:var(--ground)}
 </style>
 
 <div class="wrap">
   <header class="top">
-    <div class="brand">NBA <em>Research Desk</em></div>
+    <div class="brand">NBA <em>Matchups</em></div>
     <div class="slate" id="slate" role="group" aria-label="Games on this slate"></div>
     <label class="date"><span id="sub"></span>Slate <select id="date"></select></label>
   </header>
@@ -602,7 +611,7 @@ const SCALE={DK:1.0,FD:1.0,PTS:0.6,REB:0.3,AST:0.25,FG3A:0.3,RIM_FGA:0.3,TRIPS:0
 const TABS=[["overview","Game"],["players","Players"],["onoff","On/Off"],["rotations","Rotations"],["defense","Defense"]];
 // each tab is split into one-screen pages: [key, label, what it is for]
 const PAGES={
- overview:[["game","Game","Vegas lines, season ranks, recent form and both rotations"],["matchup","Matchup","Offense vs defense: tale of the tape, where the matchup tilts, soft spots by player type"],
+ overview:[["game","Game","Vegas lines, season ranks and recent form"],["rot","Rotation","Projected rotation, injuries and roster changes for one team"],["matchup","Matchup","Offense vs defense: tale of the tape, where the matchup tilts, soft spots by player type"],
    ["luck","3PT luck & pace","Is each team's 3-point shooting lucky or unlucky, and how possessions start"],["fouls","Fouls & turnovers","Free-throw pressure and turnovers into transition"],
    ["shots","Shot maps","Where each offense shoots against the other defense"],["insights","Insights","The strongest edges for this game"]],
  players:[["roster","Roster","Projected minutes, usage, DK points, salary and matchup for one team"],["impact","Injury impact","Who gains when a teammate sits"]],
@@ -772,7 +781,7 @@ function edges(){ // candidate insights, each with a strength score; the stronge
 
 /* ---------------- shell ---------------- */
 function renderTop(){
-  $("sub").textContent=LIVE?`${st.date} slate · lineups: RotoGrinders (expected) · player and team stats: ${D.season_label} regular season`:`${D.season_label} regular season · sample slates until the schedule feed is connected`;
+  $("sub").textContent="";
   $("date").closest("label").hidden=LIVE&&DATES.length<2;
   const ds=$("date"); ds.innerHTML=DATES.slice().reverse().map(d=>`<option ${d===st.date?"selected":""}>${d}</option>`).join("");
   ds.onchange=()=>{st.date=ds.value;st.gi=0;st.out={};st.open=null;render();};
@@ -798,18 +807,26 @@ function renderTabs(){
 }
 function insightsHTML(){
   const E=INS.E||[], N_=INS.notes||[];
-  return `<section class="card ov-ins"><div class="card-h"><h3>Insights for this game</h3><span class="hint">strongest edges first</span></div>
+  return `<section class="card ov-ins"><div class="card-h"><h3>Insights</h3></div>
     <div class="edges">${E.map(([k,t,s])=>`<div class="edge ${k}"><i></i><div><b>${t}</b><small>${s}</small></div></div>`).join("")||'<p class="hint">No standout edges for this game.</p>'}</div>
     ${N_.length?`<p class="feednote">Feed check: ${N_.join(" · ")}</p>`:""}</section>`;
+}
+// the page explains nothing in prose: drop help paragraphs and header notes, keep short data labels
+function stripExplainers(){
+  const v=$("view");
+  v.querySelectorAll("p.hint:not(.rnote):not(.empty)").forEach(e=>e.remove());
+  const keep=/^(away|home)$|\bET$|^\d+ games?|RG expected starter/i;
+  v.querySelectorAll("span.hint").forEach(e=>{ if(!keep.test(e.textContent.trim())&&!e.querySelector("i.sw")) e.remove(); });
+  v.querySelectorAll(".seg-note").forEach(e=>e.remove());
 }
 function applyPage(){
   const v=$("view"), pages=PAGES[st.tab]||[];
   st.pg=st.pg||{};
   let cur=st.pg[st.tab]; if(!pages.some(p=>p[0]===cur)) cur=pages[0][0]; st.pg[st.tab]=cur;
-  v.dataset.t=st.tab; v.dataset.p=cur;
+  v.dataset.t=st.tab; v.dataset.p=cur; stripExplainers();
   if(st.tab==="overview"){ const o=v.querySelector(".ov-ins"); if(o) o.remove(); v.insertAdjacentHTML("beforeend",insightsHTML()); }
   const bar=$("pgs"), use=(pages.find(p=>p[0]===cur)||[])[2]||"";
-  bar.innerHTML=(pages.length>1?`<div class="seg">${pages.map(([k,l])=>`<button aria-pressed="${k===cur}" data-k="${k}">${l}${k==="insights"&&INS.E.length?` <b class="ct">${INS.E.length}</b>`:""}</button>`).join("")}</div>`:"")+`<span class="use">${use}</span>`+(LIVE&&(st.tab==="onoff"||st.tab==="rotations")?`<span class="rosf">Show ${seg("ros",[["Current roster","cur"],["Include players who left","all"]],st.ros==="all"?"all":"cur")}</span>`:"");
+  bar.innerHTML=(pages.length>1?`<div class="seg">${pages.map(([k,l])=>`<button aria-pressed="${k===cur}" data-k="${k}">${l}${k==="insights"&&INS.E.length?` <b class="ct">${INS.E.length}</b>`:""}</button>`).join("")}</div>`:"")+(LIVE&&(st.tab==="onoff"||st.tab==="rotations")?`<span class="rosf">Show ${seg("ros",[["Current roster","cur"],["Include players who left","all"]],st.ros==="all"?"all":"cur")}</span>`:"");
   bar.querySelectorAll(".seg:not(#ros) button").forEach(b=>b.onclick=()=>{st.pg[st.tab]=b.dataset.k; applyPage(); save();});
   wire("ros",v=>{st.ros=v;});
   fit();
@@ -955,7 +972,8 @@ function renderOverview(){
     <div class="mini-h">${O2==="l10"?"Last 10 form":"Full season"}</div>
     ${form(a,pa,qa)}${form(h,ph,qh)}
     <p class="hint sm">Arrows compare ${O2==="l10"?"the last 10 with the season":"the season with the last 10"}.</p></div>`;
-  const top=`<div class="ov-top">${env}${rotCard(a,h,S,"away",KS)}${rotCard(h,a,S,"home",KS)}</div>`;
+  const top=`<div class="ov-top">${env}</div>`;
+  const rot=`<div class="ov-rot">${st.side==="home"?rotCard(h,a,S,"home",KS):rotCard(a,h,S,"away",KS)}</div>`;
   // tale of the tape: one compact row per stat, mirrored rank bars, L10 rank under the season rank
   const rows=[["_","Overall"],["pace","Pace"],["ortg","Off. rating"],["drtg","Def. rating"],["net","Net rating"],["_","Offense"],["three_rate","3PA rate"],["rim_rate","Rim att. rate"],["ft_rate","FT rate"],["tov_pct","Turnover %"],["oreb_pct","Off. reb %"],["trans_rate","Transition share"],
     ["_","Defense"],["opp_three_rate","Opp. 3PA rate"],["opp_rim_rate","Opp. rim rate"],["opp_ft_rate","Opp. FT rate"],["opp_tov_pct","Forced TOV %"]];
@@ -1019,18 +1037,18 @@ function renderOverview(){
           ["Points off turnovers / game","tovpts_g","n",1],["Second-chance pts / game","sc_g","n",1],["Paint points / game","paint_g","n",1]],
           "Defense columns: what that defense forces and allows. Live-ball turnovers feed fast breaks; dead-ball ones let the defense set.")}</div>
     </div>
-    <div class="card"><div class="card-h"><h3>Shot map duel</h3><span class="hint">${D.season_label} season · hex size = share of shots, color = FG% vs. league there:
-        <i class="sw hot2"></i>well above <i class="sw hot1"></i>above <i class="sw neu"></i>league <i class="sw cold1"></i>below <i class="sw cold2"></i>well below · hover a hex</span></div>
+    <div class="card"><div class="card-h"><h3>Shot map duel</h3><span class="hint">FG% vs league:
+        <i class="sw hot2"></i>well above <i class="sw hot1"></i>above <i class="sw neu"></i>league <i class="sw cold1"></i>below <i class="sw cold2"></i>well below</span></div>
       <div class="duels">${shotDuel(a,h)}${shotDuel(h,a)}</div>
       <p class="hint sm">Zone ranks: 1st = takes / allows the most of that shot. Edge when the offense is top 10 and the defense allows top 10.</p></div>`;
   }
-  $("view").innerHTML=`<div class="row-ctl ov-ctl">${seg("win",[["Season","season"],["Last 10","l10"]],W)}${seg("kpsite",[["DK","DK"],["FD","FD"]],KS)}<span class="hint">Team numbers: ${D.season_label} ${W==="l10"?"last 10 games":"regular season"} · Min and ${KS}: RG projection when posted, otherwise <span class="hist">${D.season_label} average</span></span></div>
-    ${top}
+  $("view").innerHTML=`<div class="row-ctl ov-ctl">${seg("win",[["Season","season"],["Last 10","l10"]],W)}${seg("kpsite",[["DK","DK"],["FD","FD"]],KS)}<span class="ov-side">${sideSeg()}</span><span class="hint">Team numbers: ${D.season_label} ${W==="l10"?"last 10 games":"regular season"} · Min and ${KS}: RG projection when posted, otherwise <span class="hist">${D.season_label} average</span></span></div>
+    ${top}${rot}
     <div class="ov-mid">
       <div class="card"><div class="card-h"><h3>Tale of the tape</h3><span class="hint">Big number = league rank (1st = highest), value beside it · green = best, red = worst for that team; for style stats (pace, shot mix) green = more of it</span></div>${tape}</div>
       <div class="ov-col"><div class="card"><div class="card-h"><h3>Where the matchup tilts</h3></div>${tilt}</div>${softCard}</div>
     </div>${flow}`;
-  wire("win",v=>st.win=v); wire("kpsite",v=>st.kpsite=v);
+  wire("win",v=>st.win=v); wire("kpsite",v=>st.kpsite=v); wire("side",v=>st.side=v);
 }
 
 /* ---------------- players ---------------- */
@@ -1160,7 +1178,7 @@ function renderPlayers(){
   let rep=`<section class="card"><div class="card-h"><h3>${dot(off)}${off} injury report</h3><span class="hint">usage change for tonight's teammates with him off the floor · click a name to apply his absence</span></div>`;
   const setter=`<label class="date">Set a status <select id="setp"><option value="">Player…</option>${rosterRegs(off).slice().sort((x,y)=>y.mpg-x.mpg).map(x=>`<option value="${x.id}">${nm(x.id)}${S[x.id]?" · "+STATUS[S[x.id]][0]:""}</option>`).join("")}</select>
     <select id="sets"><option value="O">Out</option><option value="D">Doubtful</option><option value="Q">Questionable</option><option value="">Clear</option></select></label>`;
-  if(!flagged.length) rep+=`<p class="hint">No ${off} regulars are flagged for this game. Set a status above to see who gains when he sits.</p>`;
+  if(!flagged.length) rep+=`<p class="hint empty">No ${off} players flagged.</p>`;
   else{
     rep+=`<div class="ir">`;
     for(const x of flagged.sort((a,b)=>"ODQ".indexOf(S[a])-"ODQ".indexOf(S[b]))){
@@ -1314,7 +1332,7 @@ function renderOnOff(){
   const isThin=r=>!r.on||!r.off||r.on[OI.min]<100||r.off[OI.min]<100;
   const hidden=dataAll.length-data.length;
   let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("site",[["DK","DK"],["FD","FD"]],st.site)}${X.combo?`<span class="seg-note">Season only for combinations</span>`:seg("oowin",[["Season","season"],["Last 20","l20"],["Last 10","l10"]],W)}${seg("oorate",[["Per 36","36"],["Per minute","min"],["Per game","game"],["Shares %","share"]],R)}</div>
-    <div class="outbar"><span class="lbl">Players off <small>(click to add or remove)</small>:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">Clear</button>`:""}</div></div>
+    <div class="outbar"><span class="lbl">Players off:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">Clear</button>`:""}</div></div>
   ${rosterNote([tm])}
   <section class="card oo-card-main"><div class="card-h"><h3>${dot(tm)}Every split ${sel.length>1?"with all of":"for"} ${nmSel} ${sel.length===1?sbadge(S[x]):""}${sel.length>1?" off the floor":""}</h3>
     <div class="kpis">${X.combo?`<span>${sel.length>1?"Combination":"Top-10 minutes player"} · whole season</span>`:`<span><b>${X.mpg}</b> mpg</span><span><b>${X.gp}</b> games</span><span><b>${MISS?MISS.missed:0}</b> missed</span>`}<span><b>${data.length}</b> teammates${hidden?` <small>(${hidden} no longer on ${tm} hidden)</small>`:""}</span></div></div>
@@ -1382,7 +1400,7 @@ function renderRotations(){
       <small>${r.gp} game${r.gp===1?"":"s"} · ${r.st}/${r.gp} starts · closes ${r.cg?Math.round(100*r.cl/r.cg)+"% ("+r.cl+"/"+r.cg+")":"–"}</small></div>`;
   }
   h+=`</tbody></table></div><div class="mm-sum">${sum}</div>`;
-  h+=`<div class="legend"><span>Off the floor</span><span class="ramp">${RAMP.map(t=>`<i style="background:var(${t})"></i>`).join("")}</span><span>On the floor every game</span><span>· Min / game counts games he played${''}; with a player filter on, the delta is against every game in the window · Closes = on the floor in the final minute of regulation, counting only competitive games (within 10 points with 3:00 left, or overtime); blowouts are left out${n?` (${games.filter(g=>g.comp===false).length} of ${n} games here)`:""}</span></div></section>`;
+  h+=`<div class="legend"><span>Off the floor</span><span class="ramp">${RAMP.map(t=>`<i style="background:var(${t})"></i>`).join("")}</span><span>On the floor every game</span></div></section>`;
   // stints, stagger and closing lineups for the same games
   if(n){
     const stt=list.slice(0,10).map(r=>{ let ns=0,gp=0; for(const g of games){ const k=g.stints?.[r.p]; if(k){ns+=k;gp++;} }
