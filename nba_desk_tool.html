@@ -265,6 +265,10 @@ table.oo thead th button.sort small{display:block;font-weight:500;color:var(--mu
 table.oo tr.grp td{background:var(--ground);font:600 .74rem var(--text);color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:6px 10px}
 table.oo tbody tr:hover td{background:var(--accent-soft)}
 .seg-note{font-size:.8rem;color:var(--muted);padding:5px 10px;border:1px dashed var(--rule-strong);border-radius:7px}
+.xbtn{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;border:1px solid var(--rule-strong);background:var(--surface);color:var(--muted);font:600 1rem/1 var(--text);cursor:pointer;padding:0}
+.xbtn:hover{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.ir-card{position:relative}
+.pill .x{margin-left:4px;font-weight:700}
 .pill.clr{border-style:dashed;color:var(--muted)}
 .outbar .lbl small{font-size:.72rem}
 .oo-bottom{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;align-items:start}
@@ -1178,14 +1182,14 @@ function renderPlayers(){
   // injury report strip: each flagged player with who gains / loses when he's off the floor
   let rep=`<section class="card"><div class="card-h"><h3>${dot(off)}${off} injury report</h3><span class="hint">usage change for tonight's teammates with him off the floor · click a name to apply his absence</span></div>`;
   const setter=`<label class="date">Set a status <select id="setp"><option value="">Player…</option>${rosterRegs(off).slice().sort((x,y)=>y.mpg-x.mpg).map(x=>`<option value="${x.id}">${nm(x.id)}${S[x.id]?" · "+STATUS[S[x.id]][0]:""}</option>`).join("")}</select>
-    <select id="sets"><option value="O">Out</option><option value="D">Doubtful</option><option value="Q">Questionable</option><option value="">Clear</option></select></label>`;
+    <select id="sets"><option value="O">Out</option><option value="D">Doubtful</option><option value="Q">Questionable</option></select></label>`;
   if(!flagged.length) rep+=`<p class="hint empty">No ${off} players flagged.</p>`;
   else{
     rep+=`<div class="ir">`;
     for(const x of flagged.sort((a,b)=>"ODQ".indexOf(S[a])-"ODQ".indexOf(S[b]))){
       const sw=swings(off,x,site), xo=O.onoff.find(o=>o.id===x);
       const pe=O.players.find(p=>p.id===x)||{};
-      rep+=`<div class="ir-card${x===outId?" on":""}"><button class="ir-name" data-id="${x}" aria-pressed="${x===outId}">${sbadge(S[x])} <b>${nm(x)}</b><span>${[pe.injury,pe.impact!=null?"impact "+pe.impact:null,xo?xo.mpg+" mpg":null].filter(Boolean).join(" · ")}</span></button>
+      rep+=`<div class="ir-card${x===outId?" on":""}"><button class="xbtn ir-x" data-x="${x}" title="Remove" aria-label="Remove ${nm(x)}">×</button><button class="ir-name" data-id="${x}" aria-pressed="${x===outId}">${sbadge(S[x])} <b>${nm(x)}</b><span>${[pe.injury,pe.impact!=null?"impact "+pe.impact:null,xo?xo.mpg+" mpg":null].filter(Boolean).join(" · ")}</span></button>
         <div class="ir-sw">${sw.g.map(m=>`<span class="sw up" title="${site}/36 ${sgn(m.df)}">${nm(m.id)} ${sgn(m.du*100)}%</span>`).join("")}${sw.l.map(m=>`<span class="sw down" title="${site}/36 ${sgn(m.df)}">${nm(m.id)} ${sgn(m.du*100)}%</span>`).join("")}${!sw.g.length&&!sw.l.length?'<span class="hint">Not enough shared minutes</span>':""}</div></div>`;
     }
     rep+=`</div>${!LIVE&&D.slate[st.date]?`<p class="hint sm">On sample slates, Out = regulars who did not play that game.</p>`:""}`;
@@ -1194,7 +1198,7 @@ function renderPlayers(){
   let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("stat",STATS.map(([k,l])=>[l,k]),st.stat)}<span class="tb-sp"></span>${setter}</div></div>${rep}`;
   const cand=rosterRegs(off).slice().sort((x,y)=>y.mpg-x.mpg).slice(0,8);
   const gx=outId||flagged[0]||(rosterRegs(off).slice().sort((a,b)=>b.mpg-a.mpg)[0]||{}).id;
-  h+=`<section class="card"><div class="outbar"><span class="lbl">Mark a player out:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}${S[x.id]?" "+sbadge(S[x.id]):""}</button>`).join("")}</div>`;
+  h+=`<section class="card"><div class="outbar"><span class="lbl">Mark a player out:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}${S[x.id]?" "+sbadge(S[x.id]):""}${x.id===outId?' <span class="x">×</span>':""}</button>`).join("")}${outId&&!cand.some(x=>x.id===outId)?`<button class="pill" data-id="${outId}" aria-pressed="true">${nm(outId)} <span class="x">×</span></button>`:""}</div>`;
   if(outId) h+=`<div class="row-ctl">${seg("outmode",[["When he's off the floor","floor"],["Games he missed","missed"]],mode)}
     <p class="hint">${mode==="floor"?`All minutes without ${nm(outId)}: his bench stretches and games he missed, garbage time removed. Rates are per 36 minutes, so they show how roles change, not how minutes change.`:MISS?`Per-game numbers from the ${MISS.missed} games ${nm(outId)} missed, only while he was on the team. This also shows who picks up his minutes.`:`${nm(outId)} hasn't missed a game with ${off}. Use "When he's off the floor".`}</p></div>`;
   const floor=outId&&mode==="floor";
@@ -1255,6 +1259,7 @@ function renderPlayers(){
   const setp=$("setp"), sets=$("sets");
   const apply=()=>{ if(!setp.value) return; const g=game(); (st.status[g.eid]=st.status[g.eid]||{})[setp.value]=sets.value; render(true); };
   setp.onchange=apply; sets.onchange=apply;
+  $("view").querySelectorAll(".ir-x").forEach(b=>b.onclick=e=>{e.stopPropagation(); const id=b.dataset.x, g=game(); (st.status[g.eid]=st.status[g.eid]||{})[id]=""; if(st.out[off]===id) st.out[off]=""; render(true);});
   $("view").querySelectorAll(".pill,.ir-name").forEach(b=>b.onclick=()=>{st.out[off]=st.out[off]===b.dataset.id?"":b.dataset.id;st.open=null;render(true);});
   $("view").querySelectorAll("tr.p").forEach(r=>r.onclick=()=>{st.open=st.open===r.dataset.id?null:r.dataset.id;render(true);});
 }
@@ -1333,7 +1338,7 @@ function renderOnOff(){
   const isThin=r=>!r.on||!r.off||r.on[OI.min]<100||r.off[OI.min]<100;
   const hidden=dataAll.length-data.length;
   let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("site",[["DK","DK"],["FD","FD"]],st.site)}${X.combo?`<span class="seg-note">Season only for combinations</span>`:seg("oowin",[["Season","season"],["Last 20","l20"],["Last 10","l10"]],W)}${seg("oorate",[["Per 36","36"],["Per minute","min"],["Per game","game"],["Shares %","share"]],R)}</div>
-    <div class="outbar"><span class="lbl">Players off:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">Clear</button>`:""}</div></div>
+    <div class="outbar"><span class="lbl">Players off:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">× Clear</button>`:""}</div></div>
   
   <section class="card oo-card-main"><div class="card-h"><h3>${dot(tm)}Every split ${sel.length>1?"with all of":"for"} ${nmSel} ${sel.length===1?sbadge(S[x]):""}${sel.length>1?" off the floor":""}</h3>
     <div class="kpis">${X.combo?`<span>${sel.length>1?"Combination":"Top-10 minutes player"} · whole season</span>`:`<span><b>${X.mpg}</b> mpg</span><span><b>${X.gp}</b> games</span><span><b>${MISS?MISS.missed:0}</b> missed</span>`}<span><b>${data.length}</b> teammates${hidden?``:""}</span></div></div>
