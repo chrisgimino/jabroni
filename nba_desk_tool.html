@@ -615,7 +615,7 @@ const PAGES={
  overview:[["game","Game","Vegas lines, season ranks and recent form"],["rot","Rotation","Projected rotation, injuries and roster changes for one team"],["matchup","Matchup","Offense vs defense: tale of the tape, where the matchup tilts, soft spots by player type"],
    ["luck","3PT luck","Is each team's 3-point shooting lucky or unlucky"],["pace","Pace","How possessions start and how long they take"],["fouls","Fouls & turnovers","Free-throw pressure and turnovers into transition"],
    ["shots","Shot maps","Where each offense shoots against the other defense"],["insights","Insights","The strongest edges for this game"]],
- players:[["roster","Roster","Projected minutes, usage, DK points, salary and matchup for one team"],["impact","Injury impact","Who gains when a teammate sits"]],
+ players:[["roster","Roster","Projected minutes, usage, DK points and matchup for one team"],["impact","Injury impact","Who gains when a teammate sits"]],
  onoff:[["splits","All splits","Every teammate's numbers with the chosen player on vs off the floor"],["swings","Biggest swings","Usage and DK change when he sits"]],
  rotations:[["matrix","Minutes matrix","Game-by-game minutes for the team"],["stints","Stints","Stint lengths and rotation pattern"]],
  defense:[["types","By player type","What the defense allows to each player archetype"]]};
@@ -1102,7 +1102,7 @@ function statCols(p,off){ // [header, cell] pairs for the selected stat tab, def
       ["Rim share of FGA",H("rim_share",T.rim/(T.fga||1),pr(T.rim,T.fga))]];
     case "TRIPS": return [["Min",minc],["FT trips / g",H("trips_g",T.trips/g,pg(T.trips))+l10("l10_trips",T.trips/g)],["FTA / g",H("fta_g",T.fta/g,pg(T.fta))],["FT rate",H("ft_rate",T.fta/(T.fga||1),pr(T.fta,T.fga,0))],["FT%",T.fta>=50?H("ft_pct",T.ftm/T.fta,pr(T.ftm,T.fta)):pr(T.ftm,T.fta)]];
     default: { const sk=st.stat==="FD"?"fd":"dk", F=p.dfs||{}, sal=F[sk+"_salary"], pj=F[sk+"_proj"], own=F[sk+"_own"];
-      const dfs=LIVE?[["Salary",sal!=null?"$"+Math.round(sal).toLocaleString():'<span class="dim" title="Not posted yet">–</span>']]:[];
+      const dfs=[];
       return [["Min",minc],[st.stat,`${H(sk,p[site],p[site])}<span class="sub2">L10 ${p["l10_"+site]??"–"}${trend(p["l10_"+site],p[site])}</span>`],
       [st.stat+" FPPM",`${p.mpg?H(sk+"pm",p[site]/p.mpg,(p[site]/p.mpg).toFixed(2)):"–"}${p.l10_mpg?`<span class="sub2">L10 ${(p["l10_"+site]/p.l10_mpg).toFixed(2)}</span>`:""}`],["Usage",usg],...dfs]; }
   }
