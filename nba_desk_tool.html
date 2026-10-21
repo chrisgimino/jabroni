@@ -535,8 +535,9 @@ h3{font:700 .95rem/1.2 var(--cond);letter-spacing:0}
 #view[data-t=overview]>:not(.ov-ctl){display:none}
 #view[data-t=overview][data-p=game]>.ov-top{display:grid;max-width:1000px;margin:0 auto;width:100%;grid-template-columns:minmax(0,1fr)!important}
 #view[data-t=overview][data-p=matchup]>.ov-mid{display:grid}
-#view[data-t=overview][data-p=luck]>.ov-flow,#view[data-t=overview][data-p=fouls]>.ov-flow{display:grid}
-#view[data-t=overview][data-p=luck] .ov-flow>.card:nth-child(n+3){display:none}
+#view[data-t=overview][data-p=luck]>.ov-flow,#view[data-t=overview][data-p=pace]>.ov-flow,#view[data-t=overview][data-p=fouls]>.ov-flow{display:grid}
+#view[data-t=overview][data-p=luck] .ov-flow>.card:nth-child(n+2){display:none}
+#view[data-t=overview][data-p=pace] .ov-flow>.card:not(:nth-child(2)){display:none}
 #view[data-t=overview][data-p=fouls] .ov-flow>.card:nth-child(-n+2){display:none}
 #view[data-t=overview][data-p=shots]>.card:not(.ov-ins){display:flex}
 #view[data-t=overview][data-p=insights]>.ov-ins{display:flex}
@@ -612,7 +613,7 @@ const TABS=[["overview","Game"],["players","Players"],["onoff","On/Off"],["rotat
 // each tab is split into one-screen pages: [key, label, what it is for]
 const PAGES={
  overview:[["game","Game","Vegas lines, season ranks and recent form"],["rot","Rotation","Projected rotation, injuries and roster changes for one team"],["matchup","Matchup","Offense vs defense: tale of the tape, where the matchup tilts, soft spots by player type"],
-   ["luck","3PT luck & pace","Is each team's 3-point shooting lucky or unlucky, and how possessions start"],["fouls","Fouls & turnovers","Free-throw pressure and turnovers into transition"],
+   ["luck","3PT luck","Is each team's 3-point shooting lucky or unlucky"],["pace","Pace","How possessions start and how long they take"],["fouls","Fouls & turnovers","Free-throw pressure and turnovers into transition"],
    ["shots","Shot maps","Where each offense shoots against the other defense"],["insights","Insights","The strongest edges for this game"]],
  players:[["roster","Roster","Projected minutes, usage, DK points, salary and matchup for one team"],["impact","Injury impact","Who gains when a teammate sits"]],
  onoff:[["splits","All splits","Every teammate's numbers with the chosen player on vs off the floor"],["swings","Biggest swings","Usage and DK change when he sits"]],
@@ -760,8 +761,8 @@ function edges(){ // candidate insights, each with a strength score; the stronge
     add("tilt","info",0.2,`${x} ${r.l}: ${ord(r.ro)} vs. ${ord(r.rd)}`,`${x} rank ${ord(r.ro)} in ${r.l} rate; ${y} rank ${ord(r.rd)} in allowing it`);
   }
   if(LIVE) for(const [x,X] of [[a,A],[h,H]]){ const {nu,gone}=rosterChange(x);
-    if(nu.length>=2||gone.length>=2) add("roster","info",9+nu.length/2,`${x} roster turnover: ${nu.length} new, ${gone.length} gone`,
-      `New: ${nu.slice(0,3).map(p=>nm(p.id)).join(", ")||"none"}${nu.length>3?"…":""} · gone: ${gone.slice(0,3).map(z=>nm(z.id)).join(", ")||"none"}${gone.length>3?"…":""} · team stats are last season's`); }
+
+  }
   // Game Flow backups: 3-point luck (shooting or opponents' shooting far from the shot mix) and transition edges
   const FL=t=>D.teams[t].flow?.season;
   if(FL(a)&&FL(h)){
@@ -926,7 +927,7 @@ function luckRow(t,side,W){ const X=FLW(t,W)[side], v=X.fg3_luck; if(v==null) re
   const read=side==="off"?(v>0.015?"running hot · likely to cool":v<-0.015?"running cold · likely to heat up":"near expected"):(v>0.015?"opponents hot · D likely better than it looks":v<-0.015?"opponents cold · D likely worse than it looks":"near expected");
   return `<div class="luck"><span class="ll">${dot(t)}${lab}</span><span class="lv">${fv(X.fg3_pct,"pct")} <small>exp ${fv(X.fg3_exp,"pct")}</small></span>
     <span class="lbar"><i class="${v>=0?"up":"down"}" style="width:${w}%"></i></span><b class="${Math.abs(v)>0.015?(v>0?"hot":"cold"):""}">${fv(v,"pp")}</b>
-    <small class="lr">${read} · <b>${pts>=0?"+":""}${pts.toFixed(1)} pts / game</b> from 3s vs. expected on ${X.fg3a_g.toFixed(1)} 3PA${v2!=null?` · ${W2==="l10"?"last 10":"season"}: ${fv(v2,"pp")}`:""}</small></div>`; }
+    <small class="lr">${read} · <b>${pts>=0?"+":""}${pts.toFixed(1)} pts / game</b></small></div>`; }
 function possMix(a,h,W){ // how each team's possessions start, offense and what its defense allows
   const T=[["st_make","After a make","--h2"],["st_dreb","After def. rebound","--h4"],["st_tov_live","After a steal","--good"],["st_tov_dead","After a dead-ball TO","--caution"],["st_other","Other","--rule-strong"]];
   const bar=(t,sd,l)=>{ const X=FLW(t,W)[sd]; return `<div class="pm-r"><span>${dot(t)}${l}</span><div class="pm-b">${T.map(([k,n,c])=>`<i style="width:${((X[k]||0)*100).toFixed(1)}%;background:var(${c})" data-tip="${l}: ${n} ${fv(X[k],"pct")}${X["sec_"+k.slice(3)]!=null?` · ${X["sec_"+k.slice(3)].toFixed(1)}s each`:""}"></i>`).join("")}</div></div>`; };
@@ -1333,13 +1334,13 @@ function renderOnOff(){
   const hidden=dataAll.length-data.length;
   let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("site",[["DK","DK"],["FD","FD"]],st.site)}${X.combo?`<span class="seg-note">Season only for combinations</span>`:seg("oowin",[["Season","season"],["Last 20","l20"],["Last 10","l10"]],W)}${seg("oorate",[["Per 36","36"],["Per minute","min"],["Per game","game"],["Shares %","share"]],R)}</div>
     <div class="outbar"><span class="lbl">Players off:</span>${regs.map(r=>`<button class="pill" data-id="${r.id}" aria-pressed="${sel.includes(r.id)}">${nm(r.id)}${S[r.id]?" "+sbadge(S[r.id]):""}</button>`).join("")}${sel.length>1?`<button class="pill clr" data-clear="1">Clear</button>`:""}</div></div>
-  ${rosterNote([tm])}
+  
   <section class="card oo-card-main"><div class="card-h"><h3>${dot(tm)}Every split ${sel.length>1?"with all of":"for"} ${nmSel} ${sel.length===1?sbadge(S[x]):""}${sel.length>1?" off the floor":""}</h3>
-    <div class="kpis">${X.combo?`<span>${sel.length>1?"Combination":"Top-10 minutes player"} · whole season</span>`:`<span><b>${X.mpg}</b> mpg</span><span><b>${X.gp}</b> games</span><span><b>${MISS?MISS.missed:0}</b> missed</span>`}<span><b>${data.length}</b> teammates${hidden?` <small>(${hidden} no longer on ${tm} hidden)</small>`:""}</span></div></div>
+    <div class="kpis">${X.combo?`<span>${sel.length>1?"Combination":"Top-10 minutes player"} · whole season</span>`:`<span><b>${X.mpg}</b> mpg</span><span><b>${X.gp}</b> games</span><span><b>${MISS?MISS.missed:0}</b> missed</span>`}<span><b>${data.length}</b> teammates${hidden?``:""}</span></div></div>
     <div class="tbl oo-wrap"><table class="oo"><thead><tr><th class="stk">Teammate</th>${COLS.map(([k,l],i)=>`<th class="${i%2?"band":""}"><button class="sort${sortK===k?" on":""}" data-k="${k}">${l}<small>${unit(k)}</small></button></th>`).join("")}<th>Missed games</th></tr><tr class="sub-h"><th class="stk"></th>${COLS.map((c,i)=>`<th class="${i%2?"band":""}">with → w/o · Δ</th>`).join("")}<th>min in → out</th></tr></thead><tbody>`;
   let thinHdr=false;
   for(const r of data){ const thin=isThin(r);
-    if(thin&&!thinHdr){ thinHdr=true; h+=`<tr class="grp"><td class="stk" colspan="1">Small samples</td><td colspan="${COLS.length+1}">under 100 minutes with or without ${nmSel}: read with care</td></tr>`; }
+    if(thin&&!thinHdr){ thinHdr=true; h+=`<tr class="grp"><td class="stk" colspan="1">Small samples</td><td colspan="${COLS.length+1}">&lt;100 min</td></tr>`; }
     h+=`<tr class="${thin?"dim":""}"><td class="stk"><span class="pname">${nm(r.m.id)}</span> ${sbadge(S[r.m.id])}${LIVE&&!onRoster(tm,r.m.id)?' <span class="badge mid">gone</span>':""}<span class="role">${r.on?r.on[OI.min].toFixed(0):0} min with · ${r.off?r.off[OI.min].toFixed(0):0} without</span></td>
       ${COLS.map(([k],i)=>cell(r,k).replace("<td",`<td data-band="${i%2}"`)).join("")}
       <td class="pair">${r.mi?`<span class="raw">${r.mi.min_in.toFixed(1)} → <b>${r.mi.min_out.toFixed(1)}</b></span><span class="sub2">${r.mi.n_out} g${r.mi.n_out<5?" · small":""}</span>`:"–"}</td></tr>`; }
@@ -1383,7 +1384,7 @@ function renderRotations(){
   const cand=D.teams[tm].inout.filter(x=>onRoster(tm,x.id)).slice().sort((x,y)=>y.mpg-x.mpg).slice(0,8);
   let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],["Season",999]],st.mmwin)}</div>
     <div class="outbar"><span class="lbl">Only games without:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}</button>`).join("")}</div></div>
-    ${rosterNote([tm])}
+    
     <section class="card"><div class="card-h"><h3>${dot(tm)}${tm} minutes matrix</h3><span class="hint">${n} game${n===1?"":"s"}${outId?` without ${nm(outId)}`:""}${n&&n<5?" · small sample":""}${M.excluded?` · ${M.excluded} game left out because the feed listed under 5 players`:""}</span></div>
     <div class="mmwrap"><table class="mm"><thead><tr><th class="nm">Player</th>`;
   for(let m=0;m<48;m++){const q=m%12===0; h+=`<th class="${q?"q":""}">${q?"Q"+(m/12+1):(m%12===5?"6'":"")}</th>`;}
