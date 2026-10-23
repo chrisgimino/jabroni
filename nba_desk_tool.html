@@ -639,6 +639,8 @@ const tc=t=>TC[t]||"var(--accent)";
 const dot=t=>`<i class="tdot" style="background:${tc(t)}"></i>`;
 // metric polarity: +1 higher is better, -1 lower is better, 0 style only
 const POL={ppg:1,opp_ppg:-1,pace:0,ortg:1,drtg:-1,net:1,three_rate:0,rim_rate:0,ft_rate:1,tov_pct:-1,oreb_pct:1,trans_rate:0,opp_three_rate:-1,opp_rim_rate:-1,opp_ft_rate:-1,opp_tov_pct:1};
+// colors read from the attacker's side: a weak defense (high points allowed / def. rating / shots allowed, few forced turnovers) is green
+const POLA=Object.assign({},POL,{opp_ppg:1,drtg:1,opp_three_rate:1,opp_rim_rate:1,opp_ft_rate:1,opp_tov_pct:-1});
 function desc(k,r){ // rank 1 = highest value
   const p=POL[k]??0;
   if(p===0){ if(r<=5) return ["v-hi","Very high"]; if(r<=10) return ["hi","High"]; if(r>=26) return ["v-lo","Very low"]; if(r>=21) return ["lo","Low"]; return ["mid","Average"]; }
@@ -972,7 +974,7 @@ function renderOverview(){
     <div class="mini-h">Vegas</div>${vg}
     <div class="mini-h">${D.season_label} ${W==="l10"?"last 10":"season"} ranks</div>
     <table class="ctbl env-t"><thead><tr><th></th><th>${a}</th><th>${h}</th></tr></thead><tbody>
-      ${[["Pace","pace"],["Points / game","ppg"],["Allowed / game","opp_ppg"],["Off. rating","ortg"],["Def. rating","drtg"]].map(([l,k])=>`<tr><td>${l}</td><td>${RK(pa[k+"_rank"],POL[k]??0,fmtS(k,pa[k]))}</td><td>${RK(ph[k+"_rank"],POL[k]??0,fmtS(k,ph[k]))}</td></tr>`).join("")}
+      ${[["Pace","pace"],["Points / game","ppg"],["Allowed / game","opp_ppg"],["Off. rating","ortg"],["Def. rating","drtg"]].map(([l,k])=>`<tr><td>${l}</td><td>${RK(pa[k+"_rank"],POLA[k]??0,fmtS(k,pa[k]))}</td><td>${RK(ph[k+"_rank"],POLA[k]??0,fmtS(k,ph[k]))}</td></tr>`).join("")}
     </tbody></table>
     <div class="mini-h">${O2==="l10"?"Last 10 form":"Full season"}</div>
     ${form(a,pa,qa)}${form(h,ph,qh)}
@@ -987,7 +989,7 @@ function renderOverview(){
   const sub=(r,k,o)=>o&&o[k+"_rank"]!=null?`<small class="alt">${other==="l10"?"L10":"Season"} ${ord(o[k+"_rank"])}</small>`:"";
   let tape=`<table class="ctbl tape2"><thead><tr><th class="l">${dot(a)}${a}</th><th></th><th class="c">Stat</th><th></th><th class="r">${h}${dot(h).replace('margin-right','margin-left')}</th></tr></thead><tbody>`;
   for(const [k,l] of rows){ if(k==="_"){ tape+=`<tr class="sect"><td colspan="5">${l}</td></tr>`; continue; }
-    const ra=pa[k+"_rank"], rh=ph[k+"_rank"], p=POL[k]??0, better=p===0?null:(p>0?(ra<rh?"a":"h"):(ra>rh?"a":"h"));
+    const ra=pa[k+"_rank"], rh=ph[k+"_rank"], p=POLA[k]??0, better=p===0?null:(p>0?(ra<rh?"a":"h"):(ra>rh?"a":"h"));
     tape+=`<tr><td class="l">${RK(ra,p,fmtS(k,pa[k]),desc(k,ra)[1])}${sub(ra,k,oa)}</td>
       <td class="barc l"><span class="tb"><i style="width:${bar(ra)}%;background:${tc(a)};opacity:${better==="h"?.35:1}"></i></span></td>
       <td class="c">${l}</td>
