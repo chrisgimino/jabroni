@@ -604,7 +604,7 @@ const D = window.NBA_DATA;
   const conv=a=>{ if(!a) return null; const m=a[I.min]||0, k=m?36/m:0;
     return {min:m, use:a[I.poss]?a[I.used]/a[I.poss]:null, dk:a[I.dk]*k, fd:a[I.fd]*k, pts:a[I.pts]*k, reb:a[I.reb]*k, ast:a[I.ast]*k, fg3a:a[I.fg3a]*k, fga:a[I.fga]*k, rim:a[I.rim]*k}; };
   for(const t of Object.values(D.teams)){
-    for(const g of t.mm.per_game) for(const p in g.sec){ const s=g.sec[p]; if(typeof s==="string") g.sec[p]=Array.from(s,c=>c.charCodeAt(0)-48); }
+    for(const g of [...t.mm.per_game,...(t.mm_new?t.mm_new.per_game:[])]) for(const p in g.sec){ const s=g.sec[p]; if(typeof s==="string") g.sec[p]=Array.from(s,c=>c.charCodeAt(0)-48); }
     for(const x of t.onoff) for(const m of x.mates){ const w=m.w.season; m.on=conv(w[0]); m.off=conv(w[1]); m.bench=conv(w[2]); }
   }
 })();
@@ -867,7 +867,7 @@ const pv=(x,d,unit="")=>x.v==null?'<span class="dim">–</span>':x.rg?`<span cla
 function rotCard(t,o,S,side,KS){
   const T=D.teams[t], O=D.teams[o], g=game(), ks=KS.toLowerCase();
   let ps=T.players.filter(p=>!(S[p.id]==="O"));
-  ps=LIVE?ps.sort((x,y)=>(x.order??99)-(y.order??99)).slice(0,10):ps.filter(p=>p.gp>=5).sort((x,y)=>y.mpg-x.mpg).slice(0,10);
+  ps=LIVE?ps.filter(p=>S[p.id]!=="O").sort((x,y)=>(x.order??99)-(y.order??99)).slice(0,10):ps.filter(p=>p.gp>=5).sort((x,y)=>y.mpg-x.mpg).slice(0,10);
   const flagged=Object.keys(S).filter(id=>T.players.some(p=>p.id===id)||T.onoff.some(o=>o.id===id));
   const extra=(g.inj_extra||[]).filter(x=>x.team===t&&!flagged.includes(x.id));
   const inj=[...flagged.map(id=>{const p=T.players.find(q=>q.id===id)||{}; return {id,s:S[id],part:p.injury,imp:p.impact};}),
@@ -1374,7 +1374,7 @@ function renderOnOff(){
 
 /* ---------------- rotations ---------------- */
 function renderRotations(){
-  const [tm]=sideTeam(), M=D.teams[tm].mm, wg=M.per_game.slice(-Math.min(st.mmwin,M.per_game.length));
+  const [tm]=sideTeam(), M=D.teams[tm].mm, MN=D.teams[tm].mm_new, useNew=st.mmwin===-1&&!!MN, wg=useNew?MN.per_game:M.per_game.slice(-Math.min(st.mmwin<0?10:st.mmwin,M.per_game.length));
   const outId=st.out[tm]||"";
   const played=(g,p)=>{const a=g.sec[p];return (a&&a.some(x=>x>0))||(g.ot[p]>0);};
   const games=outId?wg.filter(g=>!played(g,outId)):wg, n=games.length;
@@ -1389,7 +1389,7 @@ function renderRotations(){
   for(const g of wg) for(const p of new Set([...Object.keys(g.sec),...Object.keys(g.ot)])){ if(!played(g,p)) continue;
     const b=base[p]||(base[p]={gp:0,min:0}); b.gp++; b.min+=(g.sec[p]||[]).reduce((x,y)=>x+y,0)/60+(g.ot[p]||0); }
   const cand=D.teams[tm].inout.filter(x=>onRoster(tm,x.id)).slice().sort((x,y)=>y.mpg-x.mpg).slice(0,8);
-  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],["Season",999]],st.mmwin)}</div>
+  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],[D.season_label,999],...(Object.values(D.teams).some(x=>x.mm_new)?[[`${D.season+1}-${String(D.season+2).slice(2)}`,-1]]:[])],useNew?-1:(st.mmwin<0?10:st.mmwin))}</div>
     <div class="outbar"><span class="lbl">Only games without:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}</button>`).join("")}</div></div>
     
     <section class="card"><div class="card-h"><h3>${dot(tm)}${tm} minutes matrix</h3><span class="hint">${n} game${n===1?"":"s"}${outId?` without ${nm(outId)}`:""}${n&&n<5?" · small sample":""}${M.excluded?` · ${M.excluded} game left out because the feed listed under 5 players`:""}</span></div>
