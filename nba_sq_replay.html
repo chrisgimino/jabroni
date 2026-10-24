@@ -400,8 +400,13 @@ const tFull = t => S.mu?.team_names?.[t] || S.rp.teams[t].abbr;
 const lastName = id => { const p = nm(id).split(" "); return p.length > 1 ? p.slice(1).join(" ") : p[0]; };
 const teamIdx = ab => S.mu?.teams?.indexOf(ab) ?? -1;
 function prepare() {
-  S.byId = {}; for (const p of S.rp.players) S.byId[p.core_id] = p;
-  S.ev = S.rp.events; S.endT = S.ev.length ? S.ev[S.ev.length - 1].t : 2880;
+  // the replay's events carry RG player IDs; names, the box and the matchup file are by core ID: translate once here
+  S.byId = {}; const r2c = {};
+  for (const p of S.rp.players) { const c = String(p.core_id || p.rg_id); if (p.rg_id) r2c[String(p.rg_id)] = c; S.byId[c] = p; }
+  const m = id => (id === null || id === undefined || id === "") ? id : (r2c[String(id)] || String(id));
+  S.ev = S.rp.events.map(e => { const x = { ...e }; for (const k of ["player", "assist", "block", "steal", "in", "out"]) if (x[k]) x[k] = m(x[k]);
+    if (x.on) x.on = x.on.map(tm => tm.map(m)); return x; });
+  S.endT = S.ev.length ? S.ev[S.ev.length - 1].t : 2880;
   S.periods = S.ev.filter(e => e.type === "period_end").map(e => e.t);
   S.muP = {}; for (const p of (S.mu?.players || [])) S.muP[p.core_id] = p;
 }
@@ -539,7 +544,7 @@ function renderFeed() {
 function renderFive() {
   const st = S.st; if (!st) return;
   $("five").innerHTML = [0, 1].map(t => `<div style="min-width:0"><div class="lbl" style="color:var(--t${t})">${esc(tShort(t))} on floor</div><ol>` +
-    (st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => p.core_id)).map(id => {
+    (st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => String(p.core_id || p.rg_id))).map(id => {
       const b = st.box[id]; return `<li><span>${esc(lastName(id))}</span><span>${b ? fmt(dk(b), 1) : "0.0"}</span></li>`; }).join("") + "</ol></div>").join("");
 }
 
