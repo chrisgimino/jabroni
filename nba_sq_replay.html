@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SQ Replay Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one screen, never scrolls. Top bar -> navy scoreboard -> view tabs -> the one view on screen. Long lists page
+   (‹ 1/3 ›) instead of scrolling; lists open a detail panel (beside on desktop, over the list on phones).
+   Palette: the NBA Matchups desk (light only, on purpose: same look as the desk pages in the repo). */
+:root {
+  --ground: #eef1f4; --surface: #ffffff; --ink: #16233f; --muted: #57647a; --faint: #8896a8; --rule: #d7dee6; --rule-strong: #b7c1cf;
+  --panel2: #e7edf3; --accent: #e8632e; --accent-soft: #fcebe3;
+  --good: #2f8f57; --good-soft: #dcf0e4; --bad: #c0392b; --bad-soft: #f8e1de;
+  --board: #16233f; --board-ink: #ffffff; --board-muted: #a9b6cc; --board-rule: #2b3b5e;
+  --court: #f4efe6; --court-line: #c4b8a3; --paint: #ece4d6;
+  --t0: #2a6fd6; --t1: #d4561f;
+  --text: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ground); color: var(--ink) }
+body { font: 400 14px/1.4 var(--text); font-variant-numeric: tabular-nums }
+button, select, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+[hidden] { display: none !important }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+
+.app { height: 100%; height: 100dvh; display: flex; flex-direction: column; gap: 8px; max-width: 1440px; margin: 0 auto;
+  padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 10px; min-width: 0 }
+.brand { font-weight: 800; font-size: 18px; letter-spacing: .01em; white-space: nowrap }
+.brand span { color: var(--accent) }
+.top .grow { flex: 1; min-width: 0 }
+.top select { max-width: 100%; width: 100%; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 5px 8px; min-height: 32px }
+.upd { color: var(--muted); font-size: 12px; white-space: nowrap }
+.filebtn { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 5px 10px; font-size: 13px; white-space: nowrap }
+.filebtn input { position: absolute; inset: 0; opacity: 0; cursor: pointer }
+@media (max-width: 760px) { .upd { display: none } .brand { font-size: 16px } }
+
+/* scoreboard */
+.board { background: var(--board); color: var(--board-ink); border-radius: 10px; padding: 8px 16px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px }
+.side { display: flex; align-items: center; gap: 12px; min-width: 0 }
+.side.r { justify-content: flex-end; text-align: right }
+.tn { font-weight: 800; font-size: 20px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.tn i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 7px; vertical-align: 1px }
+.side.r .tn i { margin: 0 0 0 7px }
+.tmeta { color: var(--board-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.sc { font-weight: 800; font-size: 38px; line-height: 1; min-width: 2.1ch; text-align: center }
+.clk { text-align: center; line-height: 1.15 }
+.clk b { display: block; font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--board-muted) }
+.clk strong { font-weight: 700; font-size: 22px }
+.clk small { display: block; color: var(--board-muted); font-size: 11px }
+@media (max-width: 760px) {
+  .board { padding: 6px 10px; gap: 6px } .tn { font-size: 15px } .sc { font-size: 28px } .clk strong { font-size: 17px }
+  .clk small, .tmeta { display: none } .side { gap: 8px }
+}
+
+/* tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule-strong); overflow-x: auto; scrollbar-width: none; flex: 0 0 auto }
+.tabs::-webkit-scrollbar { display: none }
+.tabs button { flex: 0 0 auto; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -1px; padding: 6px 12px; font-weight: 700; font-size: 14px; color: var(--muted) }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent) }
+.tabs button:disabled { opacity: .4; cursor: default }
+
+/* views */
+.views { flex: 1; min-height: 0; position: relative }
+.view { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; min-height: 0 }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px }
+.fill { flex: 1; min-height: 0; overflow: hidden; position: relative }
+.lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted) }
+.row { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; min-width: 0 }
+.row.wrap { flex-wrap: wrap }
+.spacer { flex: 1 }
+.seg { display: inline-flex; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; overflow: hidden; flex: 0 0 auto }
+.seg button { border: 0; background: none; padding: 4px 10px; font-size: 13px; font-weight: 600; color: var(--muted); white-space: nowrap }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 13px; color: var(--muted); height: 30px; flex: 0 0 auto }
+.pager button { width: 30px; height: 28px; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--surface); font-size: 16px; line-height: 1 }
+.pager button:disabled { opacity: .35; cursor: default }
+.chiprow { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 0 0 auto; align-items: center }
+.chiprow::-webkit-scrollbar { display: none }
+.chip { flex: 0 0 auto; border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 999px; padding: 2px 10px; font-size: 12px; height: 26px; white-space: nowrap }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink) }
+.chip small { color: var(--faint); margin-left: 3px }
+.chip[aria-pressed="true"] small { color: var(--board-muted) }
+.empty-note { color: var(--muted); font-size: 13px; padding: 8px 0 }
+
+/* replay */
+.rp { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 8px; height: 100% }
+.rp-left { display: flex; flex-direction: column; gap: 6px; min-height: 0 }
+.courtbox { flex: 1; min-height: 120px; position: relative; display: flex; align-items: center; justify-content: center }
+#court { width: 100%; height: 100%; display: block; touch-action: manipulation }
+#court .floor { fill: var(--court) }
+#court .paint { fill: var(--paint) }
+#court .ln { fill: none; stroke: var(--court-line); stroke-width: .17 }
+#court .half-lbl { font-family: var(--text); font-weight: 800; font-size: 4.6px; fill: var(--court-line); opacity: .55; letter-spacing: .04em }
+.mk.t0 { --c: var(--t0) } .mk.t1 { --c: var(--t1) }
+.mk .made { fill: var(--c); stroke: var(--court); stroke-width: .22 }
+.mk .miss { stroke: var(--c); stroke-width: .3; stroke-linecap: round; fill: none }
+.mk .hit { fill: transparent }
+.mk.dim { opacity: .13 }
+.mk:hover .made { stroke: var(--ink) }
+.ball { fill: var(--ink) } .pulse { fill: none; stroke: var(--ink); stroke-width: .2 }
+.pop { font-family: var(--text); font-weight: 800; font-size: 3px; fill: var(--ink) }
+.lastlbl { font-family: var(--text); font-weight: 600; font-size: 1.7px; fill: var(--ink); paint-order: stroke; stroke: var(--court); stroke-width: .5px }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; font-size: 12px; padding: 6px 8px; border-radius: 6px; max-width: 230px; z-index: 5; line-height: 1.35 }
+.ctl { display: flex; align-items: center; gap: 6px; flex: 0 0 auto }
+.ctl .btn { height: 32px; border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 6px; padding: 0 10px; font-weight: 600; font-size: 13px; white-space: nowrap }
+.ctl .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; min-width: 64px }
+.ctl select { height: 32px; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--surface); padding: 0 6px; font-size: 13px }
+.scrub { flex: 1; min-width: 80px; display: flex; flex-direction: column }
+#scrub { width: 100%; accent-color: var(--accent); margin: 0 }
+.ticks { position: relative; height: 12px; font-size: 10px; color: var(--faint) }
+.ticks span { position: absolute; transform: translateX(-50%) }
+.legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); align-items: center; flex: 0 0 auto; white-space: nowrap; overflow: hidden }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0 }
+.rp-right { display: flex; flex-direction: column; gap: 8px; min-height: 0 }
+.five { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; flex: 0 0 auto }
+.five ol { list-style: none; margin: 3px 0 0; padding: 0 }
+.five li { display: flex; justify-content: space-between; gap: 6px; font-size: 12px; height: 20px; align-items: center; border-bottom: 1px solid var(--rule) }
+.five li span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.five li span:last-child { color: var(--muted); white-space: nowrap }
+.feed { list-style: none; margin: 0; padding: 0 }
+.feed li { height: 44px; display: grid; grid-template-columns: 50px 4px minmax(0, 1fr) 52px; gap: 7px; align-items: center; border-bottom: 1px solid var(--rule); font-size: 12.5px }
+.feed .tm { color: var(--faint); font-size: 11px }
+.feed .bar { width: 4px; height: 30px; border-radius: 2px }
+.feed .tx { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3 }
+.feed .sc2 { text-align: right; color: var(--muted); font-size: 12px }
+.feed li.big .tx { font-weight: 600 }
+.feed li.now { background: var(--accent-soft) }
+.feed li.pe { grid-template-columns: 1fr; text-align: center; font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em }
+.pt { font-size: 10.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--rule-strong); border-radius: 4px; padding: 0 4px; margin-left: 4px; white-space: nowrap }
+@media (max-width: 760px) {
+  .rp { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) }
+  .courtbox { flex: 0 0 auto; aspect-ratio: 97 / 53; min-height: 0; max-width: 100% }
+  .five, .legend { display: none } .ctl .speed { display: none }
+}
+
+/* tables */
+table.t { border-collapse: collapse; width: 100%; table-layout: auto }
+.t th { font-size: 11px; font-weight: 600; color: var(--muted); text-align: right; padding: 0 6px; height: 28px; border-bottom: 1px solid var(--rule-strong); white-space: nowrap }
+.t td { text-align: right; padding: 0 6px; height: 30px; border-bottom: 1px solid var(--rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; font-size: 13px }
+.t th:first-child, .t td:first-child { text-align: left }
+.t th.sort { cursor: pointer } .t th.sort:hover { color: var(--ink) }
+.t tr.on td:first-child { font-weight: 700 }
+.t tr.on td:first-child::after { content: " •"; color: var(--accent) }
+.t .tsw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 0 }
+.up { color: var(--good) } .down { color: var(--bad) }
+.div { position: relative; height: 10px; width: 90px; display: inline-block; vertical-align: middle; background: linear-gradient(var(--rule-strong), var(--rule-strong)) center / 1px 100% no-repeat }
+.div i { position: absolute; top: 1px; height: 8px; border-radius: 2px }
+.div i.p { background: var(--good) } .div i.n { background: var(--bad) }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; height: 100% }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr) } .hide-m { display: none } .t td { max-width: 140px } }
+
+/* master-detail */
+.md { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px; height: 100% }
+.list { list-style: none; margin: 0; padding: 0 }
+.list li { height: 56px; border-bottom: 1px solid var(--rule); display: flex; align-items: center; gap: 10px; padding: 0 6px; cursor: pointer }
+.list li:hover { background: var(--panel2) }
+.list li[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent) }
+.list .who { flex: 1; min-width: 0 }
+.list .who b { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.list .who > span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.list .nums { text-align: right; font-size: 12px; color: var(--muted); white-space: nowrap }
+.list .nums b { color: var(--ink); font-size: 14px }
+.sw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto }
+.sig { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; white-space: nowrap }
+.sig.up { background: var(--good-soft); color: var(--good) } .sig.down { background: var(--bad-soft); color: var(--bad) } .sig.nt { background: var(--panel2); color: var(--muted) }
+.tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 1px 6px; border-radius: 999px; white-space: nowrap }
+.tag.obs { background: var(--good-soft); color: var(--good) } .tag.np { background: var(--bad-soft); color: var(--bad) }
+.detail { overflow: hidden }
+.detail h3 { margin: 0; font-size: 17px; font-weight: 800 }
+.detail .sub { color: var(--muted); font-size: 12px }
+.kp { display: flex; gap: 6px 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted) }
+.kp b { color: var(--ink); font-size: 15px; font-weight: 700 }
+.rs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px }
+.rs li { font-size: 13px; display: flex; flex-direction: column; gap: 3px }
+.rs .sig { align-self: flex-start }
+.rs .tested { font-size: 12px; color: var(--muted); border-left: 2px solid var(--rule-strong); padding-left: 8px }
+.back { display: none; border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 600; width: fit-content }
+@media (max-width: 760px) {
+  .md { grid-template-columns: minmax(0, 1fr) }
+  .md .detail { position: absolute; inset: 0; z-index: 3 }
+  .md.closed .detail { display: none }
+  .back { display: inline-block }
+}
+.lines-t { max-width: 640px }
+.emptyapp { position: absolute; inset: 0; z-index: 10; background: var(--ground); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--muted); text-align: center }
+.emptyapp b { color: var(--ink); font-size: 18px }
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <header class="top">
+    <div class="brand">SQ <span>Replay</span></div>
+    <div class="grow"><select id="gamePick" aria-label="Game"></select></div>
+    <span class="upd" id="upd"></span>
+    <label class="filebtn">Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
+  </header>
+
+  <section class="board" id="board" aria-live="polite">
+    <div class="side"><div style="min-width:0"><div class="tn" id="n0"></div><div class="tmeta" id="l0"></div></div><div class="sc" id="s0">0</div></div>
+    <div class="clk"><b id="qLbl">1st</b><strong id="cLbl">12:00</strong><small id="simLbl"></small></div>
+    <div class="side r"><div class="sc" id="s1">0</div><div style="min-width:0"><div class="tn" id="n1"></div><div class="tmeta" id="l1"></div></div></div>
+  </section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-view="replay" aria-selected="true">Replay</button>
+    <button role="tab" data-view="box" aria-selected="false">Box</button>
+    <button role="tab" data-view="angles" aria-selected="false">DFS &amp; props</button>
+    <button role="tab" data-view="edges" aria-selected="false">Play-type edges</button>
+    <button role="tab" data-view="profiles" aria-selected="false">Team profiles</button>
+    <button role="tab" data-view="out" aria-selected="false">Who's out</button>
+    <button role="tab" data-view="players" aria-selected="false">Players</button>
+    <button role="tab" data-view="lines" aria-selected="false">Lines</button>
+  </nav>
+
+  <main class="views" id="views">
+    <section class="view" data-v="replay">
+      <div class="rp">
+        <div class="panel rp-left">
+          <div class="courtbox" id="courtbox">
+            <svg id="court" viewBox="-1.5 -1.5 97 53" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Court with every shot of the replayed sim so far">
+              <rect class="floor" x="0" y="0" width="94" height="50"/>
+              <g id="halfL"></g><g id="halfR" transform="translate(94 0) scale(-1 1)"></g>
+              <rect class="ln" x="0" y="0" width="94" height="50" fill="none" style="stroke-width:.3"/>
+              <line class="ln" x1="47" y1="0" x2="47" y2="50"/>
+              <circle class="ln" cx="47" cy="25" r="6" fill="none"/><circle class="ln" cx="47" cy="25" r="2" fill="none"/>
+              <text class="half-lbl" id="h0" x="30" y="47.6" text-anchor="middle"></text>
+              <text class="half-lbl" id="h1" x="64" y="47.6" text-anchor="middle"></text>
+              <g id="shots"></g><g id="fx"></g>
+            </svg>
+            <div class="tip" id="tip" hidden></div>
+          </div>
+          <div class="ctl">
+            <button class="btn primary" id="play">Play</button>
+            <button class="btn" id="prevShot" aria-label="Previous shot">‹ Shot</button>
+            <button class="btn" id="nextShot" aria-label="Next shot">Shot ›</button>
+            <select id="speed" class="speed" aria-label="Playback speed"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select>
+            <div class="scrub"><input id="scrub" type="range" min="0" max="2880" step="1" value="0" aria-label="Game time"><div class="ticks" id="ticks"></div></div>
+          </div>
+          <div class="chiprow" id="teamChips" role="group" aria-label="Team"></div>
+          <div class="chiprow" id="ptChips" role="group" aria-label="Play type"></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="rp-right">
+          <div class="panel five" id="five"></div>
+          <div class="panel" style="flex:1;min-height:0">
+            <div class="row"><span class="lbl">Play by play</span><span class="spacer"></span><span class="lbl" id="feedCt"></span></div>
+            <div class="fill"><ol class="feed" id="feed"></ol></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-v="box" hidden>
+      <div class="row wrap"><div class="seg" id="boxMode"><button data-v="box" aria-pressed="true">Box score</button><button data-v="pt" aria-pressed="false">Shots by play type</button></div>
+        <span class="spacer"></span><div class="seg team-seg" data-key="boxTeam"></div></div>
+      <div class="two" id="boxTwo" style="flex:1;min-height:0"></div>
+    </section>
+
+    <section class="view" data-v="angles" hidden>
+      <div class="row wrap"><div class="seg" id="angScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div></div>
+      <div class="md closed" id="angMD" style="flex:1;min-height:0">
+        <div class="panel"><div class="fill" id="angList"></div><div id="angPager"></div></div>
+        <div class="panel detail" id="angDetail"></div>
+      </div>
+    </section>
+
+    <section class="view" data-v="edges" hidden>
+      <div class="row wrap"><div class="seg team-seg" data-key="edgeTeam" data-label="offense"></div></div>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="edgeT"></div></div>
+    </section>
+
+    <section class="view" data-v="profiles" hidden>
+      <div class="row wrap"><div class="seg team-seg" data-key="profTeam"></div>
+        <div class="seg" id="profSide"><button data-v="offense" aria-pressed="true">Offense</button><button data-v="defense_allowed" aria-pressed="false">Defense allowed</button></div></div>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="profT"></div></div>
+    </section>
+
+    <section class="view" data-v="out" hidden>
+      <div class="row wrap"><div class="seg team-seg" data-key="outTeam"></div></div>
+      <div class="md closed" id="outMD" style="flex:1;min-height:0">
+        <div class="panel"><div class="fill" id="outList"></div><div id="outPager"></div></div>
+        <div class="panel detail" id="outDetail"></div>
+      </div>
+    </section>
+
+    <section class="view" data-v="players" hidden>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="plT"></div><div id="plPager"></div></div>
+    </section>
+
+    <section class="view" data-v="lines" hidden>
+      <div class="panel lines-t" id="linesT"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const PT = { transition: "Transition", putback: "Putback", post_up: "Post-up", pick_and_roll: "Pick-and-roll", cut: "Cut",
+  spot_up: "Spot-up", drive: "Drive", other_jumper: "Other jumper", other_rim: "Other rim" };
+const ZONE = { RIM: "at the rim", SMID: "short mid", LMID: "long mid", AB3: "above-break 3", CNR3: "corner 3" };
+const SIG = { matchup_up: ["▲ Matchup", "up"], matchup_down: ["▼ Matchup", "down"], usage_up: ["▲ Usage", "up"], usage_down: ["▼ Usage", "down"],
+  range: ["↕ Range", "nt"], making_hot: ["▲ Hot", "up"], making_cold: ["▼ Cold", "down"] };
+const SOURCES = [
+  { idx: "data/nba_sq_matchup_index.json", rp: g => `data/nba_sq_replay_${g}.json`, mu: g => `data/nba_sq_matchup_${g}.json` },
+  { idx: "../nba_sq_matchup/nba_sq_matchup_index.json", rp: g => `../nba_sq_replay/nba_sq_replay_${g}.json`, mu: g => `../nba_sq_matchup/nba_sq_matchup_${g}.json` },
+];
+const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 30, endT: 2880, cur: -2, st: null,
+  team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
+  angScope: "game", angSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0 };
+const mobile = () => matchMedia("(max-width: 760px)").matches;
+const fmt = (x, d = 1) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (+x).toFixed(d);
+const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x)) return "–"; const r = (+x).toFixed(d); return +r === 0 ? (0).toFixed(d) : (+r > 0 ? "+" : "") + r; };
+
+// ------------------------------------------------------------------ court lines (both halves drawn, no <use>)
+const HALF = `<rect class="paint" x="0" y="17" width="19" height="16"/><rect class="ln" x="0" y="17" width="19" height="16" fill="none"/>
+  <circle class="ln" cx="19" cy="25" r="6" fill="none"/><path class="ln" d="M5.25 21 A4 4 0 0 1 5.25 29" fill="none"/>
+  <line class="ln" x1="4" y1="22" x2="4" y2="28" style="stroke-width:.3"/><circle class="ln" cx="5.25" cy="25" r=".75" fill="none" style="stroke-width:.22"/>
+  <path class="ln" d="M0 3 L14.2 3 A23.75 23.75 0 0 1 14.2 47 L0 47" fill="none"/>`;
+$("halfL").innerHTML = HALF; $("halfR").innerHTML = HALF;
+
+// ------------------------------------------------------------------ data
+async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function boot() {
+  try {
+    const b = await getJSON("nba_sq_replay_data.json");
+    S.index = b.index || { games: [] }; S.games = S.index.games || [];
+    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
+    if (S.games.length) { $("upd").textContent = `Updated ${stamp(b.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
+  } catch (e) { /* no slate file */ }
+  for (const src of SOURCES) {
+    try { const idx = await getJSON(src.idx); S.src = src; S.index = idx; S.games = idx.games || []; break; } catch (e) { /* next */ }
+  }
+  if (!S.games.length) { showEmpty(); return; }
+  $("upd").textContent = `Updated ${stamp(S.index.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id);
+}
+function stamp(s) {
+  if (!s) return "";
+  const d = new Date(s); if (isNaN(d)) return String(s);
+  return d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET";
+}
+function showEmpty() {
+  const d = document.createElement("div"); d.className = "emptyapp"; d.id = "emptyApp";
+  d.innerHTML = `<b>No games loaded</b><span>Open the slate file (nba_sq_replay_data.json) or a game's replay + matchup files</span>
+    <label class="filebtn">Open files<input type="file" accept=".json" multiple id="fileIn2"></label>`;
+  $("views").appendChild(d); $("fileIn2").addEventListener("change", e => openFiles(e.target.files));
+}
+function short(full, abbr) { if (abbr && !/^\d+$/.test(abbr)) return abbr; if (!full) return abbr || "?"; const w = String(full).split(" "); return w[w.length - 1]; }
+function fillPicker() {
+  $("gamePick").innerHTML = S.games.map(g => { const tn = g.team_names || g.teams || [];
+    return `<option value="${esc(g.schedule_id)}">${esc(short(tn[0], g.teams?.[0]))} at ${esc(short(tn[1], g.teams?.[1]))}${g.date ? " · " + esc(g.date) : ""}</option>`; }).join("");
+}
+async function openFiles(files) {
+  for (const f of files) {
+    try { const j = JSON.parse(await f.text());
+      if (j.games && j.index) { S.index = j.index; S.games = j.index.games || []; for (const [k, g] of Object.entries(j.games)) S.local[k] = { rp: g.replay, mu: g.matchup }; }
+      else if (j.events && j.schedule_id) (S.local[j.schedule_id] ||= {}).rp = j;
+      else if (j.edges && j.schedule_id) (S.local[j.schedule_id] ||= {}).mu = j;
+      else if (j.games && j.slate_outliers) S.index = j;
+    } catch (e) { /* not ours */ }
+  }
+  const ids = Object.keys(S.local).filter(k => S.local[k].rp);
+  if (!ids.length) return;
+  $("emptyApp")?.remove();
+  const known = new Set(S.games.map(g => String(g.schedule_id)));
+  for (const k of ids) if (!known.has(String(k))) { const m = S.local[k].mu, r = S.local[k].rp;
+    S.games.push({ schedule_id: k, date: m?.date || r.date, teams: r.teams.map(t => t.abbr), team_names: m?.team_names }); }
+  fillPicker(); $("gamePick").value = ids[0]; await pick(ids[0]);
+}
+async function pick(gid) {
+  if (!gid) return; stop(); S.gid = String(gid);
+  let rp = S.local[gid]?.rp, mu = S.local[gid]?.mu;
+  if (!rp && S.src) { try { rp = await getJSON(S.src.rp(gid)); } catch (e) { return; } }
+  if (!mu && S.src) { try { mu = await getJSON(S.src.mu(gid)); } catch (e) { mu = null; } }
+  S.rp = rp; S.mu = mu; prepare();
+  Object.assign(S, { t: 0, cur: -2, pt: null, team: -1, angSel: null, outSel: null, page: {} });
+  $("fx").innerHTML = ""; renderStatic(); seek(0, false);
+}
+
+// ------------------------------------------------------------------ names
+const nm = id => S.mu?.names?.[id] || (S.byId[id]?.name && !/^\d+$/.test(S.byId[id].name) ? S.byId[id].name : null) || String(id ?? "");
+const tShort = t => short(S.mu?.team_names?.[t], S.rp.teams[t].abbr);
+const tFull = t => S.mu?.team_names?.[t] || S.rp.teams[t].abbr;
+const lastName = id => { const p = nm(id).split(" "); return p.length > 1 ? p.slice(1).join(" ") : p[0]; };
+const teamIdx = ab => S.mu?.teams?.indexOf(ab) ?? -1;
+function prepare() {
+  S.byId = {}; for (const p of S.rp.players) S.byId[p.core_id] = p;
+  S.ev = S.rp.events; S.endT = S.ev.length ? S.ev[S.ev.length - 1].t : 2880;
+  S.periods = S.ev.filter(e => e.type === "period_end").map(e => e.t);
+  S.muP = {}; for (const p of (S.mu?.players || [])) S.muP[p.core_id] = p;
+}
+function periodOf(t) { return t < 2880 ? Math.floor(t / 720) + 1 : 5 + Math.floor((t - 2880) / 300); }
+function clockOf(t) { const p = periodOf(t), st = p <= 4 ? (p - 1) * 720 : 2880 + (p - 5) * 300, len = p <= 4 ? 720 : 300;
+  const r = Math.max(0, len - (t - st)); return { p, txt: `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}` }; }
+const qName = p => p <= 4 ? ["1st", "2nd", "3rd", "4th"][p - 1] : (p === 5 ? "OT" : `OT${p - 4}`);
+
+// ------------------------------------------------------------------ static parts
+function renderStatic() {
+  const rp = S.rp;
+  for (const t of [0, 1]) {
+    const sw = `<i style="background:var(--t${t})"></i>`;
+    $("n" + t).innerHTML = t === 0 ? sw + esc(mobile() ? tShort(t) : tFull(t)) : esc(mobile() ? tShort(t) : tFull(t)) + sw;
+    const tm = rp.teams[t];
+    $("l" + t).textContent = `Vegas ${fmt(tm.vegas_total)} · SQ ${fmt(tm.sq_mean_points)}`;
+    $("h" + t).textContent = tShort(t).toUpperCase();
+  }
+  $("simLbl").textContent = `typical sim · ${(rp.sim_index ?? 0) + 1} of ${(rp.sims || 0).toLocaleString()}`;
+  $("scrub").max = Math.ceil(S.endT);
+  $("ticks").innerHTML = [0, ...S.periods.slice(0, -1)].map((t, i) => `<span style="left:${100 * t / S.endT}%">${i < 4 ? "Q" + (i + 1) : "OT"}</span>`).join("");
+  $("legend").innerHTML = `<span><i style="background:var(--t0)"></i>${esc(tShort(0))} ← left</span><span><i style="background:var(--t1)"></i>${esc(tShort(1))} right →</span><span>● made</span><span>✕ missed</span>`;
+  $("teamChips").innerHTML = [-1, 0, 1].map(t => `<button class="chip" data-team="${t}" aria-pressed="${S.team === t}">${t < 0 ? "Both" : esc(tShort(t))}</button>`).join("");
+  const cnt = {}; for (const e of S.ev) if (e.type === "shot") cnt[e.play_type] = (cnt[e.play_type] || 0) + 1;
+  $("ptChips").innerHTML = `<button class="chip" data-pt="" aria-pressed="${!S.pt}">All types</button>` +
+    Object.keys(PT).filter(k => cnt[k]).map(k => `<button class="chip" data-pt="${k}" aria-pressed="${S.pt === k}">${PT[k]}<small>${cnt[k]}</small></button>`).join("");
+  document.querySelectorAll(".team-seg").forEach(el => {
+    const key = el.dataset.key, lab = el.dataset.label ? " " + el.dataset.label : "";
+    el.innerHTML = [0, 1].map(t => `<button data-t="${t}" aria-pressed="${S[key] === t}">${esc(tShort(t))}${lab}</button>`).join("");
+  });
+  document.querySelectorAll(".tabs button").forEach(b => { b.disabled = !S.mu && !["replay", "box"].includes(b.dataset.view); });
+  if (!S.mu && !["replay", "box"].includes(S.view)) S.view = "replay";
+  showView();
+}
+
+// ------------------------------------------------------------------ state at time t
+function stateAt(t) {
+  const ev = S.ev, box = {}, on = [[], []]; let score = [0, 0], lastT = 0, cur = -1;
+  const B = id => (box[id] ||= { sec: 0, pts: 0, fgm: 0, fga: 0, m3: 0, a3: 0, ftm: 0, fta: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0 });
+  for (let i = 0; i < ev.length && ev[i].t <= t; i++) {
+    const e = ev[i]; cur = i;
+    if (e.on) { const dt = e.t - lastT; for (const tm of e.on) for (const id of tm) B(id).sec += dt; on[0] = e.on[0].slice(); on[1] = e.on[1].slice(); }
+    lastT = e.t; if (e.score) score = e.score;
+    if (e.type === "shot") { const b = B(e.player); b.fga++; if (e.zone === "AB3" || e.zone === "CNR3") b.a3++;
+      if (e.made) { b.fgm++; b.pts += e.pts; if (e.pts === 3) b.m3++; if (e.assist) B(e.assist).ast++; } else if (e.block) B(e.block).blk++; }
+    else if (e.type === "ft") { const b = B(e.player); b.fta += e.fta || 0; b.ftm += e.ftm || 0; b.pts += e.ftm || 0; }
+    else if (e.type === "rebound" && e.player) { const b = B(e.player); if (e.kind === "offensive") b.oreb++; else if (e.kind === "defensive") b.dreb++; }
+    else if (e.type === "turnover") { B(e.player).tov++; if (e.steal) B(e.steal).stl++; }
+    else if (e.type === "sub") { const k = on[e.team].indexOf(e.out); if (k >= 0) on[e.team][k] = e.in; }
+  }
+  for (const tm of on) for (const id of tm) B(id).sec += t - lastT;
+  return { box, on, score, cur };
+}
+function dk(b) { const reb = b.oreb + b.dreb; let v = b.pts + .5 * b.m3 + 1.25 * reb + 1.5 * b.ast + 2 * b.stl + 2 * b.blk - .5 * b.tov;
+  const tens = [b.pts, reb, b.ast, b.stl, b.blk].filter(x => x >= 10).length; if (tens >= 3) v += 4.5; else if (tens === 2) v += 1.5; return v; }
+function evText(e) {
+  const n = id => esc(nm(id));
+  switch (e.type) {
+    case "shot": { let s = `${n(e.player)} ${e.made ? "makes" : "misses"} ${e.pts === 3 ? "3" : "2"} ${ZONE[e.zone] || e.zone}<span class="pt">${PT[e.play_type] || "?"}</span>`;
+      if (e.made && e.assist) s += ` · ast ${n(e.assist)}`; if (!e.made && e.block) s += ` · blk ${n(e.block)}`; return s; }
+    case "ft": return `${n(e.player)} FT ${e.ftm}/${e.fta}`;
+    case "rebound": return e.player ? `${n(e.player)} ${e.kind === "offensive" ? "off." : "def."} rebound` : "Team rebound";
+    case "turnover": return `${n(e.player)} turnover${e.kind === "steal" && e.steal ? ` · stl ${n(e.steal)}` : e.kind === "offensive_foul" ? " (off. foul)" : ""}`;
+    case "foul": return `Foul on ${n(e.player)}`;
+    case "sub": return `${n(e.in)} in for ${n(e.out)}`;
+    case "period_end": return `End of ${qName(e.period)}`;
+  }
+  return esc(e.type);
+}
+
+// ------------------------------------------------------------------ playback
+function seek(t, animate) {
+  S.t = Math.max(0, Math.min(S.endT, t));
+  const st = stateAt(S.t), changed = st.cur !== S.cur, prev = S.cur; S.cur = st.cur; S.st = st;
+  const ck = clockOf(Math.min(S.t, S.endT - .001));
+  $("qLbl").textContent = S.t >= S.endT ? "Final" : qName(ck.p); $("cLbl").textContent = S.t >= S.endT ? "0:00" : ck.txt;
+  $("scrub").value = Math.round(S.t);
+  if (!changed) return;
+  $("s0").textContent = st.score[0]; $("s1").textContent = st.score[1];
+  if (S.view === "replay") { renderShots(); renderFeed(); renderFive(); }
+  if (S.view === "box") renderBox();
+  if (animate && S.view === "replay") for (let i = Math.max(prev + 1, 0); i <= S.cur; i++) if (S.ev[i].type === "shot") flight(S.ev[i]);
+}
+let raf = 0;
+function loop(now) { if (!S.playing) return; const dt = Math.min(.1, (now - S.last) / 1000); S.last = now; seek(S.t + dt * S.speed, true);
+  if (S.t >= S.endT) { stop(); return; } raf = requestAnimationFrame(loop); }
+function play() { if (S.t >= S.endT) seek(0, false); S.playing = true; S.last = performance.now(); $("play").textContent = "Pause"; raf = requestAnimationFrame(loop); }
+function stop() { S.playing = false; cancelAnimationFrame(raf); if ($("play")) $("play").textContent = "Play"; }
+function jumpShot(dir) {
+  const sh = S.ev.map((e, i) => [e, i]).filter(([e]) => e.type === "shot" && (S.team < 0 || e.team === S.team) && (!S.pt || e.play_type === S.pt));
+  const tg = dir > 0 ? sh.find(([, i]) => i > S.cur) : [...sh].reverse().find(([, i]) => i < S.cur);
+  if (tg) { stop(); seek(tg[0].t, dir > 0); }
+}
+
+// ------------------------------------------------------------------ replay view
+const shotXY = e => e.team === 0 ? [e.x, e.y] : [94 - e.x, e.y];
+function renderShots() {
+  let h = "", last = -1;
+  for (let i = 0; i <= S.cur; i++) { const e = S.ev[i]; if (e.type !== "shot") continue; last = i;
+    const [x, y] = shotXY(e), dim = (S.team >= 0 && e.team !== S.team) || (S.pt && e.play_type !== S.pt);
+    const mk = e.made ? `<circle class="made" cx="${x}" cy="${y}" r=".75"/>` : `<path class="miss" d="M${x - .55} ${y - .55}L${x + .55} ${y + .55}M${x + .55} ${y - .55}L${x - .55} ${y + .55}"/>`;
+    h += `<g class="mk t${e.team}${dim ? " dim" : ""}" data-i="${i}">${mk}<circle class="hit" cx="${x}" cy="${y}" r="1.7"/></g>`; }
+  if (last >= 0) { const e = S.ev[last], [x, y] = shotXY(e), ax = x < 12 ? "start" : x > 82 ? "end" : "middle";
+    h += `<text class="lastlbl" x="${x}" y="${y - 1.4}" text-anchor="${ax}">${esc(lastName(e.player))} · ${esc(PT[e.play_type] || "")}</text>`; }
+  $("shots").innerHTML = h;
+}
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function flight(e) {
+  if (reduce) return;
+  const [x, y] = shotXY(e), rx = e.team === 0 ? 5.25 : 88.75, ry = 25, NS = "http://www.w3.org/2000/svg", fx = $("fx");
+  const ball = document.createElementNS(NS, "circle"); ball.setAttribute("class", "ball"); fx.appendChild(ball);
+  const ring = document.createElementNS(NS, "circle"); ring.setAttribute("class", "pulse"); ring.setAttribute("cx", x); ring.setAttribute("cy", y); fx.appendChild(ring);
+  const t0 = performance.now(), dur = 520, ex = e.made ? rx : rx + (e.team === 0 ? 2.2 : -2.2), ey = e.made ? ry : ry + (Math.random() < .5 ? -2.4 : 2.4);
+  (function step(now) { const k = Math.min(1, (now - t0) / dur), kk = 1 - Math.pow(1 - k, 2);
+    let bx = x + (rx - x) * kk, by = y + (ry - y) * kk;
+    if (!e.made && k > .8) { const m = (k - .8) / .2; bx = rx + (ex - rx) * m; by = ry + (ey - ry) * m; }
+    ball.setAttribute("cx", bx); ball.setAttribute("cy", by); ball.setAttribute("r", (.55 + .5 * Math.sin(Math.PI * k)).toFixed(3));
+    ring.setAttribute("r", (.8 + 3 * k).toFixed(2)); ring.style.opacity = String(1 - k);
+    if (k < 1) requestAnimationFrame(step); else { ball.remove(); ring.remove(); if (e.made) pop(rx, ry - 1.6, "+" + e.pts); } })(t0);
+}
+function pop(x, y, txt) { const el = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  el.setAttribute("class", "pop"); el.setAttribute("x", x); el.setAttribute("y", y); el.setAttribute("text-anchor", "middle"); el.textContent = txt; $("fx").appendChild(el);
+  const t0 = performance.now(); (function f(now) { const k = Math.min(1, (now - t0) / 700); el.setAttribute("y", y - 2 * k); el.style.opacity = String(1 - k);
+    if (k < 1) requestAnimationFrame(f); else el.remove(); })(t0); }
+function fit(el, rowH, reserve = 0) { return Math.max(1, Math.floor((el.clientHeight - reserve) / rowH)); }
+function renderFeed() {
+  const box = $("feed").parentElement, n = fit(box, 44), rows = [];
+  for (let i = S.cur; i >= 0 && rows.length < n; i--) { const e = S.ev[i];
+    if (e.type === "period_end") { rows.push(`<li class="pe">${evText(e)} · ${e.score[0]}-${e.score[1]}</li>`); continue; }
+    rows.push(`<li class="${e.type === "shot" || e.type === "turnover" ? "big" : ""}${i === S.cur ? " now" : ""}"><span class="tm">Q${Math.min(e.period, 9)} ${esc(e.clock)}</span>
+      <span class="bar" style="background:var(--t${e.team})"></span><span class="tx">${evText(e)}</span><span class="sc2">${e.score ? e.score[0] + "-" + e.score[1] : ""}</span></li>`); }
+  $("feed").innerHTML = rows.join("") || `<li class="pe">Tip-off · press Play</li>`;
+  $("feedCt").textContent = `${S.cur + 1} / ${S.ev.length}`;
+}
+function renderFive() {
+  const st = S.st; if (!st) return;
+  $("five").innerHTML = [0, 1].map(t => `<div style="min-width:0"><div class="lbl" style="color:var(--t${t})">${esc(tShort(t))} on floor</div><ol>` +
+    (st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => p.core_id)).map(id => {
+      const b = st.box[id]; return `<li><span>${esc(lastName(id))}</span><span>${b ? fmt(dk(b), 1) : "0.0"}</span></li>`; }).join("") + "</ol></div>").join("");
+}
+
+// ------------------------------------------------------------------ paging
+function pg(key, total, per) { const pages = Math.max(1, Math.ceil(total / per)), p = Math.min(S.page[key] || 0, pages - 1); S.page[key] = p;
+  return { p, pages, from: p * per, to: Math.min(total, (p + 1) * per) }; }
+function pagerHTML(key, g) { return g.pages <= 1 ? "" : `<div class="pager"><button data-pg="${key}" data-d="-1" ${g.p === 0 ? "disabled" : ""} aria-label="Previous page">‹</button>
+  <span>${g.p + 1} / ${g.pages}</span><button data-pg="${key}" data-d="1" ${g.p >= g.pages - 1 ? "disabled" : ""} aria-label="Next page">›</button></div>`; }
+function pagedTable(el, key, head, rows) {   // fits the rows that fit; the rest on the next pages
+  el.innerHTML = `<table class="t"><thead>${head}</thead><tbody></tbody></table>`;
+  const per = fit(el, 30, 28 + (rows.length * 30 + 28 > el.clientHeight ? 32 : 0)), g = pg(key, rows.length, per);
+  el.innerHTML = `<table class="t"><thead>${head}</thead><tbody>${rows.slice(g.from, g.to).join("")}</tbody></table>${pagerHTML(key, g)}`;
+}
+
+// ------------------------------------------------------------------ box view
+function renderBox() {
+  const st = S.st, two = $("boxTwo"); if (!st) return;
+  const teams = mobile() ? [S.boxTeam] : [0, 1];
+  two.innerHTML = teams.map(t => `<div class="panel" style="min-height:0"><div class="lbl" style="color:var(--t${t})">${esc(tFull(t))}</div><div class="fill" data-t="${t}"></div></div>`).join("");
+  document.querySelectorAll(".seg[data-key=boxTeam]").forEach(el => el.hidden = !mobile());
+  const onNow = new Set([...st.on[0], ...st.on[1]]);
+  for (const t of teams) {
+    const el = two.querySelector(`.fill[data-t="${t}"]`);
+    if (S.boxMode === "box") {
+      const ps = S.rp.players.filter(p => p.team === t && ((st.box[p.core_id]?.sec || 0) > 0 || p.plan_min >= 8)).sort((a, b) => (b.plan_min || 0) - (a.plan_min || 0));
+      const rows = ps.map(p => { const b = st.box[p.core_id] || { sec: 0, pts: 0, fgm: 0, fga: 0, m3: 0, a3: 0, oreb: 0, dreb: 0, ast: 0, stl: 0, blk: 0, tov: 0, ftm: 0, fta: 0 };
+        return `<tr class="${onNow.has(p.core_id) ? "on" : ""}"><td>${esc(mobile() ? lastName(p.core_id) : nm(p.core_id))}</td><td>${Math.floor(b.sec / 60)}</td><td>${b.pts}</td><td>${b.oreb + b.dreb}</td><td>${b.ast}</td>
+          <td class="hide-m">${b.fgm}-${b.fga}</td><td class="hide-m">${b.m3}-${b.a3}</td><td class="hide-m">${b.stl + b.blk}</td><td><b>${fmt(dk(b))}</b></td><td>${fmt(p.sq_dk)}</td><td>${fmt(S.muP[p.core_id]?.main?.dk)}</td></tr>`; });
+      pagedTable(el, "box" + t, `<tr><th>Player</th><th>Min</th><th>Pts</th><th>Reb</th><th>Ast</th><th class="hide-m">FG</th><th class="hide-m">3P</th><th class="hide-m">Stl+Blk</th><th>DK</th><th title="SQ mean of all sims">SQ</th><th>Main</th></tr>`, rows);
+    } else {
+      const agg = {}; for (let i = 0; i <= S.cur; i++) { const e = S.ev[i]; if (e.type !== "shot" || e.team !== t) continue; const a = (agg[e.play_type] ||= { n: 0, m: 0, p: 0 }); a.n++; if (e.made) { a.m++; a.p += e.pts; } }
+      const tot = Object.values(agg).reduce((s, a) => s + a.n, 0), ss = {}; for (const r of (S.mu?.play_types?.[t]?.offense || [])) ss[r.play_type] = r.share;
+      const rows = Object.entries(agg).sort((a, b) => b[1].n - a[1].n).map(([k, a]) => `<tr><td>${PT[k] || k}</td><td>${a.m}-${a.n}</td><td>${(100 * a.n / tot).toFixed(0)}%</td><td>${ss[k] !== undefined ? ss[k].toFixed(0) + "%" : "–"}</td><td>${(a.p / a.n).toFixed(2)}</td></tr>`);
+      pagedTable(el, "pt" + t, `<tr><th>Play type</th><th>FG</th><th>Share</th><th>Season</th><th>Pts/shot</th></tr>`, rows.length ? rows : [`<tr><td colspan="5">No shots yet</td></tr>`]);
+    }
+  }
+}
+
+// ------------------------------------------------------------------ angles (master-detail)
+function angItems() {
+  const list = S.angScope === "slate" && S.index?.slate_outliers ? S.index.slate_outliers : (S.mu?.outliers || []);
+  return list.map(p => ({ ...p, key: (p.core_id || p.name) + "|" + p.team }));
+}
+function renderAngles() {
+  const items = angItems(), el = $("angList");
+  if (!items.length) { el.innerHTML = `<div class="empty-note">No rule fires.</div>`; $("angPager").innerHTML = ""; $("angDetail").innerHTML = ""; return; }
+  if (!S.angSel || !items.find(i => i.key === S.angSel)) S.angSel = mobile() ? null : items[0].key;
+  $("angPager").innerHTML = ""; const room = el.clientHeight, per = fit(el, 56, items.length * 56 > room ? 38 : 0), g = pg("ang" + S.angScope, items.length, per);
+  el.innerHTML = `<ul class="list">${items.slice(g.from, g.to).map(p => { const t = teamIdx(p.team);
+    const chips = (p.reasons || []).map(r => { const s = SIG[r.signal] || [r.signal, "nt"]; return `<span class="sig ${s[1]}">${s[0]}</span>`; }).join(" ");
+    return `<li data-ang="${esc(p.key)}" aria-selected="${p.key === S.angSel}"><span class="sw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>
+      <div class="who"><b>${esc(p.name)}</b><span>${chips}</span></div><div class="nums"><b>${fmt(p.sq_dk)}</b><br>SQ · main ${fmt(p.main_dk)}</div></li>`; }).join("")}</ul>`;
+  $("angPager").innerHTML = pagerHTML("ang" + S.angScope, g);
+  $("angMD").classList.toggle("closed", !S.angSel);
+  const p = items.find(i => i.key === S.angSel); if (!p) { $("angDetail").innerHTML = ""; return; }
+  const t = teamIdx(p.team), mp = S.muP[p.core_id];
+  const sq = mp?.sq || { dk: p.sq_dk }, main = mp?.main || { dk: p.main_dk, dk_own: p.dk_own };
+  $("angDetail").innerHTML = `<button class="back" data-back="ang">‹ List</button>
+    <div><h3><span class="sw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"};margin-right:8px"></span>${esc(p.name)}</h3><div class="sub">${esc(t >= 0 ? tFull(t) : p.team)}</div></div>
+    <div class="kp"><span>SQ <b>${fmt(sq.dk)}</b></span><span>Main <b>${fmt(main.dk)}</b></span>${sq.dk_p85 !== undefined ? `<span>SQ p85 <b>${fmt(sq.dk_p85)}</b></span><span>p99 <b>${fmt(sq.dk_p99)}</b></span>` : ""}
+      ${main.dk_own !== null && main.dk_own !== undefined ? `<span>Own <b>${fmt(main.dk_own)}%</b></span>` : ""}</div>
+    <ul class="rs">${(p.reasons || []).map(r => { const s = SIG[r.signal] || [r.signal, "nt"];
+      return `<li><span class="sig ${s[1]}">${s[0]}</span><span>${esc(r.text)}</span>${r.tested ? `<span class="tested">Backtest: ${esc(r.tested)}</span>` : ""}</li>`; }).join("")}</ul>`;
+}
+
+// ------------------------------------------------------------------ edges / profiles
+function renderEdges() {
+  const t = S.edgeTeam, ab = S.mu.teams[t], es = (S.mu.edges || []).filter(e => e.offense === ab), mx = Math.max(.1, ...es.map(e => Math.abs(e.pts_per_100_shots || 0)));
+  const rows = es.map(e => { const v = e.pts_per_100_shots || 0, w = 50 * Math.abs(v) / mx;
+    return `<tr><td>${PT[e.play_type] || e.play_type}</td><td>${fmt(e.offense_share)}%</td><td>${fmt(e.defense_allows_share)}%</td><td class="hide-m">${fmt(e.league_share)}%</td>
+      <td class="${e.pts_per_shot_edge > 0 ? "up" : e.pts_per_shot_edge < 0 ? "down" : ""}">${sgn(e.pts_per_shot_edge, 2)}</td><td class="hide-m">${sgn(e.sq_quality_edge, 2)}</td><td>${sgn(v)}</td>
+      <td class="hide-m"><span class="div"><i class="${v >= 0 ? "p" : "n"}" style="${v >= 0 ? `left:50%;width:${w}%` : `left:${50 - w}%;width:${w}%`}"></i></span></td><td class="hide-m">${e.offense_shots}/${e.defense_shots}</td></tr>`; });
+  pagedTable($("edgeT"), "edge" + t, `<tr><th>${esc(tShort(t))} offense</th><th>Share</th><th>${esc(tShort(1 - t))} allow</th><th class="hide-m">League</th><th>Pts/shot</th><th class="hide-m">SQ quality</th><th>Per 100</th><th class="hide-m"></th><th class="hide-m">Shots</th></tr>`, rows);
+}
+function renderProfiles() {
+  const t = S.profTeam, k = S.profSide, pr = S.mu.play_types?.[t]; if (!pr) return;
+  const rows = pr[k].map(r => `<tr><td>${PT[r.play_type] || r.play_type}</td><td>${fmt(r.share)}%</td><td class="hide-m">${fmt(r.league_share)}%</td><td>${r.share_rank ?? "–"}</td>
+    <td>${fmt(r.pts_per_shot, 2)}</td><td class="hide-m">${fmt(r.league_pts_per_shot, 2)}</td><td>${r.pts_per_shot_rank ?? "–"}</td><td class="hide-m">${fmt(r.sq_quality, 2)}</td>
+    <td class="${r.shot_making > .03 ? "up" : r.shot_making < -.03 ? "down" : ""}">${sgn(r.shot_making, 2)}</td><td class="hide-m">${r.shots}</td></tr>`);
+  pagedTable($("profT"), "prof" + t + k, `<tr><th>${k === "offense" ? "Offense" : "Allowed"}</th><th>Share</th><th class="hide-m">League</th><th title="1 = most of 30">Rank</th><th>Pts/shot</th><th class="hide-m">League</th><th title="1 = most of 30">Rank</th><th class="hide-m">SQ quality</th><th>Making</th><th class="hide-m">Shots</th></tr>`, rows);
+}
+
+// ------------------------------------------------------------------ who's out (master-detail)
+function outItems() {
+  const sec = S.mu.availability?.[S.outTeam]; if (!sec) return [];
+  const it = [];
+  for (const a of sec.absent || []) it.push({ key: "a" + a.player, kind: "OUT", name: a.name, sub: `${a.recent_games_played} of last ${sec.recent_games} · ${fmt(a.recent_min)} min`, obj: a });
+  if (sec.together) it.push({ key: "together", kind: "ALL", name: "Everyone out at once", sub: `${fmt(sec.together.minutes_off, 0)} min with all of them off`, obj: sec.together });
+  for (const r of sec.returning || []) it.push({ key: "r" + r.player, kind: "BACK", name: r.name, sub: `${r.recent_games_played} of last ${sec.recent_games} · plan ${fmt(r.plan_min, 0)} min`, obj: r });
+  return it;
+}
+function mateTable(mates, back) {
+  const rows = (mates || []).filter(m => m.usage_change !== null).slice(0, 7).map(m => { const a = back ? m.with_off : m.with_on, b = back ? m.with_on : m.with_off, ch = back ? -m.usage_change : m.usage_change;
+    return `<tr><td>${esc(m.name)}</td><td>${fmt(a.usage)}%</td><td>${fmt(b.usage)}%</td><td class="${ch > 0 ? "up" : ch < 0 ? "down" : ""}">${sgn(ch)}</td><td class="hide-m">${fmt(a.pts_per36)} → ${fmt(b.pts_per36)}</td>
+      <td>${m.observed ? `<span class="tag obs">observed</span>` : `<span class="tag np">thin</span>`}</td></tr>`; });
+  return `<table class="t"><thead><tr><th>Teammate</th><th>${back ? "Without" : "With"}</th><th>${back ? "With" : "Without"}</th><th>Usage</th><th class="hide-m">Pts/36</th><th></th></tr></thead><tbody>${rows.join("")}</tbody></table>`;
+}
+function renderOut() {
+  const items = outItems(), el = $("outList");
+  if (!items.length) { el.innerHTML = `<div class="empty-note">Nobody from the last 10 games' rotation is out.</div>`; $("outPager").innerHTML = ""; $("outDetail").innerHTML = ""; $("outMD").classList.add("closed"); return; }
+  if (!S.outSel || !items.find(i => i.key === S.outSel)) S.outSel = mobile() ? null : items[0].key;
+  $("outPager").innerHTML = ""; const room = el.clientHeight, per = fit(el, 56, items.length * 56 > room ? 38 : 0), g = pg("out" + S.outTeam, items.length, per);
+  el.innerHTML = `<ul class="list">${items.slice(g.from, g.to).map(i => `<li data-out="${esc(i.key)}" aria-selected="${i.key === S.outSel}">
+    <span class="sig ${i.kind === "BACK" ? "up" : i.kind === "OUT" ? "down" : "nt"}">${i.kind}</span><div class="who"><b>${esc(i.name)}</b><span>${esc(i.sub)}</span></div></li>`).join("")}</ul>`;
+  $("outPager").innerHTML = pagerHTML("out" + S.outTeam, g);
+  $("outMD").classList.toggle("closed", !S.outSel);
+  const i = items.find(x => x.key === S.outSel); if (!i) { $("outDetail").innerHTML = ""; return; }
+  const o = i.obj; let body = "";
+  if (i.kind === "OUT") {
+    const top = (o.his_play_types || [])[0], heirs = (o.heirs || []).map(h => `${esc(h.name)} ${fmt(h.share_of_team_type)}%`).join(", ");
+    body = `<div class="kp"><span>Status <b style="font-size:13px">${esc(o.status)}</b></span></div>
+      ${top ? `<div style="font-size:13px">Took <b>${fmt(top.share_of_team_type)}%</b> of the team's ${esc(PT[top.play_type] || top.play_type)} shots${heirs ? ` · most of the rest: ${heirs}` : ""} <span class="tag np">tendency</span></div>` : ""}
+      ${mateTable(o.on_off?.teammates, false)}`;
+  } else if (i.kind === "ALL") body = `<div class="sub">With every absent player off the floor, ${fmt(o.minutes_off, 0)} min this window. Backtest: about 40% of an on/off usage change shows up.</div>${mateTable(o.teammates, false)}`;
+  else body = `<div class="kp"><span>Back <b style="font-size:13px">${fmt(o.season_min)} min when he played · plan ${fmt(o.plan_min, 0)}</b></span></div>${mateTable(o.on_off?.teammates, true)}`;
+  $("outDetail").innerHTML = `<button class="back" data-back="out">‹ List</button><div><h3>${esc(i.name)}</h3><div class="sub">${esc(tFull(S.outTeam))} · ${esc(i.sub)}</div></div>${body}`;
+}
+
+// ------------------------------------------------------------------ players / lines
+function renderPlayers() {
+  const k = S.sortKey, ps = (S.mu.players || []).map(p => ({ ...p, sq_dk: p.sq?.dk, main_dk: p.main?.dk, gap: (p.sq?.dk ?? NaN) - (p.main?.dk ?? NaN) }))
+    .sort((a, b) => S.sortDir * (((a[k] ?? -1e9) > (b[k] ?? -1e9)) ? 1 : -1));
+  const H = (key, lab, cls = "") => `<th class="sort ${cls}" data-sort="${key}">${lab}${S.sortKey === key ? (S.sortDir < 0 ? " ↓" : " ↑") : ""}</th>`;
+  const rows = ps.map(p => { const t = teamIdx(p.team); return `<tr><td><span class="tsw" style="background:var(--t${t})"></span>${esc(mobile() ? p.name.split(" ").slice(1).join(" ") || p.name : p.name)}</td>
+    <td class="hide-m">${fmt(p.plan_min, 0)}</td><td>${fmt(p.sq_dk)}</td><td>${fmt(p.main_dk)}</td><td>${sgn(p.gap)}</td>
+    <td class="hide-m">${(p.play_types || []).slice(0, 2).map(x => `${PT[x.play_type] || x.play_type} ${fmt(x.share, 0)}%`).join(", ")}</td>
+    <td class="${p.matchup_pts > 0 ? "up" : p.matchup_pts < 0 ? "down" : ""}">${sgn(p.matchup_pts)}</td><td class="hide-m">${sgn(p.shot_making, 2)}</td></tr>`; });
+  const el = $("plT");
+  el.innerHTML = `<table class="t"><thead><tr></tr></thead></table>`;
+  $("plPager").innerHTML = ""; const per = fit(el, 30, 28 + (rows.length * 30 + 28 > el.clientHeight ? 38 : 0)), g = pg("pl", rows.length, per);
+  el.innerHTML = `<table class="t"><thead><tr><th>Player</th>${H("plan_min", "Min", "hide-m")}${H("sq_dk", "SQ")}${H("main_dk", "Main")}${H("gap", "SQ−main")}<th class="hide-m">Main play types</th>${H("matchup_pts", "Matchup")}${H("shot_making", "Making", "hide-m")}</tr></thead>
+    <tbody>${rows.slice(g.from, g.to).join("")}</tbody></table>`;
+  $("plPager").innerHTML = pagerHTML("pl", g);
+}
+function renderLines() {
+  const L = S.mu.lines || {}, ab = S.mu.teams || [];
+  const row = (lab, key) => `<tr><td>${lab}</td>${ab.map(a => `<td>${fmt(L[a]?.[key])}</td>`).join("")}<td>${fmt(ab.reduce((s, a) => s + (+L[a]?.[key] || 0), 0))}</td></tr>`;
+  $("linesT").innerHTML = `<table class="t"><thead><tr><th></th>${ab.map((a, t) => `<th style="color:var(--t${t})">${esc(tShort(t))}</th>`).join("")}<th>Total</th></tr></thead><tbody>
+    ${row("Vegas", "vegas_team_total")}${row("SQ team score", "sq_team_score")}${row("SQ used (75%)", "sq_total_used")}${row("SQ sims", "sq_sim_points")}${row("Main", "main_grid_points")}</tbody></table>`;
+}
+
+// ------------------------------------------------------------------ views
+function showView() {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.dataset.v !== S.view);
+  renderView();
+}
+function renderView() {
+  if (!S.rp) return;
+  ({ replay: () => { renderShots(); renderFeed(); renderFive(); }, box: renderBox, angles: renderAngles, edges: renderEdges, profiles: renderProfiles,
+     out: renderOut, players: renderPlayers, lines: renderLines })[S.view]?.();
+}
+
+// ------------------------------------------------------------------ wiring
+$("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
+$("gamePick").addEventListener("change", e => pick(e.target.value));
+$("fileIn").addEventListener("change", e => openFiles(e.target.files));
+$("play").addEventListener("click", () => S.playing ? stop() : play());
+$("prevShot").addEventListener("click", () => jumpShot(-1));
+$("nextShot").addEventListener("click", () => jumpShot(1));
+$("speed").addEventListener("change", e => S.speed = +e.target.value);
+$("scrub").addEventListener("input", e => { stop(); seek(+e.target.value, false); });
+$("teamChips").addEventListener("click", e => { const b = e.target.closest("[data-team]"); if (!b) return; S.team = +b.dataset.team;
+  $("teamChips").querySelectorAll("[data-team]").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.team === S.team))); renderShots(); });
+$("ptChips").addEventListener("click", e => { const b = e.target.closest("[data-pt]"); if (!b) return; S.pt = b.dataset.pt || null;
+  $("ptChips").querySelectorAll("[data-pt]").forEach(x => x.setAttribute("aria-pressed", String((x.dataset.pt || null) === S.pt))); renderShots(); });
+$("views").addEventListener("click", e => {
+  const ts = e.target.closest(".team-seg button"); if (ts) { const key = ts.closest(".team-seg").dataset.key; S[key] = +ts.dataset.t;
+    if (key === "outTeam") S.outSel = null; ts.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === ts))); renderView(); return; }
+  const sg = e.target.closest(".seg button[data-v]"); if (sg) { const id = sg.parentElement.id;
+    if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
+    sg.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === sg))); renderView(); return; }
+  const p = e.target.closest("[data-pg]"); if (p) { S.page[p.dataset.pg] = (S.page[p.dataset.pg] || 0) + +p.dataset.d; renderView(); return; }
+  const a = e.target.closest("[data-ang]"); if (a) { S.angSel = a.dataset.ang; renderAngles(); return; }
+  const o = e.target.closest("[data-out]"); if (o) { S.outSel = o.dataset.out; renderOut(); return; }
+  const bk = e.target.closest("[data-back]"); if (bk) { if (bk.dataset.back === "ang") S.angSel = null; else S.outSel = null; renderView(); return; }
+  const h = e.target.closest("[data-sort]"); if (h) { const k = h.dataset.sort; S.sortDir = S.sortKey === k ? -S.sortDir : -1; S.sortKey = k; renderPlayers(); }
+});
+const svg = $("court"), tip = $("tip"), cb = $("courtbox");
+function showTip(ev) { const g = ev.target.closest(".mk"); if (!g) { tip.hidden = true; return; }
+  const e = S.ev[+g.dataset.i], r = cb.getBoundingClientRect();
+  tip.innerHTML = `<b>${esc(nm(e.player))}</b> · ${esc(tShort(e.team))}<br>${e.made ? "Made" : "Missed"} ${e.pts} ${esc(ZONE[e.zone] || e.zone)}<br>${esc(PT[e.play_type] || e.play_type)} · Q${e.period} ${esc(e.clock)}`;
+  tip.hidden = false; const x = ev.clientX - r.left, y = ev.clientY - r.top;
+  tip.style.left = Math.max(0, Math.min(r.width - 235, x + 12)) + "px"; tip.style.top = Math.max(0, y - 64) + "px"; }
+svg.addEventListener("pointermove", showTip); svg.addEventListener("pointerdown", showTip);
+svg.addEventListener("pointerleave", () => tip.hidden = true);
+document.addEventListener("keydown", e => { if (e.target.closest("input, select, textarea")) return;
+  if (e.code === "Space") { e.preventDefault(); S.playing ? stop() : play(); } else if (e.key === "ArrowRight") jumpShot(1); else if (e.key === "ArrowLeft") jumpShot(-1); });
+let rz = 0; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.rp) { renderStatic(); } }, 120); });
+boot();
+})();
+</script>
+
+</body>
+</html>
