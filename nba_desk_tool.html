@@ -483,6 +483,7 @@ body{padding:0!important;font:14px/1.4 var(--text);font-feature-settings:"tnum" 
 .wrap{max-width:none;height:100vh;height:100dvh;margin:0;padding:8px 14px 8px;gap:6px;display:flex;flex-direction:column}
 /* top bar */
 .top{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;padding:0}
+#datawin{margin-left:auto}
 .brand{font-weight:800;font-size:17px;letter-spacing:.2px;white-space:nowrap}
 .brand em{font-style:normal;color:var(--accent)}
 .top .slate{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;padding:0}
@@ -587,6 +588,7 @@ table.oo td,table.oo th{font-size:.8rem}
   <header class="top">
     <div class="brand">NBA <em>Matchups</em></div>
     <div class="slate" id="slate" role="group" aria-label="Games on this slate"></div>
+    <div class="seg" id="datawin" role="group" aria-label="Data window"><button type="button" data-w="">Since 25/26</button><button type="button" data-w="2627">2026-27 only</button></div>
     <label class="date"><span id="sub"></span>Slate <select id="date"></select></label>
   </header>
   <div class="board" id="board"></div>
@@ -604,7 +606,7 @@ const D = window.NBA_DATA;
   const conv=a=>{ if(!a) return null; const m=a[I.min]||0, k=m?36/m:0;
     return {min:m, use:a[I.poss]?a[I.used]/a[I.poss]:null, dk:a[I.dk]*k, fd:a[I.fd]*k, pts:a[I.pts]*k, reb:a[I.reb]*k, ast:a[I.ast]*k, fg3a:a[I.fg3a]*k, fga:a[I.fga]*k, rim:a[I.rim]*k}; };
   for(const t of Object.values(D.teams)){
-    for(const g of [...t.mm.per_game,...(t.mm_new?t.mm_new.per_game:[])]) for(const p in g.sec){ const s=g.sec[p]; if(typeof s==="string") g.sec[p]=Array.from(s,c=>c.charCodeAt(0)-48); }
+    for(const g of t.mm.per_game) for(const p in g.sec){ const s=g.sec[p]; if(typeof s==="string") g.sec[p]=Array.from(s,c=>c.charCodeAt(0)-48); }
     for(const x of t.onoff) for(const m of x.mates){ const w=m.w.season; m.on=conv(w[0]); m.off=conv(w[1]); m.bench=conv(w[2]); }
   }
 })();
@@ -624,6 +626,7 @@ const PAGES={
  rotations:[["matrix","Minutes matrix","Game-by-game minutes for the team"],["stints","Stints","Stint lengths and rotation pattern"]],
  defense:[["types","By player type","What the defense allows to each player archetype"]]};
 const INS={E:[],notes:[]};
+const SL=(()=>{ const d=new Date(DATES[DATES.length-1]+"T12:00:00"), cur=d.getMonth()>=8?d.getFullYear():d.getFullYear()-1; return D.window==="since"?"Since 25/26":D.season<cur?"Last season":D.season_label; })();   // stats from a finished season read as "Last season", never as the year
 const st={pg:{}, status:{}, oo:{}, ooSort:"use", site:"DK", date:DATES[DATES.length-1], gi:0, tab:"overview", side:"away", win:"season", stat:"DK", out:{}, open:null, mmwin:10, dstat:"FG3A"};
 try{const s=JSON.parse(localStorage.getItem("desk3")||"null"); if(s&&D.slate[s.date]) Object.assign(st,s,{open:null});}catch(e){}
 const $=id=>document.getElementById(id);
@@ -684,7 +687,7 @@ const IOK={DK:"dk",FD:"fd",PTS:"pts",REB:"reb",AST:"ast",FG3A:"fg3a",RIM_FGA:"ri
 const LIVE=D.slate_mode==="live";
 const onRoster=(team,id)=>!LIVE||D.teams[team].players.some(p=>p.id===id);
 const rosterRegs=team=>D.teams[team].onoff.filter(x=>onRoster(team,x.id));
-const tagS=p=>(p.starter?'<span class="badge g1" title="Projected starter (RG)">Starter</span> ':"")+(p.new_team?'<span class="badge lo" title="Played for another team in ${D.season_label}">New team</span> ':"")+(p.nodata?'<span class="badge mid">No NBA data yet</span> ':"");
+const tagS=p=>(p.starter?'<span class="badge g1" title="Projected starter (RG)">Starter</span> ':"")+(p.new_team?'<span class="badge lo" title="Played for another team in ${SL}">New team</span> ':"")+(p.nodata?'<span class="badge mid">No NBA data yet</span> ':"");
 function rosterChange(team){
   const T=D.teams[team], nu=T.players.filter(p=>p.new_team&&p.gp>0).sort((a,b)=>(b.mpg||0)*(b.gp||0)-(a.mpg||0)*(a.gp||0));
   const gone=T.onoff.filter(x=>!onRoster(team,x.id)).sort((a,b)=>b.mpg*b.gp-a.mpg*a.gp);
@@ -694,7 +697,7 @@ function rosterNote(teamsList){
   if(!LIVE) return "";
   const parts=teamsList.map(t=>{const {nu,gone}=rosterChange(t); if(!nu.length&&!gone.length) return "";
     return `<b>${t}</b>: new ${nu.length?nu.slice(0,4).map(p=>nm(p.id)).join(", ")+(nu.length>4?` +${nu.length-4}`:""):"none"}; gone ${gone.length?gone.slice(0,4).map(x=>nm(x.id)).join(", ")+(gone.length>4?` +${gone.length-4}`:""):"none"}`;}).filter(Boolean);
-  return parts.length?`<p class="hint rnote">Team numbers here are from ${D.season_label} rosters. ${parts.join(" · ")}.</p>`:"";
+  return parts.length?`<p class="hint rnote">Team numbers here are from ${SL} rosters. ${parts.join(" · ")}.</p>`:"";
 }
 const poss=n=>n.endsWith("s")?n+"’":n+"’s";
 const save=()=>{try{localStorage.setItem("desk3",JSON.stringify(st));}catch(e){}};
@@ -800,9 +803,9 @@ function renderBoard(){
   const g=game(), {a,h,A,H}=teams(), pa=A.profile.season, ph=H.profile.season;
   const E=edges(); INS.E=E;
   $("board").innerHTML=`<div class="teams">
-    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">${LIVE?D.season_label+": ":""}${pa.wins}-${pa.losses} · net ${sgn(pa.net)} (${ord(pa.net_rank)})</span></div>
+    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">${LIVE?SL+": ":""}${pa.wins}-${pa.losses} · net ${sgn(pa.net)} (${ord(pa.net_rank)})</span></div>
     <div class="mid"><span>Avg pace</span><strong>${((pa.pace+ph.pace)/2).toFixed(1)}</strong><span>${g.tip} PM ET${g.as_!=null?` · final ${g.as_}–${g.hs}`:""}</span></div>
-    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">${LIVE?D.season_label+": ":""}${ph.wins}-${ph.losses} · net ${sgn(ph.net)} (${ord(ph.net_rank)})</span></div></div>
+    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">${LIVE?SL+": ":""}${ph.wins}-${ph.losses} · net ${sgn(ph.net)} (${ord(ph.net_rank)})</span></div></div>
     ${E.length?`<details class="qi" id="qi" ${st.qi===false?"":"open"}><summary>Quick insights <span>${E.length}</span></summary><div class="edges">${E.map(([k,t,s])=>`<div class="edge ${k}"><i></i><div><b>${t}</b><small>${s}</small></div></div>`).join("")}</div></details>`:""}`;
   const qi=$("qi"); if(qi) qi.ontoggle=()=>{st.qi=qi.open; save();};
   const notes=(D.slate_notes||[]).filter(n=>n.includes(" "+a)||n.includes(" "+h)||n.includes("("+a)||n.includes("("+h));
@@ -863,7 +866,7 @@ function leagueAvg(win,k){ const v=Object.values(D.teams).map(T=>T.profile[win]?
 // RG projection first, 2025-26 average as the fallback (shown muted with a tooltip)
 const projMin=p=>{const v=p.dfs?.proj_min; return v!=null?{v,rg:true}:{v:p.mpg||null,rg:false};};
 const projF=(p,site)=>{const v=p.dfs?.[site+"_proj"]; return v!=null?{v,rg:true}:{v:p[site]??null,rg:false};};
-const pv=(x,d,unit="")=>x.v==null?'<span class="dim">–</span>':x.rg?`<span class="rgv" title="RotoGrinders projection">${x.v.toFixed(d)}${unit}</span>`:`<span class="hist" title="${D.season_label} average · RG projection not posted yet">${x.v.toFixed(d)}${unit}</span>`;
+const pv=(x,d,unit="")=>x.v==null?'<span class="dim">–</span>':x.rg?`<span class="rgv" title="RotoGrinders projection">${x.v.toFixed(d)}${unit}</span>`:`<span class="hist" title="${SL} average · RG projection not posted yet">${x.v.toFixed(d)}${unit}</span>`;
 function rotCard(t,o,S,side,KS){
   const T=D.teams[t], O=D.teams[o], g=game(), ks=KS.toLowerCase();
   let ps=T.players.filter(p=>!(S[p.id]==="O"));
@@ -875,7 +878,7 @@ function rotCard(t,o,S,side,KS){
   const {nu,gone}=LIVE?rosterChange(t):{nu:[],gone:[]};
   const isSt=p=>LIVE?p.starter:false;
   return `<div class="card ov-team" style="--tcol:${tc(t)}"><div class="card-h"><h3>${dot(t)}${t} rotation <span class="hint">${side}</span></h3><span class="hint"><i class="stmark"></i> ${LIVE?"RG expected starter":""}</span></div>
-    <table class="ctbl kp"><thead><tr><th class="l">Player</th><th title="RG projected minutes; ${D.season_label} average when not posted">Min</th><th title="RG ${KS} projection; ${D.season_label} average when not posted">${KS}</th><th title="${D.season_label}">FPPM</th><th title="${D.season_label}">Usg</th><th title="${o} ${KS} allowed to his archetype vs. expected, per 36 · league rank (1st = most allowed)">DvA</th></tr></thead><tbody>
+    <table class="ctbl kp"><thead><tr><th class="l">Player</th><th title="RG projected minutes; ${SL} average when not posted">Min</th><th title="RG ${KS} projection; ${SL} average when not posted">${KS}</th><th title="${SL}">FPPM</th><th title="${SL}">Usg</th><th title="${o} ${KS} allowed to his archetype vs. expected, per 36 · league rank (1st = most allowed)">DvA</th></tr></thead><tbody>
     ${ps.map(p=>{ const c=dvaFor(o,t)[KS]?.cells[`${p.arch}|${p.tier}`]; const cls=c?(c[3]<=10?"good":c[3]>=21?"bad":""):"", own=p.dfs?.[ks+"_own"];
       return `<tr class="${isSt(p)?"st":""}"><td class="l"><span class="pname">${nm(p.id)}</span> ${sbadge(S[p.id])}${p.nodata?' <span class="badge mid">No NBA data</span>':""}<small>${p.arch||""}</small></td>
         <td>${pv(projMin(p),1)}</td><td>${pv(projF(p,ks),1)}</td><td>${p.mpg?(p[ks]/p.mpg).toFixed(2):"–"}</td><td>${p.usage!=null?pct(p.usage):"–"}</td>
@@ -972,7 +975,7 @@ function renderOverview(){
   const form=(t,X,Y)=>`<div class="form-r"><span class="ft">${dot(t)}${t}</span><span class="fv"><span><b>${Y.wins}-${Y.losses}</b> ${O2==="l10"?"last 10":"season"}</span><span>net <b>${sgn(Y.net)}</b> ${arr(Y.net,X.net)}</span><span>pace <b>${Y.pace.toFixed(1)}</b> ${arr(Y.pace,X.pace)}</span><span>pts <b>${Y.ppg.toFixed(1)}</b> ${arr(Y.ppg,X.ppg)}</span></span></div>`;
   const env=`<div class="card ov-env"><div class="card-h"><h3>Game environment</h3><span class="hint">${g.tip} PM ET</span></div>
     <div class="mini-h">Vegas</div>${vg}
-    <div class="mini-h">${D.season_label} ${W==="l10"?"last 10":"season"} ranks</div>
+    <div class="mini-h">${SL}${W==="l10"?" · last 10":""} ranks</div>
     <table class="ctbl env-t"><thead><tr><th></th><th>${a}</th><th>${h}</th></tr></thead><tbody>
       ${[["Pace","pace"],["Points / game","ppg"],["Allowed / game","opp_ppg"],["Off. rating","ortg"],["Def. rating","drtg"]].map(([l,k])=>`<tr><td>${l}</td><td>${RK(pa[k+"_rank"],POLA[k]??0,fmtS(k,pa[k]))}</td><td>${RK(ph[k+"_rank"],POLA[k]??0,fmtS(k,ph[k]))}</td></tr>`).join("")}
     </tbody></table>
@@ -1025,7 +1028,7 @@ function renderOverview(){
         <div class="mini-h">${a} offense vs. ${h} defense</div>${luckRow(a,"off",W)}${luckRow(h,"def",W)}
         <div class="mini-h">${h} offense vs. ${a} defense</div>${luckRow(h,"off",W)}${luckRow(a,"def",W)}
         ${luckZones(a,h,W)}
-        <p class="hint sm">Defenses barely control opponent 3P%: in ${D.season_label} a team's opponent 3P% in odd games vs. even games correlated at r = 0.12, against 0.73 for opponent 3PA. Big gaps tend to close.</p></div>
+        <p class="hint sm">Defenses barely control opponent 3P%: in ${SL} a team's opponent 3P% in odd games vs. even games correlated at r = 0.12, against 0.73 for opponent 3PA. Big gaps tend to close.</p></div>
       <div class="card"><div class="card-h"><h3>Pace clock</h3><span class="hint">how possessions start and how long they take</span></div>
         ${flowTable(a,h,W,[["Possessions / game","poss_g","n",null],["Seconds / possession","sec_poss","s",-1],["Points / possession","ppp","ppp",1],
           ["Start after a make","st_make","pct",null,"Share of possessions that start with an inbound after the other team scores"],["Seconds after a make","sec_make","s",-1],
@@ -1049,7 +1052,7 @@ function renderOverview(){
       <div class="duels">${shotDuel(a,h)}${shotDuel(h,a)}</div>
       <p class="hint sm">Zone ranks: 1st = takes / allows the most of that shot. Edge when the offense is top 10 and the defense allows top 10.</p></div>`;
   }
-  $("view").innerHTML=`<div class="row-ctl ov-ctl">${seg("win",[["Season","season"],["Last 10","l10"]],W)}${seg("kpsite",[["DK","DK"],["FD","FD"]],KS)}<span class="ov-side">${sideSeg()}</span><span class="hint">Team numbers: ${D.season_label} ${W==="l10"?"last 10 games":"regular season"} · Min and ${KS}: RG projection when posted, otherwise <span class="hist">${D.season_label} average</span></span></div>
+  $("view").innerHTML=`<div class="row-ctl ov-ctl">${seg("win",[[D.window==="since"?"Since 25/26":"Season","season"],["Last 10","l10"]],W)}${seg("kpsite",[["DK","DK"],["FD","FD"]],KS)}<span class="ov-side">${sideSeg()}</span><span class="hint">Team numbers: ${SL} ${W==="l10"?"last 10 games":"regular season"} · Min and ${KS}: RG projection when posted, otherwise <span class="hist">${SL} average</span></span></div>
     ${top}${rot}
     <div class="ov-mid">
       <div class="card"><div class="card-h"><h3>Tale of the tape</h3><span class="hint">Big number = league rank (1st = highest), value beside it · green = best, red = worst for that team; for style stats (pace, shot mix) green = more of it</span></div>${tape}</div>
@@ -1125,7 +1128,7 @@ function waterfall(off,x){ // usage he frees up and who absorbs it, season on/of
     rows+=`<div class="wf-r"><span class="wf-n">${nm(r.id)}</span><span class="wf-v">${pct(r.a)} → <b>${pct(r.b)}</b> <em class="${r.d>=0?"up":"down"}">${sgn(r.d*100)}</em></span><span class="wf-t"><i class="${r.d>=0?"up":"down"}" style="left:${(Math.max(0,st0)/scale*100).toFixed(1)}%;width:${(w/scale*100).toFixed(1)}%"></i></span></div>`; }
   rows+=`<div class="wf-r tot"><span class="wf-n">Bench sub / everyone else</span><span class="wf-v">${pct(Math.max(0,rest))}</span><span class="wf-t"><i class="rest" style="left:${(Math.max(0,cum)/scale*100).toFixed(1)}%;width:${(Math.max(0,rest)/scale*100).toFixed(1)}%"></i></span></div>`;
   return `<div class="wf"><h3>Who eats: usage with ${nm(x)} off the floor</h3>${rows}
-    <p class="hint sm">Each teammate's usage rate with ${nm(x)} on → off the floor (${D.season_label}, 150+ minutes each way). Steps add up roughly, since players share the floor for different stretches; the last bar is what the steps don't cover. Recent averages under-project these gains by 1.3–2.0 usage points right after a star is ruled out.</p></div>`;
+    <p class="hint sm">Each teammate's usage rate with ${nm(x)} on → off the floor (${SL}, 150+ minutes each way). Steps add up roughly, since players share the floor for different stretches; the last bar is what the steps don't cover. Recent averages under-project these gains by 1.3–2.0 usage points right after a star is ruled out.</p></div>`;
 }
 function gainBoxes(off,x){ // on/off gainers when x is off the floor, plus minutes gainers from games he missed
   const O=D.teams[off], X=O.onoff.find(o=>o.id===x), MISS=O.inout.find(o=>o.id===x); if(!X) return "";
@@ -1374,7 +1377,7 @@ function renderOnOff(){
 
 /* ---------------- rotations ---------------- */
 function renderRotations(){
-  const [tm]=sideTeam(), M=D.teams[tm].mm, MN=D.teams[tm].mm_new, useNew=st.mmwin===-1&&!!MN, wg=useNew?MN.per_game:M.per_game.slice(-Math.min(st.mmwin<0?10:st.mmwin,M.per_game.length));
+  const [tm]=sideTeam(), M=D.teams[tm].mm, wg=M.per_game.slice(-Math.min(st.mmwin,M.per_game.length));
   const outId=st.out[tm]||"";
   const played=(g,p)=>{const a=g.sec[p];return (a&&a.some(x=>x>0))||(g.ot[p]>0);};
   const games=outId?wg.filter(g=>!played(g,outId)):wg, n=games.length;
@@ -1389,7 +1392,7 @@ function renderRotations(){
   for(const g of wg) for(const p of new Set([...Object.keys(g.sec),...Object.keys(g.ot)])){ if(!played(g,p)) continue;
     const b=base[p]||(base[p]={gp:0,min:0}); b.gp++; b.min+=(g.sec[p]||[]).reduce((x,y)=>x+y,0)/60+(g.ot[p]||0); }
   const cand=D.teams[tm].inout.filter(x=>onRoster(tm,x.id)).slice().sort((x,y)=>y.mpg-x.mpg).slice(0,8);
-  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],[D.season_label,999],...(Object.values(D.teams).some(x=>x.mm_new)?[[`${D.season+1}-${String(D.season+2).slice(2)}`,-1]]:[])],useNew?-1:(st.mmwin<0?10:st.mmwin))}</div>
+  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],[SL,999]],st.mmwin)}</div>
     <div class="outbar"><span class="lbl">Only games without:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}</button>`).join("")}</div></div>
     
     <section class="card"><div class="card-h"><h3>${dot(tm)}${tm} minutes matrix</h3><span class="hint">${n} game${n===1?"":"s"}${outId?` without ${nm(outId)}`:""}${n&&n<5?" · small sample":""}${M.excluded?` · ${M.excluded} game left out because the feed listed under 5 players`:""}</span></div>
@@ -1430,7 +1433,7 @@ function renderRotations(){
     const closeT=top.length?`<ol class="closers">${top.map(([k,v])=>`<li><span class="cc"><b>${v}</b> of ${cg}</span><span>${k.split("|").map(id=>nm(id).split(" ").slice(-1)[0]).join(" · ")}</span></li>`).join("")}</ol>`:'<p class="hint">No competitive finishes in this window.</p>';
     h+=`<div class="rot-more">
       <div class="card"><div class="card-h"><h3>Stint lengths</h3><span class="hint">${n} games${outId?` without ${nm(outId)}`:""}</span></div>${stintT}<p class="hint sm">A stint runs from checking in to checking out. Longer stints with fewer of them = a heavier, steadier role.</p></div>
-      <div class="card"><div class="card-h"><h3>Stagger</h3><span class="hint">top regulars on tonight's roster · ${D.season_label} on/off minutes</span></div>${stagT}<p class="hint sm">High "without" shares mean the coach staggers the pair, so one is usually on the floor: those minutes carry more usage for whoever is out there.</p></div>
+      <div class="card"><div class="card-h"><h3>Stagger</h3><span class="hint">top regulars on tonight's roster · ${SL} on/off minutes</span></div>${stagT}<p class="hint sm">High "without" shares mean the coach staggers the pair, so one is usually on the floor: those minutes carry more usage for whoever is out there.</p></div>
       <div class="card"><div class="card-h"><h3>Closing lineups</h3><span class="hint">most-used unit in the last 2:00 · competitive games</span></div>${closeT}<p class="hint sm">Blowouts left out, same rule as Closes.</p></div>
     </div>`;
   }
@@ -1486,10 +1489,14 @@ render();
     document.body.appendChild(s);
   }
   if(window.NBA_DATA) return start(window.NBA_DATA);
-  const url=new URLSearchParams(location.search).get("data")||"nba_matchup_master.json";
+  const qs=new URLSearchParams(location.search); let win=qs.get("w"); try{ if(win==null) win=localStorage.getItem("nba_win")||""; }catch(e){ win=win||""; }
+  const base=qs.get("data")||"nba_matchup_master.json", main=base;
+  const url=win==="2627"?base.replace(/\.json(\?.*)?$/,"_2627.json$1"):base;
+  document.querySelectorAll("#datawin button").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.w===(win==="2627"?"2627":""))); b.onclick=()=>{ try{localStorage.setItem("nba_win",b.dataset.w);}catch(e){} const u=new URL(location.href); u.searchParams.delete("w"); location.href=u.href; }; });
   const esc=x=>String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   box.innerHTML='<p style="padding:24px;color:#5a6575">Loading the desk...</p>';
   fetch(url).then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(e=>{ if(url===main) throw e; try{localStorage.setItem("nba_win","");}catch(_){} document.querySelectorAll("#datawin button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.w===""))); return fetch(main).then(r=>{ if(!r.ok) throw e; return r.json(); }); })
     .then(start)
     .catch(e=>{ box.innerHTML='<div style="padding:24px"><b>Can\'t load the data file.</b><br>Looked for <code>'+esc(url)+'</code> ('+esc(e.message)+
       '). Put <code>nba_matchup_master.json</code> next to this page, or point at one with <code>?data=URL</code>. Serving over http (not file://) is required for fetch.</div>'; });
