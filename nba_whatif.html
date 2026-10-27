@@ -68,7 +68,7 @@ button { cursor: pointer }
 .panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; min-width: 0 }
 .lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 2px 0 6px }
 .sclist { display: flex; flex-direction: column; gap: 4px }
-@media (max-width: 860px) { .sclist { flex-direction: row; overflow-x: auto } .sclist .lbl { display: none } }
+@media (max-width: 860px) { .sclist { flex-direction: row; flex-wrap: wrap } .sclist .lbl { display: none } .sclist .sc { flex: 1 1 150px } }
 .sc { background: none; border: 1px solid transparent; border-radius: 8px; padding: 6px 9px; text-align: left; display: flex; justify-content: space-between; gap: 8px; align-items: center; flex: 0 0 auto }
 .sc:hover { background: var(--panel2) }
 .sc[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent) }
@@ -94,7 +94,7 @@ tr.up td { background: #f6fbf8 } tr.down td { background: #fdf7f6 }
 .d { font-size: 11px; margin-left: 4px }
 .pn { font-weight: 700 }
 .badge { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 4px; padding: 0 5px; margin-left: 5px; vertical-align: 1px }
-.b-edit { background: var(--panel2); color: var(--muted) } .b-big { background: #e4ecfa; color: #2a5cb8 } .b-new { background: var(--good-soft); color: var(--good) }
+.b-big { background: #e4ecfa; color: #2a5cb8 } .b-new { background: var(--good-soft); color: var(--good) }
 .b-st { background: #fff2d6; color: #8a6200 }
 .empty { color: var(--muted); padding: 14px 4px }
 
@@ -112,8 +112,23 @@ tr.up td { background: #f6fbf8 } tr.down td { background: #fdf7f6 }
 .role .arrow { color: var(--faint) }
 .role .chg { color: var(--accent); font-weight: 800 }
 .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted) }
-.foot { color: var(--muted); font-size: 12px }
-.foot li { margin: 2px 0 }
+.sub { display: block; color: var(--muted); font-size: 12px; font-weight: 500 }
+.outrow { opacity: .55 } .outtag { font-size: 10px; font-weight: 700; color: var(--muted) }
+.toggle { margin-bottom: 6px }
+@media (max-width: 640px) {
+  .hs { display: none }
+  .chips { flex-wrap: wrap; overflow: visible } .chip { padding: 5px 10px }
+  .tabs.small { flex-wrap: wrap; overflow: visible } .tabs.small button { padding: 5px 8px }
+  table { font-size: 12.5px } th, td { padding: 6px 4px } th { font-size: 10px; letter-spacing: .03em }
+  td .d { display: block; margin-left: 0; line-height: 1.1 }
+  td.pn { white-space: normal; min-width: 92px; line-height: 1.2 }
+  .tt td:not(.pn), .pt td:not(.pn) { font-size: 12px }
+  .badge { display: none }
+  .head h2 { font-size: 17px } .head .stat { width: 100% }
+  .panel { padding: 8px }
+  .bars { grid-template-columns: minmax(90px, 120px) 1fr 70px }
+  .sclist .sc { flex: 1 1 100%; padding: 5px 8px }
+}
 </style>
 </head>
 <body>
@@ -127,17 +142,11 @@ tr.up td { background: #f6fbf8 } tr.down td { background: #fdf7f6 }
     </div>
     <input class="search" id="q" type="search" placeholder="Find a player…" aria-label="Find a player">
   </div>
-  <div class="tabs" role="tablist">
-    <button role="tab" id="tabGames" aria-selected="true">By team</button>
-    <button role="tab" id="tabSlate" aria-selected="false">Slate: biggest gains</button>
-  </div>
   <section id="vGames"></section>
-  <section id="vSlate" hidden></section>
-  <ul class="foot" id="foot"></ul>
 </div>
 <script>
 "use strict";
-const S = { data: null, site: "dk", view: "games", ti: 0, sit: "base", sub: "team", q: "", sort: {}, newOnly: false };
+const S = { data: null, site: "dk", ti: 0, sit: null, sub: "team", q: "", sort: {}, newOnly: false };
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const f1 = x => x == null ? "—" : (+x).toFixed(1);
@@ -161,46 +170,7 @@ async function load() {
   } catch (e) { $("upd").textContent = "nba_whatif_data.json not loaded (" + e.message + ")"; return; }
   const d = S.data;
   $("upd").textContent = `${d.date} · updated ${d.updated_et} · ${(d.sims || 0).toLocaleString()} sims per scenario`;
-  $("foot").innerHTML = (d.flags || []).map(f => `<li>${esc(f)}</li>`).join("") +
-    `<li>Value: ${esc(d.value_formula?.dk)} · ${esc(d.value_formula?.fd)}. Analysts' minute edits stay as floors when someone is out.</li>`;
   render();
-}
-
-// ---------------------------------------------------------------------------------------------- slate view
-function slateRows() {
-  const out = [];
-  (S.data.games || []).forEach((g, gi) => (g.scenarios || []).forEach((sc, si) => {
-    if (sc.error) return;
-    sc.players.filter(p => p.team === sc.team).forEach(p => {
-      const d = p[site() + "_d"]; if (d == null || d <= 0.25) return;
-      out.push({ gi, si, sc, g, p, d });
-    });
-  }));
-  return out;
-}
-function renderSlate() {
-  const q = S.q.toLowerCase();
-  let rows = slateRows().filter(r => !q || r.p.name.toLowerCase().includes(q) || r.sc.out_names.join(" ").toLowerCase().includes(q));
-  const key = S.sort.slate || ["d", -1];
-  const get = { d: r => r.d, val: r => r.p[site() + "_val"] ?? -99, smash: r => r.p[site() + "_smash_d"] ?? -99,
-    min: r => r.p.min_d ?? -99, pct: r => r.p[site() + "_pct"] ?? -99, name: r => r.p.name, out: r => outLabel(r.sc), proj: r => r.p[site()] };
-  rows.sort((a, b) => { const x = get[key[0]](a), y = get[key[0]](b); return (x < y ? -1 : x > y ? 1 : 0) * key[1]; });
-  const th = (k, t, l) => `<th data-k="${k}" class="${l ? "l" : ""}" ${key[0] === k ? `aria-sort="${key[1] < 0 ? "descending" : "ascending"}"` : ""}>${t}</th>`;
-  $("vSlate").innerHTML = `<div class="panel"><div class="lbl">Who gains the most if a questionable player sits · ${SITE()}</div>
-    ${rows.length ? `<div class="tw"><table id="slateT"><thead><tr>${th("name", "Player", 1)}<th class="l">Team</th>${th("out", "Scenario", 1)}
-      ${th("min", "Min Δ")}${th("proj", SITE())}${th("d", SITE() + " Δ")}${th("pct", "Change")}<th>Salary</th>${th("val", "Value")}${th("smash", "SMASH Δ")}</tr></thead><tbody>
-      ${rows.slice(0, 150).map(r => `<tr class="up" data-g="${r.gi}" data-s="${r.si}" style="cursor:pointer">
-        <td class="l pn">${esc(r.p.name)}${r.p.edit != null ? `<span class="badge b-edit" title="Analyst minutes edit (floor)">edit ${f1(r.p.edit)}</span>` : ""}</td>
-        <td class="l">${esc(r.p.team)}</td><td class="l">${esc(outLabel(r.sc))}</td>
-        <td>${f1(r.p.min)}${dlt(r.p.min_d)}</td><td>${f1(r.p[site()])}</td><td>${dlt(r.d, 2)}</td>
-        <td>${r.p[site() + "_pct"] == null ? "—" : f1(r.p[site() + "_pct"]) + "%"}</td>
-        <td>${money(r.p[site() + "_sal"])}</td><td>${f2(r.p[site() + "_val"])}</td><td>${f1(r.p[site() + "_smash"])}%${dlt(r.p[site() + "_smash_d"])}</td></tr>`).join("")}
-    </tbody></table></div>` : `<div class="empty">No gains to show${S.q ? " for that search" : ""}.</div>`}</div>`;
-  $("slateT")?.querySelectorAll("th[data-k]").forEach(h => h.onclick = () => {
-    const k = h.dataset.k; S.sort.slate = [k, key[0] === k ? -key[1] : (k === "name" || k === "out" ? 1 : -1)]; renderSlate(); });
-  $("slateT")?.querySelectorAll("tr[data-g]").forEach(tr => tr.onclick = () => {
-    const sc = S.data.games[+tr.dataset.g].scenarios[+tr.dataset.s];
-    S.ti = teamList().findIndex(x => x.gi === +tr.dataset.g && x.t === sc.team); S.sit = +tr.dataset.s; S.view = "games"; S.sub = "team"; render(); });
 }
 
 // ---------------------------------------------------------------------------------------------- team view
@@ -213,36 +183,34 @@ function teamList() {
     g.scenarios.forEach((sc, si) => (sc.team === t ? own : opp).push(si));
     out.push({ gi, t, g, own, opp, q: g.questionable.filter(q => q.team === t) });
   }));
-  return out.sort((a, b) => (b.q.length > 0) - (a.q.length > 0));   // teams with questionable players first (stable)
+  return out.filter(x => x.own.length > 0);   // only teams with a questionable player of their own
 }
 function renderTeams() {
   const teams = teamList();
   if (!teams.length) { $("vGames").innerHTML = `<div class="panel empty">No questionable players today.</div>`; return; }
   S.ti = Math.min(S.ti || 0, teams.length - 1);
   const T = teams[S.ti], g = T.g;
-  const sits = [{ key: "base", label: "As projected" }, ...T.own.map(si => ({ key: si, label: outLabel(g.scenarios[si]) })),
-    ...T.opp.map(si => ({ key: si, label: outLabel(g.scenarios[si]) + " (" + g.scenarios[si].team + ")", opp: true }))];
-  if (!sits.some(x => x.key === S.sit)) S.sit = "base";
+  const sits = T.own.map(si => ({ key: si, label: outLabel(g.scenarios[si]) }));
+  if (!sits.some(x => x.key === S.sit)) S.sit = sits.length ? sits[0].key : null;
   const opp = g.teams.find(x => x !== T.t);
   const chips = teams.map((x, i) => `<button class="chip" data-i="${i}" aria-pressed="${i === S.ti}"><b>${esc(x.t)}</b>
-    <small>vs ${esc(x.g.teams.find(y => y !== x.t))} · ${x.q.length ? x.q.length + " Q" : "no Q"}</small></button>`).join("");
-  const bt = (g.base.teams || []).find(x => x.abbr === T.t) || {};
-  const board = `<div class="board"><div><div class="tm">${esc(T.t)} ${f1(bt.pts)}</div>
-      <div class="meta">vs ${esc(opp)} · ${esc(g.tip_et || "")} · Vegas ${f1(bt.vegas)} · win ${f1((bt.win || 0) * 100)}%</div></div>
+    <small>vs ${esc(x.g.teams.find(y => y !== x.t))} · ${x.q.length} Q</small></button>`).join("");
+  const board = `<div class="board"><div><div class="tm">${esc(T.t)}</div>
+      <div class="meta">vs ${esc(opp)} · ${esc(g.tip_et || "")}</div></div>
     <div class="grow"></div><div><div class="meta">Questionable</div><div class="q">${T.q.length ? T.q.map(q =>
       `<span class="qtag"><em>Q</em>${esc(q.name)}</span>`).join("") : `<span class="meta">none on ${esc(T.t)}</span>`}</div></div></div>`;
-  let lastOpp = false;
   const list = `<div class="panel"><div class="sclist"><div class="lbl">Situations</div>${sits.map(x => {
-      const div = x.opp && !lastOpp ? `<div class="lbl" style="margin-top:8px">If ${esc(opp)} is missing</div>` : ""; lastOpp = !!x.opp;
-      const sc = x.key === "base" ? null : g.scenarios[x.key];
+      const div = "";
+      const sc = g.scenarios[x.key];
       const top = sc && !sc.error ? [...sc.players].filter(p => p.team === T.t).sort((a, b) => (b[site() + "_d"] ?? -99) - (a[site() + "_d"] ?? -99))[0] : null;
       return `${div}<button class="sc" data-k="${x.key}" aria-pressed="${x.key === S.sit}"><span><span class="who">${esc(x.label)}</span>
-        ${sc && !x.opp && sc.freed_min != null ? `<br><span class="t">frees ${f1(sc.freed_min)} min</span>` : ""}</span>
+        ${sc && sc.freed_min != null ? `<br><span class="t">frees ${f1(sc.freed_min)} min</span>` : ""}</span>
         ${top && (top[site() + "_d"] ?? 0) > 0.25 ? `<span class="gain">${esc(lastName(top.name))} +${f1(top[site() + "_d"])}</span>` : sc && sc.error ? `<span class="neg">failed</span>` : ""}</button>`; }).join("")}</div></div>`;
   $("vGames").innerHTML = `<div class="chips">${chips}</div>${board}<div class="split">${list}<div class="panel" id="detail"></div></div>`;
-  $("vGames").querySelectorAll(".chip").forEach(b => b.onclick = () => { S.ti = +b.dataset.i; S.sit = "base"; renderTeams(); });
-  $("vGames").querySelectorAll(".sc").forEach(b => b.onclick = () => { S.sit = b.dataset.k === "base" ? "base" : +b.dataset.k; renderTeams(); });
-  renderDetail(g, T.t, S.sit === "base" ? null : g.scenarios[S.sit]);
+  $("vGames").querySelectorAll(".chip").forEach(b => b.onclick = () => { S.ti = +b.dataset.i; S.sit = null; renderTeams(); });
+  $("vGames").querySelectorAll(".sc").forEach(b => b.onclick = () => { S.sit = +b.dataset.k; renderTeams(); });
+  if (S.sit == null) { $("detail").innerHTML = `<div class="empty">No situations for ${esc(T.t)}.</div>`; return; }
+  renderDetail(g, T.t, g.scenarios[S.sit]);
 }
 
 function renderDetail(g, team, sc) {
@@ -251,7 +219,7 @@ function renderDetail(g, team, sc) {
   const own = sc && sc.team === team;
   const title = sc ? outLabel(sc) + (own ? "" : ` (${sc.team})`) : "As projected";
   const teams = sc ? sc.teams : (g.base.teams || []).map(t => ({ ...t, pts_d: null, win_d: null }));
-  const tstr = (teams || []).map(t => `<span class="stat">${esc(t.abbr)} <b>${f1(t.pts)}</b>${dlt(t.pts_d)} pts · win <b>${f1(t.win * 100)}%</b>${dlt(t.win_d)}</span>`).join("");
+  const tstr = (teams || []).filter(t => t.abbr === team).map(t => `<span class="stat">${esc(t.abbr)} <b>${f1(t.pts)}</b>${dlt(t.pts_d)} pts · win <b>${f1(t.win * 100)}%</b>${dlt(t.win_d)}</span>`).join("");
   const subs = [["team", `${team} projection`]];
   if (own) subs.push(["min", "Where the minutes go"]);
   subs.push(["roles", "Role shift"]);
@@ -276,31 +244,31 @@ function sorter(t, def, get) {
   const key = S.sort[t] || def;
   return { key, cmp: (a, b) => { const x = get(a, key[0]), y = get(b, key[0]); return (x < y ? -1 : x > y ? 1 : 0) * key[1]; } };
 }
-function th(t, key, k, label, left) {
-  return `<th data-k="${k}" class="${left ? "l" : ""}" ${key[0] === k ? `aria-sort="${key[1] < 0 ? "descending" : "ascending"}"` : ""}>${label}</th>`;
+function th(t, key, k, label, left, cls) {
+  return `<th data-k="${k}" class="${left ? "l" : ""} ${cls || ""}" ${key[0] === k ? `aria-sort="${key[1] < 0 ? "descending" : "ascending"}"` : ""}>${label}</th>`;
 }
 
-// the whole team in one situation: every player, OUT players listed last
+// the whole team in one situation: every player, OUT players listed last. One site at a time (DK / FD toggle).
 function teamTable(g, team, sc) {
   const s = site(), t = "team";
-  let rows = (sc ? sc.players : g.base.players).filter(p => p.team === team);
-  const outs = sc && sc.team === team ? g.base.players.filter(p => sc.out.includes(p.rg_id)) : [];
+  let rows = sc.players.filter(p => p.team === team);
+  const outs = sc.team === team ? g.base.players.filter(p => sc.out.includes(p.rg_id)) : [];
   const { key, cmp } = sorter(t, [s, -1], (p, k) => k === "name" ? p.name : (p[k] ?? -999));
   const q = S.q.toLowerCase();
   rows = rows.filter(p => !q || p.name.toLowerCase().includes(q)).sort(cmp);
-  const D = (p, k, d) => sc ? dlt(p[k + "_d"], d) : "";
-  return `<div class="tw"><table data-t="${t}"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "min", "Min")}
-    ${th(t, key, "dk", "DK")}${th(t, key, "fd", "FD")}${th(t, key, "dk_val", "DK Val")}${th(t, key, "fd_val", "FD Val")}
-    ${sc ? th(t, key, s + "_pct", "Change") : ""}${th(t, key, s + "_smash", SITE() + " SMASH")}${th(t, key, "pts", "Pts")}${th(t, key, "reb", "Reb")}
-    ${th(t, key, "ast", "Ast")}${th(t, key, "usg", "Usage")}<th>Salary</th></tr></thead><tbody>
-    ${rows.map(p => { const d = sc ? (p[s + "_d"] ?? 0) : 0; return `<tr class="${d > 0.25 ? "up" : d < -0.25 ? "down" : ""}">
-      <td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}${p.big ? `<span class="badge b-big">big</span>` : ""}${p.edit != null ? `<span class="badge b-edit" title="Analyst minutes edit${sc ? ": a floor here" : ""}">edit ${f1(p.edit)}</span>` : ""}</td>
-      <td>${f1(p.min)}${D(p, "min", 1)}</td><td>${f1(p.dk)}${D(p, "dk", 1)}</td><td>${f1(p.fd)}${D(p, "fd", 1)}</td>
-      <td>${f2(p.dk_val)}</td><td>${f2(p.fd_val)}</td>${sc ? `<td>${p[s + "_pct"] == null ? "—" : f1(p[s + "_pct"]) + "%"}</td>` : ""}
-      <td>${f1(p[s + "_smash"])}%${sc ? dlt(p[s + "_smash_d"]) : ""}</td><td>${f1(p.pts)}${D(p, "pts", 1)}</td><td>${f1(p.reb)}${D(p, "reb", 1)}</td>
-      <td>${f1(p.ast)}${D(p, "ast", 1)}</td><td>${f1(p.usg)}%${sc ? dlt(p.usg_d) : ""}</td><td>${money(p[s + "_sal"])}</td></tr>`; }).join("")}
-    ${outs.map(p => `<tr style="opacity:.55"><td class="l pn"><s>${esc(p.name)}</s><span class="badge b-edit">OUT</span></td><td>0.0${dlt(-p.min)}</td>
-      <td>—</td><td>—</td><td>—</td><td>—</td>${sc ? "<td>—</td>" : ""}<td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>${money(p[s + "_sal"])}</td></tr>`).join("")}
+  const D = (p, k, d) => dlt(p[k + "_d"], d);
+  return `<div class="tw"><table class="tt" data-t="${t}"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "min", "Min")}
+    ${th(t, key, s, SITE())}${th(t, key, s + "_val", "Value")}${th(t, key, s + "_pct", "Chg")}${th(t, key, s + "_smash", "Smash")}
+    ${th(t, key, "pts", "Pts", 0, "hs")}${th(t, key, "reb", "Reb", 0, "hs")}${th(t, key, "ast", "Ast", 0, "hs")}${th(t, key, "usg", "Usage", 0, "hs")}
+    <th class="hs">Salary</th></tr></thead><tbody>
+    ${rows.map(p => { const d = p[s + "_d"] ?? 0; return `<tr class="${d > 0.25 ? "up" : d < -0.25 ? "down" : ""}">
+      <td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}${p.big ? `<span class="badge b-big">big</span>` : ""}</td>
+      <td>${f1(p.min)}${D(p, "min", 1)}</td><td>${f1(p[s])}${D(p, s, 1)}</td><td>${f2(p[s + "_val"])}</td>
+      <td>${p[s + "_pct"] == null ? "—" : f1(p[s + "_pct"]) + "%"}</td><td>${f1(p[s + "_smash"])}%${dlt(p[s + "_smash_d"])}</td>
+      <td class="hs">${f1(p.pts)}${D(p, "pts", 1)}</td><td class="hs">${f1(p.reb)}${D(p, "reb", 1)}</td><td class="hs">${f1(p.ast)}${D(p, "ast", 1)}</td>
+      <td class="hs">${f1(p.usg)}%${dlt(p.usg_d)}</td><td class="hs">${money(p[s + "_sal"])}</td></tr>`; }).join("")}
+    ${outs.map(p => `<tr class="outrow"><td class="l pn"><s>${esc(p.name)}</s> <span class="outtag">OUT</span></td><td>0.0${dlt(-p.min)}</td>
+      <td>—</td><td>—</td><td>—</td><td>—</td><td class="hs">—</td><td class="hs">—</td><td class="hs">—</td><td class="hs">—</td><td class="hs">${money(p[s + "_sal"])}</td></tr>`).join("")}
     </tbody></table></div>`;
 }
 
@@ -327,8 +295,8 @@ function rolesView(g, t, sc) {
     ${card("Top usage", b.usage, o.usage, b.usage_pct != null ? f1(b.usage_pct) + "%" : "", o.usage_pct != null ? f1(o.usage_pct) + "%" : "")}
     ${card("Bigs (minutes)", bigs(b), bigs(o))}</div>
     <div class="lbl" style="margin-top:12px">Usage and assist rate changes</div>
-    ${movers.length ? `<div class="tw"><table><thead><tr><th class="l">Player</th><th>Usage</th><th>Usage Δ</th><th>AST%</th><th>AST% Δ</th><th>Min Δ</th></tr></thead><tbody>
-      ${movers.map(p => `<tr><td class="l pn">${esc(p.name)}</td><td>${f1(p.usg)}%</td><td>${dlt(p.usg_d)}</td><td>${f1(p.ast_pct)}%</td><td>${dlt(p.ast_pct_d)}</td><td>${dlt(p.min_d)}</td></tr>`).join("")}
+    ${movers.length ? `<div class="tw"><table><thead><tr><th class="l">Player</th><th>Usage</th><th>Usage Δ</th><th class="hs">AST%</th><th>AST% Δ</th><th class="hs">Min Δ</th></tr></thead><tbody>
+      ${movers.map(p => `<tr><td class="l pn">${esc(p.name)}</td><td>${f1(p.usg)}%</td><td>${dlt(p.usg_d)}</td><td class="hs">${f1(p.ast_pct)}%</td><td>${dlt(p.ast_pct_d)}</td><td class="hs">${dlt(p.min_d)}</td></tr>`).join("")}
     </tbody></table></div>` : `<div class="empty">No usage change of half a point or more.</div>`}`;
 }
 
@@ -337,31 +305,26 @@ function propsView(sc, team) {
   if (!rows.length) return `<div class="empty">No prop lines matched for ${esc(team)}.</div>`;
   const q = S.q.toLowerCase();
   rows = rows.filter(p => (!q || p.name.toLowerCase().includes(q)) && (!S.newOnly || (p.edge >= 5 && (p.base_edge ?? 0) < 5)));
-  const { key, cmp } = sorter("props", ["move", -1], (p, k) => k === "name" || k === "stat" ? p[k] : k === "move" ? Math.abs(p.move ?? 0) : (p[k] ?? -999));
+  const { key, cmp } = sorter("props", ["move", -1], (p, k) => k === "name" ? p.name + p.stat : k === "move" ? Math.abs(p.move ?? 0) : (p[k] ?? -999));
   rows = [...rows].sort(cmp);
   const t = "props";
-  return `<div class="head"><span class="stat">Over % from the sims in the games he plays (books void a DNP) · market = books' average no-vig over % at the consensus line</span>
-    <label class="toggle"><input type="checkbox" id="newOnly" ${S.newOnly ? "checked" : ""}> only new edges (5%+ if out, under 5% now)</label></div>
-    ${rows.length ? `<div class="tw"><table data-t="props"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "stat", "Stat", 1)}${th(t, key, "line", "Line")}${th(t, key, "books", "Books")}
-      ${th(t, key, "mkt_over", "Market over")}${th(t, key, "base_over", "Over now")}${th(t, key, "out_over", "Over if out")}${th(t, key, "move", "Move")}
-      <th class="l">Pick if out</th>${th(t, key, "edge", "Edge if out")}${th(t, key, "base_edge", "Edge now")}<th class="l">Best price</th></tr></thead><tbody>
+  return `<label class="toggle"><input type="checkbox" id="newOnly" ${S.newOnly ? "checked" : ""}> only new edges (5%+ if out, under 5% now)</label>
+    ${rows.length ? `<div class="tw"><table class="pt" data-t="props"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "line", "Line")}
+      ${th(t, key, "mkt_over", "Mkt over", 0, "hs")}${th(t, key, "base_over", "Over now")}${th(t, key, "out_over", "If out")}${th(t, key, "move", "Move", 0, "hs")}
+      ${th(t, key, "edge", "Pick if out")}${th(t, key, "base_edge", "Edge now", 0, "hs")}<th class="l hs">Best price</th></tr></thead><tbody>
       ${rows.map(p => { const nw = p.edge >= 5 && (p.base_edge ?? 0) < 5; return `<tr class="${nw ? "up" : ""}">
-        <td class="l pn">${esc(p.name)}<span class="stat"> ${esc(p.team)}</span>${nw ? `<span class="badge b-new">new</span>` : ""}</td><td class="l">${esc(p.stat)}</td>
-        <td>${p.line}</td><td>${p.books}</td><td>${f1(p.mkt_over)}%</td><td>${f1(p.base_over)}%</td><td>${f1(p.out_over)}%</td><td>${dlt(p.move, 1)}</td>
-        <td class="l">${esc(p.side)}</td><td class="${p.edge >= 5 ? "pos" : ""}">${f1(p.edge)}%</td><td>${esc(p.base_side || "")} ${f1(p.base_edge)}%</td><td class="l">${esc(p.best)}</td></tr>`; }).join("")}
+        <td class="l pn">${esc(p.name)}${nw ? `<span class="badge b-new">new</span>` : ""}<span class="sub">${esc(p.stat)}</span></td>
+        <td>${p.line}</td><td class="hs">${f1(p.mkt_over)}%</td><td>${f1(p.base_over)}%</td><td>${f1(p.out_over)}%</td><td class="hs">${dlt(p.move, 1)}</td>
+        <td class="${p.edge >= 5 ? "pos" : ""}">${esc(p.side)} ${f1(p.edge)}%</td><td class="hs">${esc(p.base_side || "")} ${f1(p.base_edge)}%</td><td class="l hs">${esc(p.best)}</td></tr>`; }).join("")}
     </tbody></table></div>` : `<div class="empty">No lines match the filter.</div>`}`;
 }
 
 // ---------------------------------------------------------------------------------------------- shell
 function render() {
   if (!S.data) return;
-  $("tabSlate").setAttribute("aria-selected", S.view === "slate"); $("tabGames").setAttribute("aria-selected", S.view === "games");
-  $("vSlate").hidden = S.view !== "slate"; $("vGames").hidden = S.view !== "games";
   $("siteDK").setAttribute("aria-pressed", S.site === "dk"); $("siteFD").setAttribute("aria-pressed", S.site === "fd");
-  if (S.view === "slate") renderSlate(); else renderTeams();
+  renderTeams();
 }
-$("tabSlate").onclick = () => { S.view = "slate"; render(); };
-$("tabGames").onclick = () => { S.view = "games"; render(); };
 $("siteDK").onclick = () => { S.site = "dk"; render(); };
 $("siteFD").onclick = () => { S.site = "fd"; render(); };
 $("q").oninput = e => { S.q = e.target.value.trim(); render(); };
