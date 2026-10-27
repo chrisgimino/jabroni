@@ -89,7 +89,7 @@ th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: v
 th.l, td.l { text-align: left }
 th[aria-sort] { color: var(--ink) }
 th[aria-sort="descending"]::after { content: " ▾" } th[aria-sort="ascending"]::after { content: " ▴" }
-tr.up td { background: #f6fbf8 } tr.down td { background: #fdf7f6 }
+td.xl { font-weight: 700 }
 .pos { color: var(--good); font-weight: 700 } .neg { color: var(--bad); font-weight: 700 } .zero { color: var(--faint) }
 .d { font-size: 11px; margin-left: 4px }
 .pn { font-weight: 700 }
@@ -157,6 +157,23 @@ function dlt(x, d = 1, suf = "") {
   const v = +x, cls = Math.abs(v) < Math.pow(10, -d) / 2 ? "zero" : v > 0 ? "pos" : "neg";
   return `<span class="d ${cls}">${v > 0 ? "+" : ""}${v.toFixed(d)}${suf}</span>`;
 }
+// Excel-style conditional formats: green (#63BE7B) - white - red (#F8696B), per column over the rows shown
+const XL = { g: [99, 190, 123], w: [255, 255, 255], r: [248, 105, 107] };
+const mix = (a, b, t) => `rgb(${a.map((x, i) => Math.round(x + (b[i] - x) * Math.max(0, Math.min(1, t)))).join(",")})`;
+const bg = c => c ? ` style="background:${c}"` : "";
+const nums = (rows, f) => rows.map(f).filter(v => v != null && isFinite(v));
+// diverging around 0: gains green, losses red, the biggest change in the column is the full color
+function xlDiv(rows, f) { const m = Math.max(0, ...nums(rows, f).map(Math.abs));
+  return v => v == null || !m ? "" : v >= 0 ? mix(XL.w, XL.g, v / m) : mix(XL.w, XL.r, -v / m); }
+// 3-color scale: lowest red, median white, highest green
+function xl3(rows, f) { const v = nums(rows, f).sort((a, b) => a - b); if (v.length < 2) return () => "";
+  const lo = v[0], hi = v[v.length - 1], md = v[Math.floor(v.length / 2)];
+  return x => x == null ? "" : x >= md ? (hi > md ? mix(XL.w, XL.g, (x - md) / (hi - md)) : "") : (md > lo ? mix(XL.w, XL.r, (md - x) / (md - lo)) : ""); }
+// 2-color scale: lowest white, highest green
+function xl2(rows, f) { const v = nums(rows, f); if (!v.length) return () => "";
+  const lo = Math.min(...v), hi = Math.max(...v); return x => x == null || hi <= lo ? "" : mix(XL.w, XL.g, (x - lo) / (hi - lo)); }
+// raw fantasy-point change, full size (the main number of the Chg column)
+const chg = x => { if (x == null) return "—"; const v = +x; return `${v > 0 ? "+" : ""}${v.toFixed(1)}`; };
 const lastName = n => { const p = String(n).split(" "); return p.length > 1 ? p.slice(1).join(" ") : n; };
 const outLabel = sc => "If " + (sc.out_names.length === 1 ? sc.out_names[0] : sc.out_names.map(lastName).join(" + ")) +
   (sc.out_names.length > 1 ? " are out" : " is out");
@@ -257,14 +274,15 @@ function teamTable(g, team, sc) {
   const q = S.q.toLowerCase();
   rows = rows.filter(p => !q || p.name.toLowerCase().includes(q)).sort(cmp);
   const D = (p, k, d) => dlt(p[k + "_d"], d);
+  const cChg = xlDiv(rows, p => p[s + "_d"]), cVal = xl3(rows, p => p[s + "_val"]), cSm = xl2(rows, p => p[s + "_smash"]);
   return `<div class="tw"><table class="tt" data-t="${t}"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "min", "Min")}
-    ${th(t, key, s, SITE())}${th(t, key, s + "_val", "Value")}${th(t, key, s + "_pct", "Chg")}${th(t, key, s + "_smash", "Smash")}
+    ${th(t, key, s, SITE())}${th(t, key, s + "_val", "Value")}${th(t, key, s + "_d", "Chg")}${th(t, key, s + "_smash", "Smash")}
     ${th(t, key, "pts", "Pts", 0, "hs")}${th(t, key, "reb", "Reb", 0, "hs")}${th(t, key, "ast", "Ast", 0, "hs")}${th(t, key, "usg", "Usage", 0, "hs")}
     <th class="hs">Salary</th></tr></thead><tbody>
-    ${rows.map(p => { const d = p[s + "_d"] ?? 0; return `<tr class="${d > 0.25 ? "up" : d < -0.25 ? "down" : ""}">
+    ${rows.map(p => { return `<tr>
       <td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}${p.big ? `<span class="badge b-big">big</span>` : ""}</td>
-      <td>${f1(p.min)}${D(p, "min", 1)}</td><td>${f1(p[s])}${D(p, s, 1)}</td><td>${f2(p[s + "_val"])}</td>
-      <td>${p[s + "_pct"] == null ? "—" : f1(p[s + "_pct"]) + "%"}</td><td>${f1(p[s + "_smash"])}%${dlt(p[s + "_smash_d"])}</td>
+      <td>${f1(p.min)}${D(p, "min", 1)}</td><td>${f1(p[s])}</td><td${bg(cVal(p[s + "_val"]))}>${f2(p[s + "_val"])}</td>
+      <td class="xl"${bg(cChg(p[s + "_d"]))}>${chg(p[s + "_d"])}</td><td${bg(cSm(p[s + "_smash"]))}>${f1(p[s + "_smash"])}%${dlt(p[s + "_smash_d"])}</td>
       <td class="hs">${f1(p.pts)}${D(p, "pts", 1)}</td><td class="hs">${f1(p.reb)}${D(p, "reb", 1)}</td><td class="hs">${f1(p.ast)}${D(p, "ast", 1)}</td>
       <td class="hs">${f1(p.usg)}%${dlt(p.usg_d)}</td><td class="hs">${money(p[s + "_sal"])}</td></tr>`; }).join("")}
     ${outs.map(p => `<tr class="outrow"><td class="l pn"><s>${esc(p.name)}</s> <span class="outtag">OUT</span></td><td>0.0${dlt(-p.min)}</td>
@@ -307,15 +325,15 @@ function propsView(sc, team) {
   rows = rows.filter(p => (!q || p.name.toLowerCase().includes(q)) && (!S.newOnly || (p.edge >= 5 && (p.base_edge ?? 0) < 5)));
   const { key, cmp } = sorter("props", ["move", -1], (p, k) => k === "name" ? p.name + p.stat : k === "move" ? Math.abs(p.move ?? 0) : (p[k] ?? -999));
   rows = [...rows].sort(cmp);
-  const t = "props";
+  const t = "props", cMove = xlDiv(rows, p => p.move), cEdge = xlDiv(rows, p => p.edge), cNow = xlDiv(rows, p => p.base_edge);
   return `<label class="toggle"><input type="checkbox" id="newOnly" ${S.newOnly ? "checked" : ""}> only new edges (5%+ if out, under 5% now)</label>
     ${rows.length ? `<div class="tw"><table class="pt" data-t="props"><thead><tr>${th(t, key, "name", "Player", 1)}${th(t, key, "line", "Line")}
       ${th(t, key, "mkt_over", "Mkt over", 0, "hs")}${th(t, key, "base_over", "Over now")}${th(t, key, "out_over", "If out")}${th(t, key, "move", "Move", 0, "hs")}
       ${th(t, key, "edge", "Pick if out")}${th(t, key, "base_edge", "Edge now", 0, "hs")}<th class="l hs">Best price</th></tr></thead><tbody>
-      ${rows.map(p => { const nw = p.edge >= 5 && (p.base_edge ?? 0) < 5; return `<tr class="${nw ? "up" : ""}">
+      ${rows.map(p => { const nw = p.edge >= 5 && (p.base_edge ?? 0) < 5; return `<tr>
         <td class="l pn">${esc(p.name)}${nw ? `<span class="badge b-new">new</span>` : ""}<span class="sub">${esc(p.stat)}</span></td>
-        <td>${p.line}</td><td class="hs">${f1(p.mkt_over)}%</td><td>${f1(p.base_over)}%</td><td>${f1(p.out_over)}%</td><td class="hs">${dlt(p.move, 1)}</td>
-        <td class="${p.edge >= 5 ? "pos" : ""}">${esc(p.side)} ${f1(p.edge)}%</td><td class="hs">${esc(p.base_side || "")} ${f1(p.base_edge)}%</td><td class="l hs">${esc(p.best)}</td></tr>`; }).join("")}
+        <td>${p.line}</td><td class="hs">${f1(p.mkt_over)}%</td><td>${f1(p.base_over)}%</td><td>${f1(p.out_over)}%</td><td class="hs xl"${bg(cMove(p.move))}>${chg(p.move)}</td>
+        <td class="xl"${bg(cEdge(p.edge))}>${esc(p.side)} ${f1(p.edge)}%</td><td class="hs"${bg(cNow(p.base_edge))}>${esc(p.base_side || "")} ${f1(p.base_edge)}%</td><td class="l hs">${esc(p.best)}</td></tr>`; }).join("")}
     </tbody></table></div>` : `<div class="empty">No lines match the filter.</div>`}`;
 }
 
