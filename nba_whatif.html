@@ -284,7 +284,7 @@ function teamRows(sc, team, t, def) {
   const q = S.q.toLowerCase();
   return { key, rows: rows.filter(p => !q || p.name.toLowerCase().includes(q)).sort(cmp) };
 }
-const pname = p => `<td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}${p.big ? `<span class="badge b-big">big</span>` : ""}</td>`;
+const pname = p => `<td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}</td>`;
 function teamTable(g, team, sc) {
   const s = site(), t = "team";
   const { key, rows } = teamRows(sc, team, t, [s, -1]);
