@@ -585,6 +585,14 @@ table.oo td,table.oo th{font-size:.8rem}
 .dtbl td.l{z-index:2} .dtbl th.l{z-index:4}
 .dtbl tr.tw td.l{background:var(--ground)}
 
+
+.dkey{display:block;font-size:.86rem;line-height:1.45}
+.dkey h3{margin:0 0 6px}.dkey .dk-h{margin-top:12px}
+.dkey ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.dkey dl{margin:0;display:grid;grid-template-columns:max-content 1fr;gap:6px 12px}
+.dkey dt{font-weight:700}.dkey dd{margin:0;color:var(--muted)}.dkey .eg{display:block;color:var(--ink)}
+.dkey .dk-note{margin:10px 0 0;color:var(--muted);font-size:.78rem}
+@media (max-width:700px){.dkey dl{grid-template-columns:1fr;gap:0}.dkey dt{margin-top:8px}}
 /* ===== phone layout: page scrolls vertically, nothing hangs off the right edge ===== */
 @media (max-width:700px){
   html,body{height:auto;overflow-x:hidden;overflow-y:auto}
@@ -853,7 +861,7 @@ function renderBoard(){
   INS.notes=notes;
 }
 function renderTabs(){
-  $("tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" data-k="${k}" aria-selected="${st.tab===k}">${l}</button>`).join("");
+  $("tabs").innerHTML=TABS.map(([k,l])=>`<button role="tab" data-k="${k}" ${k==="defense"?'title="DvA = Defense vs. Archetype"':""} aria-selected="${st.tab===k}">${l}</button>`).join("");
   $("tabs").querySelectorAll("button").forEach(b=>b.onclick=()=>{st.tab=b.dataset.k;st.open=null;render();});
 }
 function insightsHTML(){
@@ -885,6 +893,7 @@ function applyPage(){
 // one screen, no vertical page scroll: if the page is taller than the window, shrink it to fit (floor 60%)
 function fit(){
   const vp=$("vp"), v=$("view"); v.style.zoom="";
+  if(v.dataset.t==="defense"){ vp.classList.add("scrolly"); return; }
   if(window.matchMedia("(max-width:700px)").matches){ vp.classList.remove("scrolly"); return; }
   const avail=vp.clientHeight; let z=1;
   for(let i=0;i<4;i++){
@@ -1498,11 +1507,30 @@ function renderDefense(){
   for(const a of ARCH) for(const t of ["High","Low"]){ const key=`${a}|${t}`, w=who[key]; if(only&&!w) continue;
     rows+=`<tr class="${w?"has":"none"}${t==="High"?" first":""}"><td class="l"><b>${a}</b> <span class="badge ${t==="High"?"hi":"lo"}">${t.toLowerCase()} usage</span><small>${w?`${off}: ${w.join(", ")}`:`No ${off} regular`}</small></td>${SL.map(([k])=>cellH(k,DV[k].cells[key])).join("")}</tr>`; }
   const h=`<div class="toolbar card"><div class="row-ctl">${seg("side",[[`${dot(teams().h)}${teams().h} defense`,"away"],[`${dot(teams().a)}${teams().a} defense`,"home"]],st.side)}${seg("donly",[["All player types","all"],[`Types ${off} plays`,"only"]],only?"only":"all")}</div></div>
-    <section class="card"><div class="card-h"><h3>${dot(def)}What ${def} allow by player type</h3><span class="hint">big number = ${def}'s rank of 30, per possession so pace doesn't skew it (1st = gives up the most, green = good for the offense) · beside it: per 36 vs. each player's own rate at tonight's pace (${tonightPace(def,off).toFixed(1)} possessions) · 3PA ranked per minute · hover for the breakdown</span></div>
+    <section class="card"><div class="card-h"><h3>${dot(def)}DvA · Defense vs. Archetype: what ${def} allow by player type</h3><span class="hint">big number = ${def}'s rank of 30, per possession so pace doesn't skew it (1st = gives up the most, green = good for the offense) · beside it: per 36 vs. each player's own rate at tonight's pace (${tonightPace(def,off).toFixed(1)} possessions) · 3PA ranked per minute · hover for the breakdown</span></div>
     <div class="tbl dtbl-w"><table class="ctbl dtbl"><thead><tr><th class="l">Player type · ${off} players</th>${SL.map(([k,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
-    <p class="hint sm">Each cell = ${def}'s team-wide effect plus a type-specific part shrunk by sample. 3PA is the most repeatable; points and assists are the noisiest. Names are ${off} players with 12+ mpg${LIVE?" or projected to start":""}.</p></section>`;
+    <p class="hint sm">Each cell = ${def}'s team-wide effect plus a type-specific part shrunk by sample. 3PA is the most repeatable; points and assists are the noisiest. Names are ${off} players with 12+ mpg${LIVE?" or projected to start":""}.</p></section>${dvaKey()}`;
   $("view").innerHTML=h;
   wire("side",v=>st.side=v); wire("donly",v=>st.donly=v==="only");
+}
+function dvaKey(){
+  const A=[["Distributor","Ball handlers who run the offense and set others up; limited scoring of their own.","Cade Cunningham, Josh Giddey, Stephon Castle, Andrew Nembhard"],
+   ["Combo Guard","Guards who mix creating, scoring and passing.","Shai Gilgeous-Alexander, Luka Doncic, Tyrese Maxey, Jalen Brunson"],
+   ["Shooting Wing","Perimeter players who work mostly off the ball: spot-ups, screens, handoffs. Rarely create their own shot.","Trey Murphy, Nickeil Alexander-Walker, Grayson Allen, Donte DiVincenzo"],
+   ["Scoring Wing","Perimeter scorers who also create off the dribble.","Anthony Edwards, Devin Booker, Jaylen Brown, Kawhi Leonard"],
+   ["3 and D Wings","Bigger wings who shoot threes and guard up a position; not primary creators.","OG Anunoby, Mikal Bridges, Andrew Wiggins, Jaden McDaniels"],
+   ["Versatile Forward","Forwards with several offensive skills who play on and off the ball.","Paolo Banchero, Scottie Barnes, Jalen Johnson, Pascal Siakam"],
+   ["Versatile Big","Big men who score in the post and away from the basket.","Nikola Jokic, Victor Wembanyama, Alperen Sengun, Bam Adebayo"],
+   ["Post Big","Bigs who work near the rim and rarely stretch the floor.","Jalen Duren, Donovan Clingan, Rudy Gobert, Jarrett Allen"]];
+  return `<section class="card dkey"><h3>DvA = Defense vs. Archetype</h3>
+    <ul class="dk-how">
+      <li><b>Rank (big number):</b> where the defense sits among 30 teams in what it gives up to that player type. <b>1st = gives up the most, the best matchup for the offense (green). 30th = gives up the least, the worst matchup (red).</b></li>
+      <li><b>Number beside the rank:</b> how much more (+) or less (&minus;) than normal that player type produces against this defense, per 36 minutes at tonight's pace. Higher is better for the offense.</li>
+      <li>Each type is split into high and low usage. Everything except 3PA is ranked per possession so pace doesn't skew it; 3PA is ranked per minute. Hover a cell for the minutes behind it. 3PA is the most repeatable; points and assists are the noisiest.</li>
+    </ul>
+    <h3 class="dk-h">Player types</h3>
+    <dl class="dk-types">${A.map(([n,d,e])=>`<dt>${n}</dt><dd>${d} <span class="eg">${e}</span></dd>`).join("")}</dl>
+    <p class="dk-note">Types come from the desk's own archetype file, so a player's label here can differ from the one on the site.</p></section>`;
 }
 
 function render(keep){
