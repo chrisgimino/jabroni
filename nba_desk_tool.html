@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <title>NBA Matchups</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
@@ -483,7 +484,7 @@ body{padding:0!important;font:14px/1.4 var(--text);font-feature-settings:"tnum" 
 .wrap{max-width:none;height:100vh;height:100dvh;margin:0;padding:8px 14px 8px;gap:6px;display:flex;flex-direction:column}
 /* top bar */
 .top{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;padding:0}
-#datawin{margin-left:auto}
+.navrow{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}.navrow .tabs{flex:1 1 auto}#datawin{margin-bottom:4px}
 .brand{font-weight:800;font-size:17px;letter-spacing:.2px;white-space:nowrap}
 .brand em{font-style:normal;color:var(--accent)}
 .top .slate{flex:1;min-width:0;display:flex;gap:6px;overflow-x:auto;padding:0}
@@ -582,17 +583,56 @@ table.oo td,table.oo th{font-size:.8rem}
 .dtbl th.l,.dtbl td.l{position:sticky;left:0;background:var(--surface);box-shadow:1px 0 0 var(--rule-strong)}
 .dtbl td.l{z-index:2} .dtbl th.l{z-index:4}
 .dtbl tr.tw td.l{background:var(--ground)}
+
+/* ===== phone layout: page scrolls vertically, nothing hangs off the right edge ===== */
+@media (max-width:700px){
+  html,body{height:auto;overflow-x:hidden;overflow-y:auto}
+  .wrap{height:auto;min-height:100dvh;padding:8px 10px 24px;gap:8px}
+  .vp,.vp.scrolly{flex:none;overflow:visible}
+  .view{zoom:1!important}
+  .top{flex-wrap:wrap;gap:6px 10px}
+  .top .brand{order:1}.top .date{order:2;margin-left:auto}
+  .top .slate{order:3;flex:1 0 100%;padding-bottom:2px}
+  .chip-game{flex:0 0 auto}
+  .board{padding:8px 12px}
+  .board .teams{display:grid;grid-template-columns:1fr 1fr;gap:2px 8px;width:100%}
+  .team{flex-direction:column;align-items:flex-start;gap:2px}
+  .team.home{flex-direction:column;align-items:flex-end}
+  .team .ab{font-size:1.7rem}
+  .team .meta{white-space:nowrap}
+  .mid{grid-column:1/-1;order:3;justify-content:center;flex-wrap:wrap;gap:4px 8px}
+  .navrow{flex-direction:column;align-items:stretch;gap:6px}
+  .tabs{width:100%;gap:0;overflow-x:auto}
+  .tabs button{flex:1 1 auto;padding:7px 6px;font-size:13px;white-space:nowrap}
+  #datawin{display:flex;margin:0;width:100%}#datawin button{flex:1 1 0}
+  .pgs{flex-wrap:wrap;gap:6px}
+  .pgs>.seg{display:flex;flex-wrap:wrap;gap:4px;background:none;border:0;overflow:visible;width:100%}
+  .pgs>.seg button{flex:1 1 auto;border:1px solid var(--rule)!important;border-radius:6px;background:var(--surface);padding:6px 10px}
+  .pgs>.seg button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)!important}
+  .rosf{margin-left:0;flex-wrap:wrap;width:100%}
+  .seg{max-width:100%}
+  .row-ctl .seg,.toolbar .seg,.ov-ctl .seg{display:flex;flex-wrap:wrap}
+  .row-ctl .seg button,.toolbar .seg button{flex:1 1 auto}
+  .row-ctl,.toolbar .row-ctl{flex-wrap:wrap;gap:6px}
+  .tbl table td:first-child,.tbl table th:first-child,.card table td:first-child,.card table th:first-child{position:sticky;left:0;z-index:1;background:var(--surface);box-shadow:1px 0 0 var(--rule)}
+  .card,.tbl,.mmwrap{max-width:100%}
+  .mm{table-layout:fixed;width:max-content;min-width:100%}
+  .mm .nm{width:96px;padding:0 6px;font-size:.78rem}
+  .mm td.c,.mm thead th:not(.nm){width:5px}
+  .mm thead th:not(.q):not(.nm){font-size:0}
+  .mm thead th.q{font-size:.72rem;overflow:visible}
+  .mm tbody tr{height:30px}
+}
 </style>
 
 <div class="wrap">
   <header class="top">
     <div class="brand">NBA <em>Matchups</em></div>
     <div class="slate" id="slate" role="group" aria-label="Games on this slate"></div>
-    <div class="seg" id="datawin" role="group" aria-label="Data window"><button type="button" data-w="">Since 25/26</button><button type="button" data-w="2627">2026-27 only</button></div>
     <label class="date"><span id="sub"></span>Slate <select id="date"></select></label>
   </header>
   <div class="board" id="board"></div>
-  <div class="nav2"><div class="tabs" role="tablist" id="tabs"></div><div class="pgs" id="pgs"></div></div>
+  <div class="nav2"><div class="navrow"><div class="tabs" role="tablist" id="tabs"></div><div class="seg" id="datawin" role="group" aria-label="Data window"><button type="button" data-w="">Since 25/26</button><button type="button" data-w="2627">2026-27 only</button></div></div><div class="pgs" id="pgs"></div></div>
   <div class="vp" id="vp"><div class="view" id="view"></div></div>
 </div>
 <div id="tip" hidden></div>
@@ -615,7 +655,7 @@ const ARCH = ["Combo Guard","Distributor","Scoring Wing","Shooting Wing","3 and 
 const STATS = [["DK","DK"],["FD","FD"],["FG3A","3PA"],["RIM_FGA","Rim attempts"],["REB","Rebounds"],["PTS","Points"],["AST","Assists"],["TRIPS","FT trips"]];
 const PLURAL={"Combo Guard":"combo guards","Distributor":"distributors","Scoring Wing":"scoring wings","Shooting Wing":"shooting wings","3 and D Wings":"3-and-D wings","Versatile Forward":"versatile forwards","Versatile Big":"versatile bigs","Post Big":"post bigs"};
 const SCALE={DK:1.0,FD:1.0,PTS:0.6,REB:0.3,AST:0.25,FG3A:0.3,RIM_FGA:0.3,TRIPS:0.15};
-const TABS=[["overview","Game"],["players","Players"],["onoff","On/Off"],["rotations","Rotations"],["defense","Defense"]];
+const TABS=[["defense","DvA"],["overview","Game"],["players","Players"],["onoff","On/Off"],["rotations","Rotations"]];
 // each tab is split into one-screen pages: [key, label, what it is for]
 const PAGES={
  overview:[["game","Game","Vegas lines, season ranks and recent form"],["rot","Rotation","Projected rotation, injuries and roster changes for one team"],["matchup","Matchup","Offense vs defense: tale of the tape, where the matchup tilts, soft spots by player type"],
@@ -627,7 +667,7 @@ const PAGES={
  defense:[["types","By player type","What the defense allows to each player archetype"]]};
 const INS={E:[],notes:[]};
 const SL=(()=>{ const d=new Date(DATES[DATES.length-1]+"T12:00:00"), cur=d.getMonth()>=8?d.getFullYear():d.getFullYear()-1; return D.window==="since"?"Since 25/26":D.season<cur?"Last season":D.season_label; })();   // stats from a finished season read as "Last season", never as the year
-const st={pg:{}, status:{}, oo:{}, ooSort:"use", site:"DK", date:DATES[DATES.length-1], gi:0, tab:"overview", side:"away", win:"season", stat:"DK", out:{}, open:null, mmwin:10, dstat:"FG3A"};
+const st={pg:{}, status:{}, oo:{}, ooSort:"use", site:"DK", date:DATES[DATES.length-1], gi:0, tab:"defense", side:"away", win:"season", stat:"DK", out:{}, open:null, mmwin:10, dstat:"FG3A"};
 try{const s=JSON.parse(localStorage.getItem("desk3")||"null"); if(s&&D.slate[s.date]) Object.assign(st,s,{open:null});}catch(e){}
 const $=id=>document.getElementById(id);
 const nm=p=>N[p]||p;
@@ -800,12 +840,12 @@ function renderTop(){
   $("slate").querySelectorAll("button").forEach(b=>b.onclick=()=>{st.gi=+b.dataset.i;st.out={};st.open=null;render();});
 }
 function renderBoard(){
-  const g=game(), {a,h,A,H}=teams(), pa=A.profile.season, ph=H.profile.season;
+  const g=game(), {a,h,A,H}=teams(), W0=st.win==="l10"?"l10":"season", pa=A.profile[W0]||A.profile.season, ph=H.profile[W0]||H.profile.season;
   const E=edges(); INS.E=E;
   $("board").innerHTML=`<div class="teams">
-    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">${LIVE?SL+": ":""}${pa.wins}-${pa.losses} · net ${sgn(pa.net)} (${ord(pa.net_rank)})</span></div>
+    <div class="team" style="--tcol:${tc(a)}"><span class="ab">${a}</span><span class="meta">net ${sgn(pa.net)}${pa.net_rank!=null?` (${ord(pa.net_rank)})`:""}</span></div>
     <div class="mid"><span>Avg pace</span><strong>${((pa.pace+ph.pace)/2).toFixed(1)}</strong><span>${g.tip} PM ET${g.as_!=null?` · final ${g.as_}–${g.hs}`:""}</span></div>
-    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">${LIVE?SL+": ":""}${ph.wins}-${ph.losses} · net ${sgn(ph.net)} (${ord(ph.net_rank)})</span></div></div>
+    <div class="team home" style="--tcol:${tc(h)}"><span class="ab">${h}</span><span class="meta">net ${sgn(ph.net)}${ph.net_rank!=null?` (${ord(ph.net_rank)})`:""}</span></div></div>
     ${E.length?`<details class="qi" id="qi" ${st.qi===false?"":"open"}><summary>Quick insights <span>${E.length}</span></summary><div class="edges">${E.map(([k,t,s])=>`<div class="edge ${k}"><i></i><div><b>${t}</b><small>${s}</small></div></div>`).join("")}</div></details>`:""}`;
   const qi=$("qi"); if(qi) qi.ontoggle=()=>{st.qi=qi.open; save();};
   const notes=(D.slate_notes||[]).filter(n=>n.includes(" "+a)||n.includes(" "+h)||n.includes("("+a)||n.includes("("+h));
@@ -844,6 +884,7 @@ function applyPage(){
 // one screen, no vertical page scroll: if the page is taller than the window, shrink it to fit (floor 60%)
 function fit(){
   const vp=$("vp"), v=$("view"); v.style.zoom="";
+  if(window.matchMedia("(max-width:700px)").matches){ vp.classList.remove("scrolly"); return; }
   const avail=vp.clientHeight; let z=1;
   for(let i=0;i<4;i++){
     const hgt=v.getBoundingClientRect().height;
