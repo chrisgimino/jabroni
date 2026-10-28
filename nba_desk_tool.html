@@ -380,6 +380,7 @@ tr.detail td{background:var(--ground);padding:14px 16px;white-space:normal;text-
 .mm tbody tr{height:25px}
 .mm td.c{border-top:1px solid var(--surface)}
 .mm thead th{overflow:visible}
+.mm thead th:not(.nm){background:transparent}.mm thead th.q{padding-left:3px;text-overflow:clip}
 .mm thead th.q{text-align:left}
 .mm td.qs{box-shadow:inset 2px 0 0 var(--surface)}
 .mm td.st,.mm th.st{text-align:right;padding:0 10px;font-size:.86rem}
@@ -1433,7 +1434,7 @@ function renderRotations(){
   for(const g of wg) for(const p of new Set([...Object.keys(g.sec),...Object.keys(g.ot)])){ if(!played(g,p)) continue;
     const b=base[p]||(base[p]={gp:0,min:0}); b.gp++; b.min+=(g.sec[p]||[]).reduce((x,y)=>x+y,0)/60+(g.ot[p]||0); }
   const cand=D.teams[tm].inout.filter(x=>onRoster(tm,x.id)).slice().sort((x,y)=>y.mpg-x.mpg).slice(0,8);
-  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],[SL,999]],st.mmwin)}</div>
+  let h=`<div class="toolbar card"><div class="row-ctl">${sideSeg()}${seg("mmwin",[["Last 5",5],["Last 10",10],["Last 20",20],["All games",999]],st.mmwin)}</div>
     <div class="outbar"><span class="lbl">Only games without:</span>${cand.map(x=>`<button class="pill" data-id="${x.id}" aria-pressed="${x.id===outId}">${nm(x.id)}</button>`).join("")}</div></div>
     
     <section class="card"><div class="card-h"><h3>${dot(tm)}${tm} minutes matrix</h3><span class="hint">${n} game${n===1?"":"s"}${outId?` without ${nm(outId)}`:""}${n&&n<5?" · small sample":""}${M.excluded?` · ${M.excluded} game left out because the feed listed under 5 players`:""}</span></div>
