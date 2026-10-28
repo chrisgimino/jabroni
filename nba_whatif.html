@@ -35,6 +35,8 @@ button { cursor: pointer }
 .brand span { color: var(--accent) }
 .upd { color: var(--muted); font-size: 12px }
 .grow { flex: 1 }
+.note { background: #fff6e0; border: 1px solid #efc66b; border-left: 4px solid #e0a020; border-radius: 6px; padding: 8px 12px; font-size: 13px; line-height: 1.4; color: var(--ink) }
+.note b { font-weight: 800 }
 .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 7px; overflow: hidden; background: var(--surface) }
 .seg button { border: 0; background: none; padding: 5px 12px; font-weight: 700; font-size: 13px; color: var(--muted) }
 .seg button[aria-pressed="true"] { background: var(--ink); color: #fff }
@@ -153,6 +155,7 @@ td.c .d, td.c .d.pos, td.c .d.neg { color: var(--ink); opacity: .75 }
     </div>
     <input class="search" id="q" type="search" placeholder="Find a player…" aria-label="Find a player">
   </div>
+  <div class="note" role="note"><b>Automated rough estimates.</b> Final projections are curated by the RotoGrinders NBA team upon breaking news.</div>
   <section id="vGames"></section>
 </div>
 <script>
