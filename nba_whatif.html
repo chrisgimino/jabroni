@@ -250,8 +250,6 @@ function renderDetail(g, team, sc) {
   const teams = sc ? sc.teams : (g.base.teams || []).map(t => ({ ...t, pts_d: null, win_d: null }));
   const tstr = (teams || []).filter(t => t.abbr === team).map(t => `<span class="stat">${esc(t.abbr)} <b>${f1(t.pts)}</b>${dlt(t.pts_d)} pts · win <b>${f1(t.win * 100)}%</b>${dlt(t.win_d)}</span>`).join("");
   const subs = [["team", `${team} projection`]];
-  if (own) subs.push(["min", "Where the minutes go"]);
-  subs.push(["roles", "Role shift"]);
   if (sc) subs.push(["props", `Props (${goodProps(sc, team).length})`]);
   if (!subs.some(x => x[0] === S.sub)) S.sub = "team";
   el.innerHTML = `<div class="head"><h2>${esc(title)}</h2>${tstr}</div>
@@ -260,8 +258,6 @@ function renderDetail(g, team, sc) {
   el.querySelectorAll(".tabs button").forEach(b => b.onclick = () => { S.sub = b.dataset.k; renderDetail(g, team, sc); });
   const sub = $("sub");
   if (S.sub === "team") sub.innerHTML = teamTable(g, team, sc);
-  else if (S.sub === "min") sub.innerHTML = minutesView(sc);
-  else if (S.sub === "roles") sub.innerHTML = rolesView(g, team, sc);
   else sub.innerHTML = propsView(sc, team);
   sub.querySelectorAll("th[data-k]").forEach(h => h.onclick = () => {
     const t = h.closest("table").dataset.t, cur = S.sort[t] || [], k = h.dataset.k;
@@ -310,36 +306,6 @@ function statsTable(sc, team) {
     ${rows.map(p => `<tr>${pname(p)}${cols.map(([k]) => cell(f1(p[k]) + dlt(p[k + "_d"]), C[k](p[k + "_d"]))).join("")}
       ${cell(f1(p.usg) + "%" + dlt(p.usg_d), cU(p.usg_d))}<td>${money(p[s + "_sal"])}</td></tr>`).join("")}
     </tbody></table></div>`;
-}
-
-function minutesView(sc) {
-  const fl = sc.minutes_flow || [];
-  if (!fl.length) return `<div class="empty">No teammate gains more than 0.2 minutes.</div>`;
-  const mx = Math.max(...fl.map(x => x.min_d));
-  return `<div class="lbl">${esc(sc.out_names.join(" + "))} leave${sc.out_names.length > 1 ? "" : "s"} ${f1(sc.freed_min)} projected minutes · who takes them</div>
-    <div class="bars">${fl.map(x => `<span class="n">${esc(x.name)}</span><span class="bar"><i style="width:${(x.min_d / mx * 100).toFixed(1)}%"></i></span>
-      <span class="v">+${f1(x.min_d)} · ${x.share == null ? "—" : f1(x.share) + "%"}</span>`).join("")}</div>`;
-}
-
-function rolesView(g, t, sc) {
-  const b = (g.base.roles || {})[t] || {}, o = sc ? (sc.roles || {})[t] || {} : b;
-  const card = (k, bv, ov, bx, ox) => `<div class="role"><div class="k">${k}</div><div class="v"><span>${esc(bv || "—")}${bx ? ` <span class="stat">${bx}</span>` : ""}</span>
-    <span class="arrow">→</span><span class="${bv !== ov ? "chg" : ""}">${esc(ov || "—")}${ox ? ` <span class="stat">${ox}</span>` : ""}</span></div></div>`;
-  const bigs = r => (r.bigs || []).map(x => `${lastName(x.name)} ${f1(x.min)}`).join(", ");
-  if (!sc) return `<div class="lbl">${esc(t)} as projected</div><div class="roles">
-    ${card("Ball handler (top assist rate)", b.ball_handler, b.ball_handler, b.ball_handler_ast != null ? f1(b.ball_handler_ast) + "% AST" : "", "")}
-    ${card("Top usage", b.usage, b.usage, b.usage_pct != null ? f1(b.usage_pct) + "%" : "", "")}${card("Bigs (minutes)", bigs(b), bigs(b))}</div>`;
-  const movers = sc.players.filter(p => p.team === t && p.usg_d != null && Math.abs(p.usg_d) >= 0.5).sort((a, c) => c.usg_d - a.usg_d);
-  return `<div class="lbl">${esc(t)} as projected → ${esc(outLabel(sc).toLowerCase())}</div><div class="roles">
-    ${card("Ball handler (top assist rate)", b.ball_handler, o.ball_handler, b.ball_handler_ast != null ? f1(b.ball_handler_ast) + "% AST" : "", o.ball_handler_ast != null ? f1(o.ball_handler_ast) + "% AST" : "")}
-    ${card("Top usage", b.usage, o.usage, b.usage_pct != null ? f1(b.usage_pct) + "%" : "", o.usage_pct != null ? f1(o.usage_pct) + "%" : "")}
-    ${card("Bigs (minutes)", bigs(b), bigs(o))}</div>
-    <div class="lbl" style="margin-top:12px">Usage and assist rate changes</div>
-    ${movers.length ? (() => { const cU = xlDiv(movers, p => p.usg_d), cA = xlDiv(movers, p => p.ast_pct_d), cM = xlDiv(movers, p => p.min_d);
-      return `<div class="tw"><table class="st"><thead><tr><th class="l pnh">Player</th><th>Usage</th><th>AST%</th><th>Min</th></tr></thead><tbody>
-      ${movers.map(p => `<tr><td class="l pn">${esc(p.name)}</td>${cell(f1(p.usg) + "%" + dlt(p.usg_d), cU(p.usg_d))}${cell(f1(p.ast_pct) + "%" + dlt(p.ast_pct_d), cA(p.ast_pct_d))}
-        ${cell(f1(p.min) + dlt(p.min_d), cM(p.min_d))}</tr>`).join("")}
-    </tbody></table></div>`; })() : `<div class="empty">No usage change of half a point or more.</div>`}`;
 }
 
 // props that are a good play with the player(s) out: the pick, its edge, and the projected stat (sim mean with them out)

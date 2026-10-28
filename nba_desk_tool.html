@@ -1529,8 +1529,7 @@ function dvaKey(){
       <li>Each type is split into high and low usage. Everything except 3PA is ranked per possession so pace doesn't skew it; 3PA is ranked per minute. Hover a cell for the minutes behind it. 3PA is the most repeatable; points and assists are the noisiest.</li>
     </ul>
     <h3 class="dk-h">Player types</h3>
-    <dl class="dk-types">${A.map(([n,d,e])=>`<dt>${n}</dt><dd>${d} <span class="eg">${e}</span></dd>`).join("")}</dl>
-    <p class="dk-note">Types come from the desk's own archetype file, so a player's label here can differ from the one on the site.</p></section>`;
+    <dl class="dk-types">${A.map(([n,d,e])=>`<dt>${n}</dt><dd>${d} <span class="eg">${e}</span></dd>`).join("")}</dl></section>`;
 }
 
 function render(keep){
