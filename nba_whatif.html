@@ -153,7 +153,7 @@ td.c .d, td.c .d.pos, td.c .d.neg { color: var(--ink); opacity: .75 }
       <button id="siteDK" aria-pressed="true">DK</button><button id="siteFD" aria-pressed="false">FD</button>
     </div>
   </div>
-  <div class="note" role="note"><b>Automated rough estimates.</b> Final projections are curated by the RotoGrinders NBA team upon breaking news.</div>
+  <div class="note" role="note"><b>Automated estimates.</b> Final projections are curated by the RotoGrinders NBA team upon breaking news.</div>
   <section id="vGames"></section>
 </div>
 <script>
@@ -319,7 +319,9 @@ function goodProps(sc, team) {
     const [ab, ks] = STAT[p.stat] || [p.stat, []], pl = P[p.rg_id];
     const vals = pl ? ks.map(k => pl[k]) : [];
     const proj = vals.length && vals.every(v => v != null) ? vals.reduce((a, b) => a + b, 0) : null;
-    return { ...p, ab, proj, pick: `${ab} ${p.side === "Over" ? "o" : "u"}${p.line}` };
+    // edge change on this same pick vs as projected: same side = edge - before; side flipped = the over-probability move
+    const de = p.base_side === p.side && p.base_edge != null ? p.edge - p.base_edge : p.move == null ? null : p.side === "Over" ? p.move : -p.move;
+    return { ...p, ab, proj, de, pick: `${ab} ${p.side === "Over" ? "o" : "u"}${p.line}` };
   });
 }
 function propsView(sc, team) {
@@ -331,7 +333,7 @@ function propsView(sc, team) {
   return `<div class="tw"><table class="pt" data-t="props"><thead><tr>${th(t, key, "name", "Player", 1, "pnh")}${th(t, key, "pick", "Prop", 1)}
     ${th(t, key, "proj", "Proj")}${th(t, key, "edge", "Edge")}</tr></thead><tbody>
     ${rows.map(p => `<tr><td class="l pn">${esc(p.name)}</td><td class="l"><b>${esc(p.pick)}</b></td><td>${f1(p.proj)}</td>
-      ${cell(f1(p.edge) + "%", cE(p.edge), "xl")}</tr>`).join("")}
+      ${cell(f1(p.edge) + "%" + (p.de == null ? "" : dlt(p.de, 1, "%").replace('">', '">(').replace("</span>", ")</span>")), cE(p.edge), "xl")}</tr>`).join("")}
     </tbody></table></div>`;
 }
 
