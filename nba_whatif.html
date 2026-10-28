@@ -40,8 +40,7 @@ button { cursor: pointer }
 .seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 7px; overflow: hidden; background: var(--surface) }
 .seg button { border: 0; background: none; padding: 5px 12px; font-weight: 700; font-size: 13px; color: var(--muted) }
 .seg button[aria-pressed="true"] { background: var(--ink); color: #fff }
-.search { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 7px; padding: 5px 10px; min-height: 32px; width: 200px; max-width: 100% }
-@media (max-width: 640px) { .search { width: 100% } .upd { width: 100% } }
+@media (max-width: 640px) { .upd { width: 100% } }
 
 /* tabs */
 .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule-strong); overflow-x: auto; scrollbar-width: none }
@@ -153,14 +152,13 @@ td.c .d, td.c .d.pos, td.c .d.neg { color: var(--ink); opacity: .75 }
     <div class="seg" role="group" aria-label="Site">
       <button id="siteDK" aria-pressed="true">DK</button><button id="siteFD" aria-pressed="false">FD</button>
     </div>
-    <input class="search" id="q" type="search" placeholder="Find a player…" aria-label="Find a player">
   </div>
   <div class="note" role="note"><b>Automated rough estimates.</b> Final projections are curated by the RotoGrinders NBA team upon breaking news.</div>
   <section id="vGames"></section>
 </div>
 <script>
 "use strict";
-const S = { data: null, site: "dk", ti: 0, sit: null, sub: "team", q: "", sort: {} };
+const S = { data: null, site: "dk", ti: 0, sit: null, sub: "team", sort: {} };
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const f1 = x => x == null ? "—" : (+x).toFixed(1);
@@ -284,8 +282,7 @@ const cell = (v, c, extra) => `<td class="c${extra ? " " + extra : ""}"${bg(c)}>
 function teamRows(sc, team, t, def) {
   let rows = sc.players.filter(p => p.team === team);
   const { key, cmp } = sorter(t, def, (p, k) => k === "name" ? p.name : (p[k] ?? -999));
-  const q = S.q.toLowerCase();
-  return { key, rows: rows.filter(p => !q || p.name.toLowerCase().includes(q)).sort(cmp) };
+  return { key, rows: rows.sort(cmp) };
 }
 const pname = p => `<td class="l pn">${esc(p.name)}${p.starter ? `<span class="badge b-st">S</span>` : ""}</td>`;
 function teamTable(g, team, sc) {
@@ -360,8 +357,7 @@ function goodProps(sc, team) {
   });
 }
 function propsView(sc, team) {
-  const q = S.q.toLowerCase();
-  let rows = goodProps(sc, team).filter(p => !q || p.name.toLowerCase().includes(q));
+  let rows = goodProps(sc, team);
   if (!rows.length) return `<div class="empty">No props are a good play for ${esc(team)} in this situation.</div>`;
   const t = "props", { key, cmp } = sorter(t, ["edge", -1], (p, k) => k === "name" ? p.name + p.ab : (p[k] ?? -999));
   rows = [...rows].sort(cmp);
@@ -381,7 +377,6 @@ function render() {
 }
 $("siteDK").onclick = () => { S.site = "dk"; render(); };
 $("siteFD").onclick = () => { S.site = "fd"; render(); };
-$("q").oninput = e => { S.q = e.target.value.trim(); render(); };
 load();
 </script>
 </body>
