@@ -593,6 +593,10 @@ table.oo td,table.oo th{font-size:.8rem}
 .dkey dt{font-weight:700}.dkey dd{margin:0;color:var(--muted)}.dkey .eg{display:block;color:var(--ink)}
 .dkey .dk-note{margin:10px 0 0;color:var(--muted);font-size:.78rem}
 @media (max-width:700px){.dkey dl{grid-template-columns:1fr;gap:0}.dkey dt{margin-top:8px}}
+/* names stay put while the stat columns scroll sideways, on every table at every width */
+.tbl table td:first-child:not([colspan]),.tbl table th:first-child:not([colspan]),.card table td:first-child:not([colspan]),.card table th:first-child:not([colspan]),.mmwrap table td:first-child:not([colspan]),.mmwrap table th:first-child:not([colspan]){position:sticky;left:0;z-index:2;background-color:var(--surface);box-shadow:1px 0 0 var(--rule)}
+.tbl table th:first-child:not([colspan]),.card table th:first-child:not([colspan]){z-index:4}
+#view[data-t=rotations][data-p=stints]>.rot-more{flex-wrap:wrap}.rot-more>.card{min-width:0}
 /* ===== phone layout: page scrolls vertically, nothing hangs off the right edge ===== */
 @media (max-width:700px){
   html,body{height:auto;overflow-x:hidden;overflow-y:auto}
@@ -623,7 +627,11 @@ table.oo td,table.oo th{font-size:.8rem}
   .row-ctl .seg,.toolbar .seg,.ov-ctl .seg{display:flex;flex-wrap:wrap}
   .row-ctl .seg button,.toolbar .seg button{flex:1 1 auto}
   .row-ctl,.toolbar .row-ctl{flex-wrap:wrap;gap:6px}
-  .tbl table td:first-child,.tbl table th:first-child,.card table td:first-child,.card table th:first-child{position:sticky;left:0;z-index:1;background:var(--surface);box-shadow:1px 0 0 var(--rule)}
+  .rot-more,#view[data-t=rotations][data-p=stints]>.rot-more{flex-direction:column}
+  .toolbar .date{flex-wrap:wrap;white-space:normal;width:100%}.toolbar .date select{flex:1 1 120px;min-width:0;max-width:100%}
+  /* the frozen name column stays narrow so the numbers beside it are still on screen */
+  .tbl table td:first-child:not([colspan]):not(.nm),.tbl table th:first-child:not([colspan]):not(.nm),.card table td:first-child:not([colspan]):not(.nm),.card table th:first-child:not([colspan]):not(.nm){width:36vw;min-width:36vw;max-width:36vw;white-space:normal;overflow-wrap:anywhere;font-size:.8rem;line-height:1.25}
+  .tbl table td:first-child small,.card table td:first-child small{font-size:.68rem}
   .card,.tbl,.mmwrap{max-width:100%}
   .mm{table-layout:fixed;width:max-content;min-width:100%}
   .mm .nm{width:96px;padding:0 6px;font-size:.78rem}
@@ -1557,16 +1565,20 @@ render();
     s.textContent=document.getElementById("deskapp").textContent;
     document.body.appendChild(s);
   }
-  if(window.NBA_DATA) return start(window.NBA_DATA);
   const qs=new URLSearchParams(location.search); let win=qs.get("w"); try{ if(win==null) win=localStorage.getItem("nba_win")||""; }catch(e){ win=win||""; }
   const base=qs.get("data")||"nba_matchup_master.json", main=base;
   const url=win==="2627"?base.replace(/\.json(\?.*)?$/,"_2627.json$1"):base;
-  document.querySelectorAll("#datawin button").forEach(b=>{ b.setAttribute("aria-pressed",String(b.dataset.w===(win==="2627"?"2627":""))); b.onclick=()=>{ try{localStorage.setItem("nba_win",b.dataset.w);}catch(e){} const u=new URL(location.href); u.searchParams.delete("w"); location.href=u.href; }; });
+  const mark=w=>document.querySelectorAll("#datawin button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.w===w)));
+  // the choice rides in the address (?w=) so it survives where browser storage is blocked, and is also kept in storage
+  document.querySelectorAll("#datawin button").forEach(b=>{ b.onclick=()=>{ try{localStorage.setItem("nba_win",b.dataset.w);}catch(e){} const u=new URL(location.href); u.searchParams.set("w",b.dataset.w); location.href=u.href; }; });
+  mark(win==="2627"?"2627":"");
+  if(window.NBA_DATA) return start(window.NBA_DATA);
   const esc=x=>String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   box.innerHTML='<p style="padding:24px;color:#5a6575">Loading the desk...</p>';
   fetch(url).then(r=>{ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
-    .catch(e=>{ if(url===main) throw e; try{localStorage.setItem("nba_win","");}catch(_){} document.querySelectorAll("#datawin button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.w===""))); return fetch(main).then(r=>{ if(!r.ok) throw e; return r.json(); }); })
-    .then(start)
+    .catch(e=>{ if(url===main) throw e; try{localStorage.setItem("nba_win","");}catch(_){} mark("");
+      return fetch(main).then(r=>{ if(!r.ok) throw e; return r.json(); }).then(d=>{ d.__winerr=url+" ("+e.message+")"; return d; }); })
+    .then(d=>{ start(d); if(d.__winerr){ const n=document.createElement("div"); n.style.cssText="font-size:.8rem;color:#b3261e;padding:2px 0"; n.textContent="Could not load "+d.__winerr+" - showing Since 25/26"; const t=document.getElementById("datawin"); if(t) t.insertAdjacentElement("afterend",n); } })
     .catch(e=>{ box.innerHTML='<div style="padding:24px"><b>Can\'t load the data file.</b><br>Looked for <code>'+esc(url)+'</code> ('+esc(e.message)+
       '). Put <code>nba_matchup_master.json</code> next to this page, or point at one with <code>?data=URL</code>. Serving over http (not file://) is required for fetch.</div>'; });
 })();
