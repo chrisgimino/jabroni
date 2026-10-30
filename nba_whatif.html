@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>NBA What If</title>
+<title>NBA If/Then</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
 <style>
-/* NBA What If: reads nba_whatif_data.json from next to itself (pushed by nba_nightly.py --mode whatif).
+/* NBA If/Then (formerly What If): reads nba_whatif_data.json from next to itself (pushed by nba_nightly.py --mode whatif).
    Palette: the NBA Matchups desk / SQ Replay Room (light only, same look as the other desk pages in the repo). */
 :root {
   --ground: #eef1f4; --surface: #ffffff; --ink: #16233f; --muted: #57647a; --faint: #8896a8; --rule: #d7dee6; --rule-strong: #b7c1cf;
@@ -146,7 +146,7 @@ td.c .d, td.c .d.pos, td.c .d.neg { color: var(--ink); opacity: .75 }
 <body>
 <div class="app">
   <div class="top">
-    <div class="brand">What <span>If</span> · NBA</div>
+    <div class="brand">If<span>/Then</span> · NBA</div>
     <div class="upd" id="upd">Loading…</div>
     <div class="grow"></div>
     <div class="seg" role="group" aria-label="Site">
@@ -322,7 +322,7 @@ function goodProps(sc, team) {
     // edge change on this same pick vs as projected: same side = edge - before; side flipped = the over-probability move
     const de = p.base_side === p.side && p.base_edge != null ? p.edge - p.base_edge : p.move == null ? null : p.side === "Over" ? p.move : -p.move;
     return { ...p, ab, proj, de, pick: `${ab} ${p.side === "Over" ? "o" : "u"}${p.line}` };
-  });
+  }).filter(p => p.proj != null);   // only props the page has a projection for
 }
 function propsView(sc, team) {
   let rows = goodProps(sc, team);
