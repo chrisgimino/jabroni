@@ -112,6 +112,13 @@ button { cursor: pointer }
 .ball { fill: var(--ink) } .pulse { fill: none; stroke: var(--ink); stroke-width: .2 }
 .pop { font-family: var(--text); font-weight: 800; font-size: 3px; fill: var(--ink) }
 .lastlbl { font-family: var(--text); font-weight: 600; font-size: 1.7px; fill: var(--ink); paint-order: stroke; stroke: var(--court); stroke-width: .5px }
+#court .logo circle { fill: var(--board) }
+#dots { transition: opacity .6s } #dots.gone { opacity: 0; pointer-events: none }
+.dot.t0 { --c: var(--t0) } .dot.t1 { --c: var(--t1) }
+.dot circle { fill: var(--c); stroke: #fff; stroke-width: .28 }
+.dot text { font-family: var(--text); font-weight: 800; font-size: 1.05px; fill: #fff; text-anchor: middle; pointer-events: none }
+#bdot { stroke: #fff; stroke-width: .16 }
+@media (max-width: 760px) { .dot text { display: none } }
 .tip { position: absolute; pointer-events: none; background: var(--ink); color: #fff; font-size: 12px; padding: 6px 8px; border-radius: 6px; max-width: 230px; z-index: 5; line-height: 1.35 }
 .ctl { display: flex; align-items: center; gap: 6px; flex: 0 0 auto }
 .ctl .btn { height: 32px; border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 6px; padding: 0 10px; font-weight: 600; font-size: 13px; white-space: nowrap }
@@ -231,15 +238,16 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
       <div class="rp">
         <div class="panel rp-left">
           <div class="courtbox" id="courtbox">
-            <svg id="court" viewBox="-1.5 -1.5 97 53" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Court with every shot of the replayed sim so far">
+            <svg id="court" viewBox="-1.5 -1.5 97 53" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Court with the ten players of the replayed sim; the shot chart shows at the final">
               <rect class="floor" x="0" y="0" width="94" height="50"/>
               <g id="halfL"></g><g id="halfR" transform="translate(94 0) scale(-1 1)"></g>
               <rect class="ln" x="0" y="0" width="94" height="50" fill="none" style="stroke-width:.3"/>
               <line class="ln" x1="47" y1="0" x2="47" y2="50"/>
               <circle class="ln" cx="47" cy="25" r="6" fill="none"/><circle class="ln" cx="47" cy="25" r="2" fill="none"/>
+              <g class="logo" aria-hidden="true"><circle cx="47" cy="25" r="5.8"/><image x="41.6" y="24.117" width="10.8" height="1.766" href="data:image/png;base64,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"/></g>
               <text class="half-lbl" id="h0" x="30" y="47.6" text-anchor="middle"></text>
               <text class="half-lbl" id="h1" x="64" y="47.6" text-anchor="middle"></text>
-              <g id="shots"></g><g id="fx"></g>
+              <g id="shots"></g><g id="dots"></g><circle id="bdot" class="ball" r=".6" style="display:none"/><g id="fx"></g>
             </svg>
             <div class="tip" id="tip" hidden></div>
           </div>
@@ -247,7 +255,7 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
             <button class="btn primary" id="play">Play</button>
             <button class="btn" id="prevShot" aria-label="Previous shot">‹ Shot</button>
             <button class="btn" id="nextShot" aria-label="Next shot">Shot ›</button>
-            <select id="speed" class="speed" aria-label="Playback speed"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option><option value="120">120×</option></select>
+            <select id="speed" class="speed" aria-label="Playback speed"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option></select>
             <div class="scrub"><input id="scrub" type="range" min="0" max="2880" step="1" value="0" aria-label="Game time"><div class="ticks" id="ticks"></div></div>
           </div>
           <div class="chiprow" id="teamChips" role="group" aria-label="Team"></div>
@@ -323,7 +331,7 @@ const SOURCES = [
 ];
 const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 30, endT: 2880, cur: -2, st: null,
   team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
-  angScope: "game", angSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0 };
+  angScope: "game", angSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
 const mobile = () => matchMedia("(max-width: 760px)").matches;
 const fmt = (x, d = 1) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (+x).toFixed(d);
 const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x)) return "–"; const r = (+x).toFixed(d); return +r === 0 ? (0).toFixed(d) : (+r > 0 ? "+" : "") + r; };
@@ -389,8 +397,8 @@ async function pick(gid) {
   if (!rp && S.src) { try { rp = await getJSON(S.src.rp(gid)); } catch (e) { return; } }
   if (!mu && S.src) { try { mu = await getJSON(S.src.mu(gid)); } catch (e) { mu = null; } }
   S.rp = rp; S.mu = mu; prepare();
-  Object.assign(S, { t: 0, cur: -2, pt: null, team: -1, angSel: null, outSel: null, page: {} });
-  $("fx").innerHTML = ""; renderStatic(); seek(0, false);
+  Object.assign(S, { t: 0, cur: -2, st: null, pt: null, team: -1, angSel: null, outSel: null, page: {} });
+  $("fx").innerHTML = ""; $("dots").innerHTML = ""; S.dotEl = new Map(); renderStatic(); seek(0, false);
 }
 
 // ------------------------------------------------------------------ names
@@ -409,6 +417,9 @@ function prepare() {
   S.endT = S.ev.length ? S.ev[S.ev.length - 1].t : 2880;
   S.periods = S.ev.filter(e => e.type === "period_end").map(e => e.t);
   S.muP = {}; for (const p of (S.mu?.players || [])) S.muP[p.core_id] = p;
+  S.gs = {}; for (const [id, p] of Object.entries(S.byId)) { const m = Math.max(6, +p.sq_min || 0);   // guard-like (+) to big-like (−)
+    S.gs[id] = (1.6 * (+p.sq_ast || 0) + .6 * (+p.sq_fg3m || 0) - .55 * (+p.sq_reb || 0) - 1.6 * (+p.sq_blk || 0)) / m; }
+  S.mo = buildMotion();
 }
 function periodOf(t) { return t < 2880 ? Math.floor(t / 720) + 1 : 5 + Math.floor((t - 2880) / 300); }
 function clockOf(t) { const p = periodOf(t), st = p <= 4 ? (p - 1) * 720 : 2880 + (p - 5) * 300, len = p <= 4 ? 720 : 300;
@@ -428,7 +439,7 @@ function renderStatic() {
   $("simLbl").textContent = `typical sim · ${(rp.sim_index ?? 0) + 1} of ${(rp.sims || 0).toLocaleString()}`;
   $("scrub").max = Math.ceil(S.endT);
   $("ticks").innerHTML = [0, ...S.periods.slice(0, -1)].map((t, i) => `<span style="left:${100 * t / S.endT}%">${i < 4 ? "Q" + (i + 1) : "OT"}</span>`).join("");
-  $("legend").innerHTML = `<span><i style="background:var(--t0)"></i>${esc(tShort(0))} ← left</span><span><i style="background:var(--t1)"></i>${esc(tShort(1))} right →</span><span>● made</span><span>✕ missed</span>`;
+  $("legend").innerHTML = `<span><i style="background:var(--t0)"></i>${esc(tShort(0))} ← left</span><span><i style="background:var(--t1)"></i>${esc(tShort(1))} right →</span><span>● made</span><span>✕ missed</span><span>shot chart at the final</span>`;
   $("teamChips").innerHTML = [-1, 0, 1].map(t => `<button class="chip" data-team="${t}" aria-pressed="${S.team === t}">${t < 0 ? "Both" : esc(tShort(t))}</button>`).join("");
   const cnt = {}; for (const e of S.ev) if (e.type === "shot") cnt[e.play_type] = (cnt[e.play_type] || 0) + 1;
   $("ptChips").innerHTML = `<button class="chip" data-pt="" aria-pressed="${!S.pt}">All types</button>` +
@@ -465,7 +476,7 @@ function dk(b) { const reb = b.oreb + b.dreb; let v = b.pts + .5 * b.m3 + 1.25 *
 function evText(e) {
   const n = id => esc(nm(id));
   switch (e.type) {
-    case "shot": { let s = `${n(e.player)} ${e.made ? "makes" : "misses"} ${e.pts === 3 ? "3" : "2"} ${ZONE[e.zone] || e.zone}<span class="pt">${PT[e.play_type] || "?"}</span>`;
+    case "shot": { let s = `${n(e.player)} ${e.made ? "makes" : "misses"} ${shotPts(e)} ${ZONE[e.zone] || e.zone}<span class="pt">${PT[e.play_type] || "?"}</span>`;
       if (e.made && e.assist) s += ` · ast ${n(e.assist)}`; if (!e.made && e.block) s += ` · blk ${n(e.block)}`; return s; }
     case "ft": return `${n(e.player)} FT ${e.ftm}/${e.fta}`;
     case "rebound": return e.player ? `${n(e.player)} ${e.kind === "offensive" ? "off." : "def."} rebound` : "Team rebound";
@@ -484,6 +495,7 @@ function seek(t, animate) {
   const ck = clockOf(Math.min(S.t, S.endT - .001));
   $("qLbl").textContent = S.t >= S.endT ? "Final" : qName(ck.p); $("cLbl").textContent = S.t >= S.endT ? "0:00" : ck.txt;
   $("scrub").value = Math.round(S.t);
+  if (S.view === "replay") drawDots();
   if (!changed) return;
   $("s0").textContent = st.score[0]; $("s1").textContent = st.score[1];
   if (S.view === "replay") { renderShots(); renderFeed(); renderFive(); }
@@ -503,15 +515,165 @@ function jumpShot(dir) {
 
 // ------------------------------------------------------------------ replay view
 const shotXY = e => e.team === 0 ? [e.x, e.y] : [94 - e.x, e.y];
-function renderShots() {
-  let h = "", last = -1;
-  for (let i = 0; i <= S.cur; i++) { const e = S.ev[i]; if (e.type !== "shot") continue; last = i;
-    const [x, y] = shotXY(e), dim = (S.team >= 0 && e.team !== S.team) || (S.pt && e.play_type !== S.pt);
+const shotPts = e => e.pts ?? (e.zone === "AB3" || e.zone === "CNR3" ? 3 : 2);   // misses carry no pts
+function renderShots() {   // during play: only the latest shot; at the final: the whole shot chart on the floor
+  const full = S.t >= S.endT; let h = "", last = -1;
+  const mark = (e, i) => { const [x, y] = shotXY(e), dim = (S.team >= 0 && e.team !== S.team) || (S.pt && e.play_type !== S.pt);
     const mk = e.made ? `<circle class="made" cx="${x}" cy="${y}" r=".75"/>` : `<path class="miss" d="M${x - .55} ${y - .55}L${x + .55} ${y + .55}M${x + .55} ${y - .55}L${x - .55} ${y + .55}"/>`;
-    h += `<g class="mk t${e.team}${dim ? " dim" : ""}" data-i="${i}">${mk}<circle class="hit" cx="${x}" cy="${y}" r="1.7"/></g>`; }
-  if (last >= 0) { const e = S.ev[last], [x, y] = shotXY(e), ax = x < 12 ? "start" : x > 82 ? "end" : "middle";
-    h += `<text class="lastlbl" x="${x}" y="${y - 1.4}" text-anchor="${ax}">${esc(lastName(e.player))} · ${esc(PT[e.play_type] || "")}</text>`; }
+    return `<g class="mk t${e.team}${dim ? " dim" : ""}" data-i="${i}">${mk}<circle class="hit" cx="${x}" cy="${y}" r="1.7"/></g>`; };
+  for (let i = 0; i <= S.cur; i++) { const e = S.ev[i]; if (e.type !== "shot") continue; last = i; if (full) h += mark(e, i); }
+  if (last >= 0 && !full) { const e = S.ev[last], [x, y] = shotXY(e), ax = x < 12 ? "start" : x > 82 ? "end" : "middle";
+    h += mark(e, last) + `<text class="lastlbl" x="${x}" y="${y - 1.4}" text-anchor="${ax}">${esc(lastName(e.player))} · ${esc(PT[e.play_type] || "")}</text>`; }
   $("shots").innerHTML = h;
+}
+
+// ------------------------------------------------------------------ the ten players: loose motion built from the play-by-play
+// Keyframes per player in feet. Each possession: run up the floor → a set for its play type → the event at its time (shooter on
+// his shot spot, assister where the pass came from, defenders on their men). Rebounds crash the rim, made baskets inbound,
+// free throws line up, subs walk on from the table. Frame u,v: the attacking basket at u 5.25, v 25; court x = u (team 0) or 94 − u.
+const NS = "http://www.w3.org/2000/svg", RIM_U = 5.25;
+const BASE = [[29, 25], [21.5, 8], [21.5, 42], [4, 46.5], [9.5, 13.5]];   // top, wing, wing, corner, big
+const TABLE = [[43.5, 49.3], [50.5, 49.3]];
+function buildMotion() {
+  const K = new Map(), BK = [], ev = S.ev, gs = S.gs, now = new Map();
+  let seed = 1 + (parseInt(S.gid, 10) || 7) % 9973, last = 0;
+  const R = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296, J = a => (R() - .5) * 2 * a;
+  const put = (id, t, x, y) => { if (!id) return; x = Math.max(-.8, Math.min(94.8, x)); y = Math.max(.8, Math.min(49.2, y));
+    let a = K.get(id); if (!a) K.set(id, a = []); const p = a[a.length - 1];
+    if (p && t <= p.t) { p.x = x; p.y = y; } else a.push({ t, x, y }); now.set(id, [x, y]); last = Math.max(last, t); };
+  const putF = (o, m, t) => { for (const id in m) if (m[id]) put(id, t, o === 0 ? m[id][0] : 94 - m[id][0], m[id][1]); };
+  const fr = (o, id) => { const p = now.get(id); return p ? [o === 0 ? p[0] : 94 - p[0], p[1]] : null; };
+  const ord = five => five.slice().sort((a, b) => (gs[b] ?? 0) - (gs[a] ?? 0));   // most guard-like first
+  const toward = (p, d) => { const dx = RIM_U - p[0], dy = 25 - p[1], L = Math.hypot(dx, dy) || 1; return [p[0] + dx / L * d, p[1] + dy / L * d]; };
+  const guard = (p, k) => [p[0] + (RIM_U - p[0]) * k, p[1] + (25 - p[1]) * k * .7];   // between his man and the rim
+  const ball = (t, id) => BK.push({ t, id: id || null });
+
+  function possession(e, on) {   // a shot or a turnover
+    const o = e.team, off = on[o] || [], def = on[1 - o] || []; if (off.length < 5 || def.length < 5) return;
+    const O = ord(off), D = ord(def), mm = {}; O.forEach((id, i) => mm[id] = D[i]);
+    const shot = e.type === "shot", pt = shot ? e.play_type : "turnover", t0 = last, gap = e.t - t0, act = {};
+    const s = off.includes(e.player) ? e.player : null, a = shot && e.made && off.includes(e.assist) ? e.assist : null, uv = shot ? [e.x, e.y] : null;
+    if (pt === "transition" && s) {   // no set: the floor runs straight into the shot
+      const lanes = [[20, 7], [20, 43], [31, 16], [38, 34], [44, 25]], back = [[6.5, 25], [16, 18], [24, 32], [32, 22], [40, 28]];
+      let k = 0; for (const id of O) if (id !== s) { const l = lanes[k++]; act[id] = id === a ? [uv[0] + 9, uv[1] + (uv[1] < 25 ? 9 : -9)] : [l[0] + J(3), l[1] + J(3)]; }
+      act[s] = uv.slice(); k = 0;
+      for (const id of D) if (id !== mm[s]) { const b = back[k++]; act[id] = [b[0] + J(3), b[1] + J(4)]; }
+      act[mm[s]] = [uv[0] + 3 + J(1), uv[1] + J(2)];
+      ball(t0 + Math.min(.6, gap * .2), a || s);
+    } else if (pt === "putback" && s) {   // stays around the rim after the offensive board
+      for (const id of [...off, ...def]) { const p = fr(o, id); if (p) act[id] = [p[0] + J(.8), p[1] + J(.8)]; }
+      act[s] = uv.slice(); act[mm[s]] = toward(act[s], 1.2);
+    } else {   // half court: a set, then the action
+      const mir = R() < .5, spot = BASE.map(([u, v]) => [u + J(1.5), (mir ? 50 - v : v) + J(1.5)]), who = O.slice();
+      const swap = (id, i) => { const j = who.indexOf(id); if (j >= 0 && j !== i) [who[i], who[j]] = [who[j], who[i]]; };
+      const h = a || (s && ["pick_and_roll", "drive", "other_rim", "other_jumper", "turnover"].includes(pt) ? s : who[0]);
+      swap(h, 0);
+      if (s && s !== h && uv && pt !== "post_up" && pt !== "pick_and_roll") {   // the shooter waits at the spot nearest his shot
+        let b = 1, bd = 1e9; for (let i = 1; i < 5; i++) { const d = Math.hypot(spot[i][0] - uv[0], spot[i][1] - uv[1]); if (d < bd) { bd = d; b = i; } } swap(s, b); }
+      const set = {}; who.forEach((id, i) => set[id] = spot[i].slice());
+      let scr = null;
+      if (pt === "pick_and_roll") { scr = s && s !== h ? s : who.slice(1).sort((x, y) => (gs[x] ?? 0) - (gs[y] ?? 0))[0];
+        set[scr] = [set[h][0] - 1.4, set[h][1] + (set[h][1] <= 25 ? 2.4 : -2.4)]; }
+      if (pt === "post_up" && s && uv) set[s] = [7.8 + J(.8), uv[1] < 25 ? 17.6 : 32.4];
+      ball(t0 + Math.min(1, gap * .2), h);
+      if (gap > 3.5) { const dset = {}; for (const id of off) dset[mm[id]] = guard(set[id], id === h ? .12 : .3);
+        const tS = e.t - Math.min(7, Math.max(1.2, gap * .45)); putF(o, set, tS); putF(o, dset, tS); }
+      for (const id of off) act[id] = [set[id][0] + J(1.2), set[id][1] + J(1.2)];
+      if (s && uv) act[s] = uv.slice();
+      if (pt === "pick_and_roll") { if (s === h) act[scr] = [10 + J(2), 25 + J(4)]; else act[h] = [set[h][0] - 4, set[h][1] + J(3)]; }
+      if ((pt === "drive" || pt === "other_rim") && uv) { const big = O[4] === s ? O[3] : O[4]; if (big !== a) act[big] = [4.5, uv[1] < 25 ? 38 : 12]; }
+      if (pt === "spot_up" && a && uv) act[a] = [12 + J(2), 25 + (uv[1] < 25 ? 4 : -4)];   // drive and kick
+      if (pt === "cut" && a) act[a] = [set[a][0] - 3, set[a][1] + (25 - set[a][1]) * .3];
+      if (pt === "post_up" && a && uv) act[a] = [21, uv[1] < 25 ? 8 : 42];
+      if (pt === "turnover" && s) act[s] = e.kind === "offensive_foul" ? [11, 25 + J(5)] : [set[s][0] - 4 + J(2), set[s][1] + J(3)];
+      for (const id of off) act[mm[id]] = guard(act[id], .3);
+      if (s && shot) act[mm[s]] = toward(act[s], e.made ? 2.6 : 1.5);   // the closeout
+    }
+    const swapD = (d, s0) => { const man = O.find(x => mm[x] === d), d0 = mm[s0]; if (man && d0 && d0 !== d && act[man]) act[d0] = guard(act[man], .3); };
+    if (s && shot && e.block && def.includes(e.block)) { swapD(e.block, s); act[e.block] = toward(act[s], .9); }
+    if (s && !shot && e.steal && def.includes(e.steal)) { swapD(e.steal, s); act[e.steal] = [act[s][0] - .4, act[s][1] + 1.3]; }
+    if (s && !shot && e.kind === "offensive_foul") act[mm[s]] = toward(act[s], 1.1);
+    putF(o, act, e.t);
+    if (shot) { ball(e.t, s); ball(e.t + .05, null); } else ball(e.t, e.steal && def.includes(e.steal) ? e.steal : null);
+  }
+  function rebound(e, on) {   // everyone crashes toward the rim the miss was at, two guards of the shooting side get back
+    const o = /offensive/.test(e.kind) ? e.team : 1 - e.team, m = {};
+    for (const id of [...on[0], ...on[1]]) { const p = fr(o, id); if (p) m[id] = [p[0] + (RIM_U + 3 - p[0]) * .35, p[1] + (25 - p[1]) * .3]; }
+    for (const id of ord(on[o]).slice(0, 2)) if (id !== e.player) m[id] = [28 + J(5), 25 + J(12)];
+    if (e.player) m[e.player] = [RIM_U + 2.5 + R() * 4, 25 + J(7)];
+    putF(o, m, e.t); ball(e.t, e.player);
+  }
+  function inbound(o, on, t) {   // o just scored: the other side takes it out under that basket, o runs back
+    const N = ord(on[1 - o]), m = {};
+    const nIn = [[8 + J(2), 30 + J(4)], [24 + J(4), 9 + J(3)], [30 + J(4), 41 + J(3)], [36 + J(4), 25 + J(6)], [-.6, 21 + J(3)]];
+    const oBack = [[30 + J(4), 22 + J(5)], [24 + J(4), 38 + J(4)], [36 + J(4), 12 + J(4)], [41 + J(3), 33 + J(4)], [44 + J(2), 20 + J(4)]];
+    N.forEach((id, i) => m[id] = nIn[i]); ord(on[o]).forEach((id, i) => m[id] = oBack[i]);
+    putF(o, m, t); ball(t - .3, N[4]);
+  }
+  function freeThrows(f, on, t1, t2) {   // shooter at the line, bigs on the lane, guards back
+    const o = f.team, O = ord(on[o]).filter(id => id !== f.player), D = ord(on[1 - o]), m = {};
+    const OB = [[27 + J(2), 11 + J(3)], [27 + J(2), 39 + J(3)], [30, 25]], OL = [[10.4, 17.6], [10.4, 32.4]];
+    const DB = [[26 + J(2), 21 + J(3)], [24 + J(2), 33 + J(3)]], DL = [[7.6, 17.6], [7.6, 32.4], [13.3, 32.4]];
+    m[f.player] = [19.2, 25]; O.forEach((id, i) => m[id] = i < O.length - 2 ? OB[i] : OL[i - (O.length - 2)]);
+    D.forEach((id, i) => m[id] = i < 2 ? DB[i] : DL[i - 2]);
+    putF(o, m, t1); putF(o, m, t2); ball(t1, f.player); ball(t2, null);
+  }
+
+  const first = ev.find(e => e.on), on = first ? [first.on[0].slice(), first.on[1].slice()] : [[], []];
+  const t1 = Math.min(2, (ev[0]?.t ?? 10) * .2);   // tip-off around the center circle
+  for (const tm of [0, 1]) ord(on[tm]).forEach((id, i) => { const p = [[36.5, 25], [40.5, 16], [40.5, 34], [44.5, 9.5], [45.6, 25]][i] || [40, 25];
+    const x = tm === 0 ? p[0] : 94 - p[0]; put(id, 0, x, p[1]); put(id, t1, x, p[1]); });
+  for (let i = 0; i < ev.length;) {
+    let j = i; while (j < ev.length && ev[j].t === ev[i].t) j++;
+    const t = ev[i].t, nextT = j < ev.length ? ev[j].t : t + 12;
+    for (const e of ev.slice(i, j)) {
+      const cur = e.on ? e.on : on;   // the lineup at this event (a sub's own lineup is before the sub)
+      if (e.type === "shot" || e.type === "turnover") possession(e, cur);
+      else if (e.type === "rebound") rebound(e, cur);
+      if (e.on) { on[0] = e.on[0].slice(); on[1] = e.on[1].slice(); }
+      if (e.type === "sub") { const k = on[e.team].indexOf(e.out); if (k >= 0) on[e.team][k] = e.in;
+        const p = now.get(e.out); if (p) put(e.out, t, p[0], p[1]); put(e.in, t, TABLE[e.team][0], TABLE[e.team][1]); }
+    }
+    const grp = ev.slice(i, j), ft = grp.find(e => e.type === "ft"), made = grp.find(e => e.type === "shot" && e.made);
+    if (ft && on[ft.team].length) freeThrows(ft, on, t + Math.min(1.5, (nextT - t) * .25), t + Math.min(4, (nextT - t) * .55));
+    else if (made && nextT - t > 3) inbound(made.team, on, t + Math.min(2.2, (nextT - t) * .3));
+    i = j;
+  }
+  BK.sort((a, b) => a.t - b.t);
+  return { K, BK };
+}
+function posAt(id, t) {
+  const a = S.mo?.K.get(id); if (!a || !a.length) return null;
+  if (t <= a[0].t) return [a[0].x, a[0].y];
+  let lo = 0, hi = a.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (a[m].t <= t) lo = m; else hi = m - 1; }
+  const p = a[lo], q = a[lo + 1]; if (!q) return [p.x, p.y];
+  let f = (t - p.t) / (q.t - p.t); f = f * f * (3 - 2 * f);
+  return [p.x + (q.x - p.x) * f, p.y + (q.y - p.y) * f];
+}
+function ballAt(t, live) {   // in the holder's hands; a pass slides it to the next holder
+  const B = S.mo?.BK || []; let lo = 0, hi = B.length - 1, k = -1;
+  while (lo <= hi) { const m = (lo + hi) >> 1; if (B[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
+  if (k < 0 || !B[k].id || !live.has(B[k].id)) return null;
+  const a = posAt(B[k].id, t), n = B[k + 1]; if (!a) return null;
+  if (n && n.id && n.id !== B[k].id && live.has(n.id)) { const d = Math.min(1.2, (n.t - B[k].t) * .4);
+    if (t > n.t - d) { const b = posAt(n.id, t), f = (t - (n.t - d)) / d; if (b) return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; } }
+  return [a[0] + .8, a[1] - .8];
+}
+const initials = id => { const w = nm(id).replace(/[^A-Za-z' -]/g, "").split(/[\s-]+/).filter(x => x && !/^(jr|sr|ii|iii|iv)$/i.test(x));
+  return w.length > 1 ? (w[0][0] + w[w.length - 1][0]).toUpperCase() : (w[0] || "?").slice(0, 2).toUpperCase(); };
+function drawDots() {
+  if (!S.mo || !S.st) return;
+  const g = $("dots"), end = S.t >= S.endT, live = new Set(); g.classList.toggle("gone", end);
+  for (const tm of [0, 1]) {
+    const five = S.st.on[tm].length ? S.st.on[tm] : (S.ev[0]?.on?.[tm] || []);
+    for (const id of five) { live.add(id); let el = S.dotEl.get(id);
+      if (!el) { el = document.createElementNS(NS, "g"); el.setAttribute("class", "dot t" + tm); el.dataset.id = id; el.dataset.t = tm;
+        el.innerHTML = `<circle r="1.25"/><text y=".38">${esc(initials(id))}</text>`; g.appendChild(el); S.dotEl.set(id, el); }
+      const p = posAt(id, S.t) || TABLE[tm]; el.setAttribute("transform", `translate(${p[0].toFixed(2)} ${p[1].toFixed(2)})`); el.style.display = ""; }
+  }
+  for (const [id, el] of S.dotEl) if (!live.has(id)) el.style.display = "none";
+  const b = end ? null : ballAt(S.t, live), bd = $("bdot");
+  if (b) { bd.setAttribute("cx", b[0].toFixed(2)); bd.setAttribute("cy", b[1].toFixed(2)); bd.style.display = ""; } else bd.style.display = "none";
 }
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function flight(e) {
@@ -694,7 +856,7 @@ function showView() {
 }
 function renderView() {
   if (!S.rp) return;
-  ({ replay: () => { renderShots(); renderFeed(); renderFive(); }, box: renderBox, angles: renderAngles, edges: renderEdges, profiles: renderProfiles,
+  ({ replay: () => { renderShots(); renderFeed(); renderFive(); drawDots(); }, box: renderBox, angles: renderAngles, edges: renderEdges, profiles: renderProfiles,
      out: renderOut, players: renderPlayers, lines: renderLines })[S.view]?.();
 }
 
@@ -724,9 +886,11 @@ $("views").addEventListener("click", e => {
   const h = e.target.closest("[data-sort]"); if (h) { const k = h.dataset.sort; S.sortDir = S.sortKey === k ? -S.sortDir : -1; S.sortKey = k; renderPlayers(); }
 });
 const svg = $("court"), tip = $("tip"), cb = $("courtbox");
-function showTip(ev) { const g = ev.target.closest(".mk"); if (!g) { tip.hidden = true; return; }
-  const e = S.ev[+g.dataset.i], r = cb.getBoundingClientRect();
-  tip.innerHTML = `<b>${esc(nm(e.player))}</b> · ${esc(tShort(e.team))}<br>${e.made ? "Made" : "Missed"} ${e.pts} ${esc(ZONE[e.zone] || e.zone)}<br>${esc(PT[e.play_type] || e.play_type)} · Q${e.period} ${esc(e.clock)}`;
+function showTip(ev) { const g = ev.target.closest(".mk, .dot"); if (!g) { tip.hidden = true; return; }
+  const r = cb.getBoundingClientRect();
+  if (g.classList.contains("dot")) tip.innerHTML = `<b>${esc(nm(g.dataset.id))}</b> · ${esc(tShort(+g.dataset.t))}`;
+  else { const e = S.ev[+g.dataset.i];
+    tip.innerHTML = `<b>${esc(nm(e.player))}</b> · ${esc(tShort(e.team))}<br>${e.made ? "Made" : "Missed"} ${shotPts(e)} ${esc(ZONE[e.zone] || e.zone)}<br>${esc(PT[e.play_type] || e.play_type)} · Q${e.period} ${esc(e.clock)}`; }
   tip.hidden = false; const x = ev.clientX - r.left, y = ev.clientY - r.top;
   tip.style.left = Math.max(0, Math.min(r.width - 235, x + 12)) + "px"; tip.style.top = Math.max(0, y - 64) + "px"; }
 svg.addEventListener("pointermove", showTip); svg.addEventListener("pointerdown", showTip);
