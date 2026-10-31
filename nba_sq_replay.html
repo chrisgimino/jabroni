@@ -255,7 +255,7 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
             <button class="btn primary" id="play">Play</button>
             <button class="btn" id="prevShot" aria-label="Previous shot">‹ Shot</button>
             <button class="btn" id="nextShot" aria-label="Next shot">Shot ›</button>
-            <select id="speed" class="speed" aria-label="Playback speed"><option value="10">10×</option><option value="30" selected>30×</option><option value="60">60×</option></select>
+            <select id="speed" class="speed" aria-label="Playback speed"><option value="3">3×</option><option value="5">5×</option><option value="10" selected>10×</option><option value="30">30×</option><option value="60">60×</option></select>
             <div class="scrub"><input id="scrub" type="range" min="0" max="2880" step="1" value="0" aria-label="Game time"><div class="ticks" id="ticks"></div></div>
           </div>
           <div class="chiprow" id="teamChips" role="group" aria-label="Team"></div>
@@ -329,7 +329,7 @@ const SOURCES = [
   { idx: "data/nba_sq_matchup_index.json", rp: g => `data/nba_sq_replay_${g}.json`, mu: g => `data/nba_sq_matchup_${g}.json` },
   { idx: "../nba_sq_matchup/nba_sq_matchup_index.json", rp: g => `../nba_sq_replay/nba_sq_replay_${g}.json`, mu: g => `../nba_sq_matchup/nba_sq_matchup_${g}.json` },
 ];
-const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 30, endT: 2880, cur: -2, st: null,
+const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 10, endT: 2880, cur: -2, st: null,
   team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
   angScope: "game", angSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
 const mobile = () => matchMedia("(max-width: 760px)").matches;
@@ -527,81 +527,205 @@ function renderShots() {   // during play: only the latest shot; at the final: t
   $("shots").innerHTML = h;
 }
 
-// ------------------------------------------------------------------ the ten players: loose motion built from the play-by-play
-// Keyframes per player in feet. Each possession: run up the floor → a set for its play type → the event at its time (shooter on
-// his shot spot, assister where the pass came from, defenders on their men). Rebounds crash the rim, made baskets inbound,
-// free throws line up, subs walk on from the table. Frame u,v: the attacking basket at u 5.25, v 25; court x = u (team 0) or 94 − u.
-const NS = "http://www.w3.org/2000/svg", RIM_U = 5.25;
-const BASE = [[29, 25], [21.5, 8], [21.5, 42], [4, 46.5], [9.5, 13.5]];   // top, wing, wing, corner, big
+// ------------------------------------------------------------------ the ten players: motion built from the play-by-play
+// Keyframes per player (feet, game seconds), joined by smooth curves. A possession: the guard brings it up while the
+// defense gets back, the ball swings around a set while off-ball players relocate and defenders stay with their men, then
+// the play type is acted out in steps (screen and roll, drive with help, drive and kick, entry pass and back-down,
+// backdoor cut, outlet and race up the floor) and the shot comes from the sim's own spot at the sim's time. Rebounds crash
+// the rim, made baskets inbound, free throws line up, subs walk on from the table. Nobody outruns a sprint, except where
+// the sim's own times force it. Frame u,v: the attacking basket at u 5.25, v 25; court x = u (team 0) or 94 − u (team 1).
+const NS = "http://www.w3.org/2000/svg", RIM_U = 5.25, VMAX = 17;   // ft/s between keyframes (curve peaks about 25, a sprint)
 const TABLE = [[43.5, 49.3], [50.5, 49.3]];
+const SPOT = { top: [29, 25], wingL: [21, 8.5], wingR: [21, 41.5], cornerL: [3.5, 3.6], cornerR: [3.5, 46.4],
+  dunkL: [5, 14.5], dunkR: [5, 35.5], elbowL: [19, 17.5], elbowR: [19, 32.5] };
+const lerp = (p, q, f) => [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f];
+const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+const toward = (p, d) => { const dx = RIM_U - p[0], dy = 25 - p[1], L = Math.hypot(dx, dy) || 1; return [p[0] + dx / L * d, p[1] + dy / L * d]; };
+const rot = (p, deg, dr = 0) => { const dx = p[0] - RIM_U, dy = p[1] - 25, r = Math.max(1, Math.hypot(dx, dy) + dr), an = Math.atan2(dy, dx) + deg * Math.PI / 180;
+  return [Math.max(.5, RIM_U + r * Math.cos(an)), Math.max(2, Math.min(48, 25 + r * Math.sin(an)))]; };
+const defend = (p, ball, onBall) => {   // between his man and the rim; off the ball he sags and leans toward the ball
+  if (onBall) return toward(p, 3);
+  const q = toward(p, Math.max(3, Math.min(8, .3 * dist(p, [RIM_U, 25])))); return lerp(q, ball, .12); };
 function buildMotion() {
   const K = new Map(), BK = [], ev = S.ev, gs = S.gs, now = new Map();
   let seed = 1 + (parseInt(S.gid, 10) || 7) % 9973, last = 0;
   const R = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296, J = a => (R() - .5) * 2 * a;
-  const put = (id, t, x, y) => { if (!id) return; x = Math.max(-.8, Math.min(94.8, x)); y = Math.max(.8, Math.min(49.2, y));
-    let a = K.get(id); if (!a) K.set(id, a = []); const p = a[a.length - 1];
-    if (p && t <= p.t) { p.x = x; p.y = y; } else a.push({ t, x, y }); now.set(id, [x, y]); last = Math.max(last, t); };
-  const putF = (o, m, t) => { for (const id in m) if (m[id]) put(id, t, o === 0 ? m[id][0] : 94 - m[id][0], m[id][1]); };
+  // fl: 1 = pinned (the sprint cap never moves it: shots, rebounds, free throws, the table), 2 = pinned and standing still
+  const put = (id, t, x, y, fl = 0) => { if (!id) return; x = Math.max(-.8, Math.min(94.8, x)); y = Math.max(.8, Math.min(49.2, y));
+    let a = K.get(id); if (!a) K.set(id, a = []); const p = a[a.length - 1], k = { t, x, y, fix: fl >= 1, stop: fl === 2 };
+    if (p && t <= p.t) { p.x = x; p.y = y; p.fix = p.fix || k.fix; p.stop = p.stop || k.stop; } else a.push(k);
+    now.set(id, [x, y]); last = Math.max(last, t); };
+  const putF = (o, m, t, fl = 0) => { for (const id in m) if (m[id]) put(id, t, o === 0 ? m[id][0] : 94 - m[id][0], m[id][1], fl); };
+  const pin = id => { const a = K.get(id); if (a?.length) a[a.length - 1].fix = true; };
   const fr = (o, id) => { const p = now.get(id); return p ? [o === 0 ? p[0] : 94 - p[0], p[1]] : null; };
   const ord = five => five.slice().sort((a, b) => (gs[b] ?? 0) - (gs[a] ?? 0));   // most guard-like first
-  const toward = (p, d) => { const dx = RIM_U - p[0], dy = 25 - p[1], L = Math.hypot(dx, dy) || 1; return [p[0] + dx / L * d, p[1] + dy / L * d]; };
-  const guard = (p, k) => [p[0] + (RIM_U - p[0]) * k, p[1] + (25 - p[1]) * k * .7];   // between his man and the rim
   const ball = (t, id) => BK.push({ t, id: id || null });
+  let lastMiss = null;   // where the last miss was (for the rebound's length)
 
   function possession(e, on) {   // a shot or a turnover
     const o = e.team, off = on[o] || [], def = on[1 - o] || []; if (off.length < 5 || def.length < 5) return;
     const O = ord(off), D = ord(def), mm = {}; O.forEach((id, i) => mm[id] = D[i]);
-    const shot = e.type === "shot", pt = shot ? e.play_type : "turnover", t0 = last, gap = e.t - t0, act = {};
-    const s = off.includes(e.player) ? e.player : null, a = shot && e.made && off.includes(e.assist) ? e.assist : null, uv = shot ? [e.x, e.y] : null;
-    if (pt === "transition" && s) {   // no set: the floor runs straight into the shot
-      const lanes = [[20, 7], [20, 43], [31, 16], [38, 34], [44, 25]], back = [[6.5, 25], [16, 18], [24, 32], [32, 22], [40, 28]];
-      let k = 0; for (const id of O) if (id !== s) { const l = lanes[k++]; act[id] = id === a ? [uv[0] + 9, uv[1] + (uv[1] < 25 ? 9 : -9)] : [l[0] + J(3), l[1] + J(3)]; }
-      act[s] = uv.slice(); k = 0;
-      for (const id of D) if (id !== mm[s]) { const b = back[k++]; act[id] = [b[0] + J(3), b[1] + J(4)]; }
-      act[mm[s]] = [uv[0] + 3 + J(1), uv[1] + J(2)];
-      ball(t0 + Math.min(.6, gap * .2), a || s);
-    } else if (pt === "putback" && s) {   // stays around the rim after the offensive board
-      for (const id of [...off, ...def]) { const p = fr(o, id); if (p) act[id] = [p[0] + J(.8), p[1] + J(.8)]; }
-      act[s] = uv.slice(); act[mm[s]] = toward(act[s], 1.2);
-    } else {   // half court: a set, then the action
-      const mir = R() < .5, spot = BASE.map(([u, v]) => [u + J(1.5), (mir ? 50 - v : v) + J(1.5)]), who = O.slice();
-      const swap = (id, i) => { const j = who.indexOf(id); if (j >= 0 && j !== i) [who[i], who[j]] = [who[j], who[i]]; };
-      const h = a || (s && ["pick_and_roll", "drive", "other_rim", "other_jumper", "turnover"].includes(pt) ? s : who[0]);
-      swap(h, 0);
-      if (s && s !== h && uv && pt !== "post_up" && pt !== "pick_and_roll") {   // the shooter waits at the spot nearest his shot
-        let b = 1, bd = 1e9; for (let i = 1; i < 5; i++) { const d = Math.hypot(spot[i][0] - uv[0], spot[i][1] - uv[1]); if (d < bd) { bd = d; b = i; } } swap(s, b); }
-      const set = {}; who.forEach((id, i) => set[id] = spot[i].slice());
-      let scr = null;
-      if (pt === "pick_and_roll") { scr = s && s !== h ? s : who.slice(1).sort((x, y) => (gs[x] ?? 0) - (gs[y] ?? 0))[0];
-        set[scr] = [set[h][0] - 1.4, set[h][1] + (set[h][1] <= 25 ? 2.4 : -2.4)]; }
-      if (pt === "post_up" && s && uv) set[s] = [7.8 + J(.8), uv[1] < 25 ? 17.6 : 32.4];
-      ball(t0 + Math.min(1, gap * .2), h);
-      if (gap > 3.5) { const dset = {}; for (const id of off) dset[mm[id]] = guard(set[id], id === h ? .12 : .3);
-        const tS = e.t - Math.min(7, Math.max(1.2, gap * .45)); putF(o, set, tS); putF(o, dset, tS); }
-      for (const id of off) act[id] = [set[id][0] + J(1.2), set[id][1] + J(1.2)];
-      if (s && uv) act[s] = uv.slice();
-      if (pt === "pick_and_roll") { if (s === h) act[scr] = [10 + J(2), 25 + J(4)]; else act[h] = [set[h][0] - 4, set[h][1] + J(3)]; }
-      if ((pt === "drive" || pt === "other_rim") && uv) { const big = O[4] === s ? O[3] : O[4]; if (big !== a) act[big] = [4.5, uv[1] < 25 ? 38 : 12]; }
-      if (pt === "spot_up" && a && uv) act[a] = [12 + J(2), 25 + (uv[1] < 25 ? 4 : -4)];   // drive and kick
-      if (pt === "cut" && a) act[a] = [set[a][0] - 3, set[a][1] + (25 - set[a][1]) * .3];
-      if (pt === "post_up" && a && uv) act[a] = [21, uv[1] < 25 ? 8 : 42];
-      if (pt === "turnover" && s) act[s] = e.kind === "offensive_foul" ? [11, 25 + J(5)] : [set[s][0] - 4 + J(2), set[s][1] + J(3)];
-      for (const id of off) act[mm[id]] = guard(act[id], .3);
-      if (s && shot) act[mm[s]] = toward(act[s], e.made ? 2.6 : 1.5);   // the closeout
+    const shot = e.type === "shot", pt = shot ? (e.play_type || "other") : "turnover", t0 = last, G = Math.max(0, e.t - t0);
+    const s = off.includes(e.player) ? e.player : null, a = shot && e.made && off.includes(e.assist) && e.assist !== s ? e.assist : null;
+    const uv = shot && e.x !== undefined && e.x !== null ? [e.x, e.y] : null;
+    const cur = id => fr(o, id) || [47, 25];
+    const emit = (t, m, hold, dov = {}) => {   // offense as given; each defender on his man unless told otherwise
+      const bp = m[hold] || [20, 25], out = {};
+      for (const id of O) if (m[id]) { out[id] = m[id]; out[mm[id]] = dov[mm[id]] || defend(m[id], bp, id === hold); }
+      for (const d in dov) out[d] = dov[d];
+      putF(o, out, t);
+    };
+    const finish = (act, dov, hold) => {   // the event itself: blocks, steals, charges, then the keys and the ball
+      const swapD = d => { const man = O.find(x => mm[x] === d), d0 = mm[s]; if (man && d0 && d0 !== d && act[man]) dov[d0] = defend(act[man], act[s], false); };
+      if (s && shot && e.block && def.includes(e.block)) { swapD(e.block); dov[e.block] = toward(act[s], .9); }
+      if (s && !shot && e.steal && def.includes(e.steal)) { swapD(e.steal); dov[e.steal] = [act[s][0] - .4, act[s][1] + 1.3]; }
+      if (s && !shot && e.kind === "offensive_foul") dov[mm[s]] = toward(act[s], 1.1);
+      emit(e.t, act, hold, dov); if (s) pin(s);
+      if (shot) { ball(e.t, s); ball(e.t + .05, null); lastMiss = e.made ? null : { o, uv, three: e.zone === "AB3" || e.zone === "CNR3" }; }
+      else { ball(e.t, e.steal && def.includes(e.steal) ? e.steal : null); if (e.steal) pin(e.steal); }
+    };
+
+    if (pt === "transition" && s && uv) {   // outlet and a race up the floor, the defense chasing
+      const lanes = [[19, 6], [19, 44], [30, 15], [36, 35], [42, 25]], back = [[7, 25], [15, 18], [22, 33], [30, 22], [38, 28]];
+      const tm = t0 + G * .5, m1 = {}, m2 = {}, d1 = {}, d2 = {};
+      let k = 0;
+      for (const id of O) { const c = cur(id);
+        if (id === s) { m2[id] = uv.slice(); m1[id] = rot(lerp(c, uv, .55), J(6)); }
+        else if (id === a) { m2[id] = [uv[0] + 9, uv[1] + (uv[1] < 25 ? 9 : -9)]; m1[id] = lerp(c, m2[id], .55); }
+        else { const l = lanes[k++]; m2[id] = [l[0] + J(3), l[1] + J(3)]; m1[id] = lerp(c, m2[id], .5); } }
+      k = 0;
+      for (const id of D) { const c = cur(id);
+        if (id === mm[s]) { d2[id] = [uv[0] + 3 + J(1), uv[1] + J(2)]; d1[id] = lerp(c, [uv[0] + 8, uv[1]], .55); }
+        else { const b = back[k++]; d2[id] = [b[0] + J(3), b[1] + J(4)]; d1[id] = lerp(c, d2[id], .6); } }
+      ball(t0 + Math.min(.7, G * .2), a || s);
+      if (G > 2) { putF(o, m1, tm); putF(o, d1, tm); }
+      finish(m2, d2, s);
+      return;
     }
-    const swapD = (d, s0) => { const man = O.find(x => mm[x] === d), d0 = mm[s0]; if (man && d0 && d0 !== d && act[man]) act[d0] = guard(act[man], .3); };
-    if (s && shot && e.block && def.includes(e.block)) { swapD(e.block, s); act[e.block] = toward(act[s], .9); }
-    if (s && !shot && e.steal && def.includes(e.steal)) { swapD(e.steal, s); act[e.steal] = [act[s][0] - .4, act[s][1] + 1.3]; }
-    if (s && !shot && e.kind === "offensive_foul") act[mm[s]] = toward(act[s], 1.1);
-    putF(o, act, e.t);
-    if (shot) { ball(e.t, s); ball(e.t + .05, null); } else ball(e.t, e.steal && def.includes(e.steal) ? e.steal : null);
+    if (pt === "putback" && s && uv) {   // stays around the rim after the offensive board
+      const act = {}, dov = {};
+      for (const id of O) act[id] = rot(cur(id), J(4), J(.8));
+      for (const id of D) dov[id] = rot(cur(id), J(4), J(.8));
+      act[s] = uv.slice(); dov[mm[s]] = toward(act[s], 1.2);
+      finish(act, dov, s);
+      return;
+    }
+
+    // ---- half court
+    const side = uv ? (uv[1] < 25 ? -1 : 1) : (R() < .5 ? -1 : 1);
+    const W = sd => sd < 0 ? SPOT.wingL : SPOT.wingR, C = sd => sd < 0 ? SPOT.cornerL : SPOT.cornerR;
+    const Dk = sd => sd < 0 ? SPOT.dunkL : SPOT.dunkR, El = sd => sd < 0 ? SPOT.elbowL : SPOT.elbowR;
+    const th = uv ? Math.atan2(uv[1] - 25, uv[0] - RIM_U) * 180 / Math.PI : 0;   // shot angle, 0 = straight out
+    const big2 = [O[3], O[4]], other = x => O.find(id => id !== x && !big2.includes(id)) || O.find(id => id !== x);
+    let roll = false, actH, sPre = null;
+    if (pt === "pick_and_roll") { roll = !!s && big2.includes(s); actH = roll ? (a && !big2.includes(a) ? a : other(s)) : (s || O[0]); if (!roll && s) sPre = SPOT.top; }
+    else if (["drive", "other_rim", "other_jumper", "turnover", "other"].includes(pt)) { actH = s || O[0]; sPre = Math.abs(th) < 28 ? SPOT.top : W(side); }
+    else if (pt === "spot_up") { actH = a || other(s); sPre = uv ? rot(uv, th > 0 ? -12 : 12, 1.5) : W(side); }
+    else if (pt === "post_up") { actH = a || other(s); sPre = [8, 25 + side * 7]; }
+    else if (pt === "cut") { actH = a || other(s); sPre = R() < .3 ? C(side) : W(side); }
+    else { actH = s || O[0]; sPre = W(side); }
+    const bh = [O[0], O[1]].includes(actH) ? actH : O[0];   // brings it up
+    const pool = [SPOT.top, W(-1), W(1), C(R() < .5 ? -1 : 1), R() < .5 ? Dk(-side) : El(-side)].map(p => [p[0] + J(1.2), p[1] + J(1.2)]);
+    const set = {};
+    const take = (id, want) => { if (!pool.length) { set[id] = want.slice(); return; } let b = 0, bd = 1e9;
+      pool.forEach((p, i) => { const d = dist(p, want); if (d < bd) { bd = d; b = i; } }); set[id] = pool.splice(b, 1)[0]; };
+    if (s && roll) take(s, Dk(side));
+    else if (s && sPre) { take(s, sPre); set[s] = [sPre[0] + J(.8), sPre[1] + J(.8)]; }
+    if (!set[actH]) { take(actH, pt === "post_up" ? W(side) : SPOT.top); if (pt === "post_up") set[actH] = [W(side)[0] + J(1), W(side)[1] + J(1)]; }
+    const rest = O.filter(id => !set[id]).sort((x, y) => (gs[x] ?? 0) - (gs[y] ?? 0));   // biggest first
+    rest.forEach((id, i) => take(id, i === 0 ? Dk(-side) : (pool[0] || SPOT.top)));
+    const scr = pt === "pick_and_roll" ? (roll ? s : [...O].reverse().find(id => id !== actH)) : null, go = side;
+
+    const needA = cur(bh)[0] > 36;
+    const tA = needA ? t0 + Math.min(7, Math.max(1.5, G * .35)) : t0;
+    let dC = ({ pick_and_roll: 3.2, post_up: 3.4, spot_up: 2.6, drive: 2.2, cut: 2.2, other_rim: 1.8, other_jumper: 2, turnover: 2 })[pt] || 2;
+    dC = Math.min(dC, Math.max(0, e.t - tA) * .6);
+    const tC = e.t - dC, tM = tC + dC * .55;
+
+    // 1. bring it up: the guard dribbles to half court, the floor fills in behind him, the defense is already back
+    if (needA && tA - t0 > .8) {
+      const m = {}, dov = {};
+      for (const id of O) m[id] = id === bh ? [43 + J(3), 25 + J(6)] : lerp(cur(id), set[id], big2.includes(id) ? .45 : .7);
+      for (const id of O) dov[mm[id]] = id === bh ? toward([36, m[bh][1]], 3) : defend(set[id], [30, 25], false);
+      ball(t0 + Math.min(.8, G * .15), bh); emit(tA, m, bh, dov);
+    } else ball(t0 + Math.min(.5, G * .1), bh);
+
+    // 2. the set: the ball swings, off-ball players relocate, the bigs flash to the elbow and back
+    const nb = Math.max(0, Math.min(3, Math.floor((tC - tA - .6) / 2.4))), perim = O.filter(id => !big2.includes(id));
+    let hold = bh;
+    for (let k = 0; k < nb; k++) {
+      const t = tA + (k + 1) * (tC - tA) / (nb + 1), m = {};
+      const nx = k === nb - 1 ? (a && a !== actH ? a : actH) : perim.filter(id => id !== hold)[Math.floor(R() * (perim.length - 1))] || actH;
+      hold = nx;
+      for (const id of O) m[id] = id === hold ? set[id].slice() : big2.includes(id) ? (k % 2 ? set[id].slice() : lerp(set[id], El(set[id][1] < 25 ? -1 : 1), .7)) : rot(set[id], J(9), J(1.2));
+      ball(t, hold); emit(t, m, hold);
+    }
+    if (!nb && a && a !== actH && tC - t0 > 1.5) ball((Math.max(t0, tA) + tC) / 2, a);
+
+    // 3. the action starts
+    const mC = {}, dC0 = {}; for (const id of O) mC[id] = set[id].slice();
+    const holdC = actH;
+    if (scr) { mC[scr] = [mC[actH][0] - 1.2, mC[actH][1] + go * 2.6]; dC0[mm[scr]] = [mC[scr][0] - 2.5, mC[scr][1] + go * .5]; }
+    if (pt === "post_up" && s) dC0[mm[s]] = toward(mC[s], 1.3);
+    if (pt === "cut" && s) dC0[mm[s]] = lerp(toward(mC[s], 1), mC[actH], .22);   // denying the pass
+    if (dC > .4) { ball(tC, holdC); emit(tC, mC, holdC, dC0); }
+
+    // 4. the middle of the action
+    const mM = {}, dM = {}; for (const id of O) mM[id] = id === holdC ? mC[id].slice() : rot(mC[id], J(4), J(.6));
+    let holdM = holdC;
+    const helper = mm[[...O].reverse().find(id => id !== s && id !== a && id !== actH)];
+    switch (pt) {
+      case "pick_and_roll":   // handler comes off the screen; the screener rolls (or pops for a jumper); his man drops
+        mM[actH] = [mC[actH][0] - 5, mC[actH][1] + go * 6.5];
+        mM[scr] = roll && uv && uv[0] > 16 ? lerp(mC[scr], uv, .5) : [14, 25 + go * 2];
+        dM[mm[actH]] = [mM[actH][0] + 2, mM[actH][1] - go * 1.8]; dM[mm[scr]] = [12, 25 + go * 3];
+        break;
+      case "drive": case "other_rim": case "turnover": case "other": {   // attack off the dribble; help steps in
+        const p = mC[actH], tg = uv || [12, 25 + side * 3], mid = lerp(p, tg, .5), nx = -(tg[1] - p[1]), ny = tg[0] - p[0], L = Math.hypot(nx, ny) || 1, w = R() < .5 ? 2.5 : -2.5;
+        mM[actH] = [mid[0] + nx / L * w, mid[1] + ny / L * w]; dM[mm[actH]] = toward(mM[actH], -1.4);
+        if (helper && pt !== "turnover") dM[helper] = [10, 25 + side * 4];
+        break; }
+      case "other_jumper":   // jab and attack, then the step back into the shot
+        mM[actH] = rot(toward(mC[actH], 2.5), J(8)); dM[mm[actH]] = toward(mM[actH], 2.2);
+        break;
+      case "spot_up":   // drive into the lane; the shooter's man helps; the shooter drifts to his spot
+        mM[actH] = [13 + J(2), 25 + J(4)];
+        if (s && uv) { mM[s] = lerp(mC[s], uv, .5); dM[mm[s]] = lerp(defend(mC[s], mC[actH], false), mM[actH], .45); }
+        break;
+      case "post_up":   // entry pass, then he backs his man down
+        if (s) { holdM = s; mM[s] = toward(mC[s], 1.6); dM[mm[s]] = toward(mM[s], 1.1); }
+        break;
+      case "cut":   // backdoor along the baseline, his man a step behind
+        if (s && uv) { mM[s] = [Math.max(4, (mC[s][0] + uv[0]) / 2 - 3), lerp(mC[s], uv, .55)[1]]; dM[mm[s]] = [mM[s][0] + 1.5, mM[s][1] + (mC[s][1] < 25 ? -1 : 1)]; }
+        break;
+    }
+    if (dC > 1.2) { if (holdM !== holdC) ball(tM, holdM); emit(tM, mM, holdM, dM); }
+
+    // 5. the shot (or the turnover) at the sim's spot and time
+    const act = {}, dE = {}; for (const id of O) act[id] = id === holdM ? mM[id].slice() : rot(mM[id], J(3), J(.5));
+    if (s && uv) act[s] = uv.slice();
+    switch (pt) {
+      case "pick_and_roll": if (roll) act[actH] = [mM[actH][0] - 1, mM[actH][1] + go * 2]; else if (scr !== s) act[scr] = [9 + J(2), 25 + go * 3]; break;
+      case "drive": case "other_rim": case "other": { const bg = big2.find(id => id !== s && id !== a); if (bg) act[bg] = [Dk(-side)[0] + J(1), Dk(-side)[1] + J(2)];
+        if (s && helper) { dE[helper] = toward(act[s], 1.4); dE[mm[s]] = toward(act[s], -1.5); } break; }
+      case "spot_up": if (actH !== s) act[actH] = [11 + J(2), 25 + J(3)]; break;
+      case "post_up": if (actH !== s) act[actH] = rot(mM[actH], J(6), -1); break;
+      case "cut": if (actH !== s) act[actH] = mM[actH].slice(); break;
+      case "turnover": if (s) act[s] = [mM[s][0] - 1, mM[s][1] + J(2)]; break;
+    }
+    if (s && shot && !dE[mm[s]]) dE[mm[s]] = toward(act[s], pt === "spot_up" ? 3.2 : e.made ? 2.6 : 1.6);   // the closeout
+    finish(act, dE, s || holdM);
   }
-  function rebound(e, on) {   // everyone crashes toward the rim the miss was at, two guards of the shooting side get back
-    const o = /offensive/.test(e.kind) ? e.team : 1 - e.team, m = {};
-    for (const id of [...on[0], ...on[1]]) { const p = fr(o, id); if (p) m[id] = [p[0] + (RIM_U + 3 - p[0]) * .35, p[1] + (25 - p[1]) * .3]; }
-    for (const id of ord(on[o]).slice(0, 2)) if (id !== e.player) m[id] = [28 + J(5), 25 + J(12)];
-    if (e.player) m[e.player] = [RIM_U + 2.5 + R() * 4, 25 + J(7)];
-    putF(o, m, e.t); ball(e.t, e.player);
+  function rebound(e, on) {   // the shooting side's bigs crash, its guards get back, the defense boxes out
+    const o = /offensive/.test(e.kind) ? e.team : 1 - e.team, m = {}, O = ord(on[o] || []);
+    const th = lastMiss?.uv ? Math.atan2(lastMiss.uv[1] - 25, lastMiss.uv[0] - RIM_U) : 0;
+    for (const id of on[1 - o] || []) { const p = fr(o, id); if (p) m[id] = toward(p, Math.max(0, dist(p, [RIM_U, 25]) - 7)); }
+    for (const id of O) { const p = fr(o, id); if (p) m[id] = toward(p, Math.max(0, dist(p, [RIM_U, 25]) - 9)); }
+    for (const id of O.slice(0, 2)) if (id !== e.player) m[id] = [28 + J(5), 25 + J(12)];
+    for (const id of O.slice(3)) if (id !== e.player) m[id] = [7 + J(2), 25 + J(6)];
+    if (e.player) { const r = lastMiss?.three ? 6 + R() * 8 : 3 + R() * 4, an = -th * .5 + J(.7);   // long boards off 3s, often weak side
+      m[e.player] = [Math.max(1, RIM_U + r * Math.cos(an)), 25 + r * Math.sin(an)]; }
+    putF(o, m, e.t); if (e.player) pin(e.player); ball(e.t, e.player); lastMiss = null;
   }
   function inbound(o, on, t) {   // o just scored: the other side takes it out under that basket, o runs back
     const N = ord(on[1 - o]), m = {};
@@ -616,13 +740,13 @@ function buildMotion() {
     const DB = [[26 + J(2), 21 + J(3)], [24 + J(2), 33 + J(3)]], DL = [[7.6, 17.6], [7.6, 32.4], [13.3, 32.4]];
     m[f.player] = [19.2, 25]; O.forEach((id, i) => m[id] = i < O.length - 2 ? OB[i] : OL[i - (O.length - 2)]);
     D.forEach((id, i) => m[id] = i < 2 ? DB[i] : DL[i - 2]);
-    putF(o, m, t1); putF(o, m, t2); ball(t1, f.player); ball(t2, null);
+    putF(o, m, t1, 2); putF(o, m, t2, 2); ball(t1, f.player); ball(t2, null);
   }
 
   const first = ev.find(e => e.on), on = first ? [first.on[0].slice(), first.on[1].slice()] : [[], []];
   const t1 = Math.min(2, (ev[0]?.t ?? 10) * .2);   // tip-off around the center circle
   for (const tm of [0, 1]) ord(on[tm]).forEach((id, i) => { const p = [[36.5, 25], [40.5, 16], [40.5, 34], [44.5, 9.5], [45.6, 25]][i] || [40, 25];
-    const x = tm === 0 ? p[0] : 94 - p[0]; put(id, 0, x, p[1]); put(id, t1, x, p[1]); });
+    const x = tm === 0 ? p[0] : 94 - p[0]; put(id, 0, x, p[1], 2); put(id, t1, x, p[1], 2); });
   for (let i = 0; i < ev.length;) {
     let j = i; while (j < ev.length && ev[j].t === ev[i].t) j++;
     const t = ev[i].t, nextT = j < ev.length ? ev[j].t : t + 12;
@@ -632,7 +756,7 @@ function buildMotion() {
       else if (e.type === "rebound") rebound(e, cur);
       if (e.on) { on[0] = e.on[0].slice(); on[1] = e.on[1].slice(); }
       if (e.type === "sub") { const k = on[e.team].indexOf(e.out); if (k >= 0) on[e.team][k] = e.in;
-        const p = now.get(e.out); if (p) put(e.out, t, p[0], p[1]); put(e.in, t, TABLE[e.team][0], TABLE[e.team][1]); }
+        const p = now.get(e.out); if (p) put(e.out, t, p[0], p[1], 1); put(e.in, t, TABLE[e.team][0], TABLE[e.team][1], 2); }
     }
     const grp = ev.slice(i, j), ft = grp.find(e => e.type === "ft"), made = grp.find(e => e.type === "shot" && e.made);
     if (ft && on[ft.team].length) freeThrows(ft, on, t + Math.min(1.5, (nextT - t) * .25), t + Math.min(4, (nextT - t) * .55));
@@ -640,6 +764,20 @@ function buildMotion() {
     i = j;
   }
   BK.sort((a, b) => a.t - b.t);
+
+  // nobody outruns a sprint: keys between pinned ones are pulled within reach (forward, then back toward the next pin);
+  // then each key gets a velocity so players flow through their keys instead of stopping at each one
+  const cap = (p, q) => { const d = Math.hypot(q.x - p.x, q.y - p.y), m = VMAX * Math.abs(q.t - p.t);
+    if (d > m && d > 0) { q.x = p.x + (q.x - p.x) * m / d; q.y = p.y + (q.y - p.y) * m / d; } };
+  for (const a of K.values()) {
+    for (let i = 1; i < a.length; i++) if (!a[i].fix) cap(a[i - 1], a[i]);
+    for (let i = a.length - 2; i >= 0; i--) if (!a[i].fix) cap(a[i + 1], a[i]);
+    for (let i = 0; i < a.length; i++) { const k = a[i], p = a[i - 1], n = a[i + 1]; k.mx = k.my = 0;
+      if (k.stop || !p || !n || n.t - p.t <= 0) continue;
+      const v0 = Math.hypot(k.x - p.x, k.y - p.y) / Math.max(.05, k.t - p.t), v1 = Math.hypot(n.x - k.x, n.y - k.y) / Math.max(.05, n.t - k.t);
+      let mx = (n.x - p.x) / (n.t - p.t), my = (n.y - p.y) / (n.t - p.t); const L = Math.hypot(mx, my), lim = Math.min(v0, v1) * 1.4;
+      if (L > lim && L > 0) { mx *= lim / L; my *= lim / L; } k.mx = mx; k.my = my; }
+  }
   return { K, BK };
 }
 function posAt(id, t) {
@@ -647,16 +785,18 @@ function posAt(id, t) {
   if (t <= a[0].t) return [a[0].x, a[0].y];
   let lo = 0, hi = a.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (a[m].t <= t) lo = m; else hi = m - 1; }
   const p = a[lo], q = a[lo + 1]; if (!q) return [p.x, p.y];
-  let f = (t - p.t) / (q.t - p.t); f = f * f * (3 - 2 * f);
-  return [p.x + (q.x - p.x) * f, p.y + (q.y - p.y) * f];
+  const h = q.t - p.t; if (h <= 0) return [q.x, q.y];
+  const s = (t - p.t) / h, s2 = s * s, s3 = s2 * s, h00 = 2 * s3 - 3 * s2 + 1, h10 = s3 - 2 * s2 + s, h01 = 3 * s2 - 2 * s3, h11 = s3 - s2;
+  return [h00 * p.x + h10 * h * p.mx + h01 * q.x + h11 * h * q.mx, h00 * p.y + h10 * h * p.my + h01 * q.y + h11 * h * q.my];
 }
-function ballAt(t, live) {   // in the holder's hands; a pass slides it to the next holder
+function ballAt(t, live) {   // in the holder's hands; a pass travels to the next holder at about 40 ft/s
   const B = S.mo?.BK || []; let lo = 0, hi = B.length - 1, k = -1;
   while (lo <= hi) { const m = (lo + hi) >> 1; if (B[m].t <= t) { k = m; lo = m + 1; } else hi = m - 1; }
   if (k < 0 || !B[k].id || !live.has(B[k].id)) return null;
   const a = posAt(B[k].id, t), n = B[k + 1]; if (!a) return null;
-  if (n && n.id && n.id !== B[k].id && live.has(n.id)) { const d = Math.min(1.2, (n.t - B[k].t) * .4);
-    if (t > n.t - d) { const b = posAt(n.id, t), f = (t - (n.t - d)) / d; if (b) return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; } }
+  if (n && n.id && n.id !== B[k].id && live.has(n.id)) { const b = posAt(n.id, t);
+    if (b) { const d = Math.min((n.t - B[k].t) * .6, Math.max(.3, Math.min(.9, dist(a, b) / 40)));
+      if (t > n.t - d) { const f = (t - (n.t - d)) / d; return lerp([a[0] + .8, a[1] - .8], [b[0] + .8, b[1] - .8], f); } } }
   return [a[0] + .8, a[1] - .8];
 }
 const initials = id => { const w = nm(id).replace(/[^A-Za-z' -]/g, "").split(/[\s-]+/).filter(x => x && !/^(jr|sr|ii|iii|iv)$/i.test(x));
