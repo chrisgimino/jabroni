@@ -241,6 +241,59 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
 .lad .tsw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto }
 .mobile-only { display: none }
 @media (max-width: 760px) { .mobile-only { display: inline-flex } .ins-two[data-part="alt"] > .panel:first-child { display: none } .ins-two[data-part="alt"] > .panel + .panel { display: flex } }
+
+/* ---- v2: dark look (Chris 2026-11-07) ---- */
+:root {
+  --ground: #0b1017; --surface: #131a25; --ink: #e9eef6; --muted: #9ba8bb; --faint: #6c788b; --rule: #222c3b; --rule-strong: #334155;
+  --panel2: #1a2331; --accent-soft: color-mix(in srgb, var(--accent) 20%, transparent);
+  --good: #3fcf7e; --good-soft: rgba(63, 207, 126, .14); --bad: #ff6f5e; --bad-soft: rgba(255, 111, 94, .14);
+  --board: #0f1622; --board-ink: #ffffff; --board-muted: #94a2b8; --board-rule: #263246;
+  --court: #3a2a1e; --court-line: #d9c6a3; --paint: #47321f;
+  --t0: #3b82f6; --t1: #f97316;
+  color-scheme: dark;
+}
+.seg button[aria-pressed="true"], .chip[aria-pressed="true"] { color: var(--ground) }
+.tip { background: #e9eef6; color: #0b1017 }
+.ball, #bdot { fill: #f28c28 } .pulse { stroke: #f28c28 }
+.warn { background: #2a2210; border-color: #5c4a1c; color: #f2d58a } .warn .q { background: #5c4a1c; color: #ffe7a6 } .warn .wd { color: var(--ink) }
+.sig.lean { background: rgba(240, 180, 60, .15); color: #f0b43c } .sig.unc { background: rgba(203, 191, 154, .12); color: #cbbf9a }
+.rung.hot { border-color: var(--good); background: var(--good-soft) }
+.top .brand img.an { filter: invert(1) hue-rotate(180deg) }
+#teamChips, #ptChips, #legend, #shots, #ftlbl { display: none !important }
+#court .half-lbl { opacity: .35 }
+/* on-floor box */
+.five { gap: 10px; grid-template-columns: minmax(0, 1fr) !important }
+.five table { width: 100%; border-collapse: collapse }
+.five th { font-size: 10.5px; font-weight: 700; color: var(--muted); text-align: right; padding: 0 4px; height: 20px; letter-spacing: .04em }
+.five th:first-child { text-align: left; text-transform: uppercase; letter-spacing: .07em; font-size: 11px }
+.five td { font-size: 13px; text-align: right; padding: 0 4px; height: 23px; border-top: 1px solid var(--rule); white-space: nowrap }
+.five td:first-child { text-align: left; max-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis }
+.five td b { font-weight: 800 }
+.five tr.hot td:first-child { color: var(--accent) }
+/* moments */
+.moments { list-style: none; margin: 0; padding: 0 }
+.moments li { height: 48px; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 9px; align-items: center; border-bottom: 1px solid var(--rule) }
+.moments .mt { min-width: 0 } .moments .mtt { display: block; font-size: 12.5px; font-weight: 800; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.moments .mt span b { color: var(--accent) }
+.moments .mt span { display: block; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.moments .mc { font-size: 11px; color: var(--faint); text-align: right; white-space: nowrap }
+.badge { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-weight: 800; color: #fff; letter-spacing: .02em; flex: 0 0 auto;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .18) }
+.popout { position: absolute; left: 50%; top: 7%; transform: translate(-50%, -8px); opacity: 0; pointer-events: none; z-index: 6; min-width: min(78%, 360px); max-width: 92%;
+  display: grid; grid-template-columns: 6px auto minmax(0, 1fr); align-items: center; gap: 0 12px; background: rgba(10, 15, 23, .94); border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 10px; padding: 0 16px 0 0; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); transition: opacity .22s, transform .22s; overflow: hidden }
+.popout.on { opacity: 1; transform: translate(-50%, 0) }
+.popout .stripe { align-self: stretch } .popout .badge { width: 40px; height: 40px; font-size: 12px; margin: 10px 0 }
+.popout .pt1 { font-size: 17px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #fff; line-height: 1.15 }
+.popout .pt2 { font-size: 12.5px; color: #c7d1df; line-height: 1.3; margin-top: 2px }
+.popout .pt2 b { color: var(--accent) }
+@media (max-width: 760px) { .popout { top: 4%; min-width: 86% } .popout .pt1 { font-size: 14px } .popout .pt2 { font-size: 11.5px } .popout .badge { width: 32px; height: 32px; font-size: 10.5px; margin: 7px 0 } }
+.dot.jumper circle { stroke: #f28c28; stroke-width: .42 }
+@media (max-width: 760px) {
+  .rp { grid-template-rows: auto auto minmax(0, 1fr) }
+  .five { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px } .five td { height: 19px; font-size: 12px } .five th { height: 17px }
+  .moments li { height: 42px }
+}
 </style>
 </head>
 <body>
@@ -305,7 +358,7 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
         <div class="rp-right">
           <div class="panel five" id="five"></div>
           <div class="panel" style="flex:1;min-height:0">
-            <div class="row"><span class="lbl">Play by play</span><span class="spacer"></span><span class="lbl" id="feedCt"></span></div>
+            <div class="row"><div class="seg" id="feedMode"><button data-v="moments" aria-pressed="true">Moments</button><button data-v="pbp" aria-pressed="false">Play-by-play</button></div><span class="spacer"></span><span class="lbl" id="feedCt"></span></div>
             <div class="fill"><ol class="feed" id="feed"></ol></div>
           </div>
         </div>
@@ -409,7 +462,7 @@ const SOURCES = [
 ];
 const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 10, endT: 2880, cur: -2, st: null,
   team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
-  mode: "std", angScope: "game", angSel: null, propMode: "main", propScope: "game", propOnly: "all", fbKind: "first_basket", ladScope: "game", dfsKind: "upside", dfsScope: "game", dfsSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
+  mode: "std", angScope: "game", angSel: null, feedMode: "moments", propMode: "main", propScope: "game", propOnly: "all", fbKind: "first_basket", ladScope: "game", dfsKind: "upside", dfsScope: "game", dfsSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
 const mobile = () => matchMedia("(max-width: 760px)").matches;
 const fmt = (x, d = 1) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (+x).toFixed(d);
 const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x)) return "–"; const r = (+x).toFixed(d); return +r === 0 ? (0).toFixed(d) : (+r > 0 ? "+" : "") + r; };
@@ -496,12 +549,13 @@ function prepare() {
   for (const p of S.rp.players) { const c = String(p.core_id || p.rg_id); if (p.rg_id) r2c[String(p.rg_id)] = c; S.byId[c] = p; }
   const m = id => (id === null || id === undefined || id === "") ? id : (r2c[String(id)] || String(id));
   const src = (STD()?.events || S.rp.events).map(e => { const x = { ...e }; for (const k of ["player", "assist", "block", "steal", "in", "out"]) if (x[k]) x[k] = m(x[k]);
-    if (x.on) x.on = x.on.map(tm => tm.map(m)); return x; });
+    if (x.on) x.on = x.on.map(tm => tm.map(m)); if (x.jump) x.jump = x.jump.map(m); return x; });
   // each free-throw trip becomes one event per attempt, on its own replay time while the game clock holds. The sim gives the
   // trip's attempts and makes; only the last attempt's result is known (a rebound follows only a missed last free throw), so
   // the others are ordered to fit it (misses first when the last one went in, makes first when it missed).
   S.ev = []; S.holds = []; let off = 0;
   for (let i = 0; i < src.length; i++) { const e = src[i];
+    if (e.type === "jump") { S.ev.push({ ...e, gt: e.t, t: e.t + off }); S.holds.push({ s: e.t + off, len: JUMP_LEN, g: e.t, off }); off += JUMP_LEN; continue; }
     if (e.type !== "ft") { S.ev.push({ ...e, gt: e.t, t: e.t + off }); continue; }
     const n = Math.max(1, e.fta || 0), mk = Math.max(0, Math.min(n, e.ftm || 0)), fz = e.t + off;
     const nx = src.slice(i + 1).find(x => x.type !== "sub" && x.type !== "foul"), lastIn = mk === n || (mk > 0 && !(nx && nx.type === "rebound"));
@@ -518,6 +572,7 @@ function prepare() {
   S.gs = {}; for (const [id, p] of Object.entries(S.byId)) { const m = Math.max(6, +p.sq_min || 0);   // guard-like (+) to big-like (−)
     S.gs[id] = (1.6 * (+p.sq_ast || 0) + .6 * (+p.sq_fg3m || 0) - .55 * (+p.sq_reb || 0) - 1.6 * (+p.sq_blk || 0)) / m; }
   S.mo = buildMotion();
+  S.moms = moments(); S.jumpEv = S.ev[0]?.type === "jump" ? S.ev[0] : null; popClear();
 }
 // which sim the replay shows: "sq" (the SQ sim, the file's main events) or "std" (the standard sim's typical game, the
 // file's "standard" section, when the run wrote one)
@@ -612,13 +667,15 @@ function seek(t, animate) {
   $("s0").textContent = st.score[0]; $("s1").textContent = st.score[1];
   if (S.view === "replay") { renderShots(); renderFeed(); renderFive(); }
   if (S.view === "box") renderBox();
+  if (animate && S.view === "replay") for (const m of S.moms || []) if (m.i > prev && m.i <= S.cur && m.pr >= 2) popQueue(m);
+  if (!animate) popClear();
   if (animate && S.view === "replay") for (let i = Math.max(prev + 1, 0); i <= S.cur; i++) { const e = S.ev[i];
     if (e.type === "shot") flight(e); else if (e.type === "fta") flight({ team: e.team, x: FT_U, y: 25, made: e.made, pts: 1 }); }
 }
 let raf = 0;
 function loop(now) { if (!S.playing) return; const dt = Math.min(.1, (now - S.last) / 1000); S.last = now; seek(S.t + dt * S.speed, true);
   if (S.t >= S.endT) { stop(); return; } raf = requestAnimationFrame(loop); }
-function play() { if (S.t >= S.endT) seek(0, false); S.playing = true; S.last = performance.now(); $("play").textContent = "Pause"; raf = requestAnimationFrame(loop); }
+function play() { if (S.t >= S.endT) seek(0, false); if (S.t === 0 && S.moms?.[0]?.i === 0) popQueue(S.moms[0]); S.playing = true; S.last = performance.now(); $("play").textContent = "Pause"; raf = requestAnimationFrame(loop); }
 function stop() { S.playing = false; cancelAnimationFrame(raf); if ($("play")) $("play").textContent = "Play"; }
 function jumpShot(dir) {
   const sh = S.ev.map((e, i) => [e, i]).filter(([e]) => e.type === "shot" && (S.team < 0 || e.team === S.team) && (!S.pt || e.play_type === S.pt));
@@ -861,9 +918,13 @@ function buildMotion() {
   }
 
   const first = ev.find(e => e.on), on = first ? [first.on[0].slice(), first.on[1].slice()] : [[], []];
-  const t1 = Math.min(2, (ev[0]?.t ?? 10) * .2);   // tip-off around the center circle
-  for (const tm of [0, 1]) ord(on[tm]).forEach((id, i) => { const p = [[36.5, 25], [40.5, 16], [40.5, 34], [44.5, 9.5], [45.6, 25]][i] || [40, 25];
-    const x = tm === 0 ? p[0] : 94 - p[0]; put(id, 0, x, p[1], 2); put(id, t1, x, p[1], 2); });
+  const jv = ev[0]?.type === "jump" ? ev[0] : null, nx0 = ev.find(e => e.type !== "jump");
+  const t1 = jv ? jv.t + JUMP_LEN : Math.min(2, (ev[0]?.t ?? 10) * .2);   // tip-off around the center circle (held through the jump ball)
+  for (const tm of [0, 1]) { const jm = jv?.jump?.[tm] && on[tm].includes(jv.jump[tm]) ? jv.jump[tm] : null, rest = ord(on[tm]).filter(id => id !== jm);
+    const spots = jm ? [[38, 18.5], [38, 31.5], [33, 25], [42.6, 10.5]] : [[36.5, 25], [40.5, 16], [40.5, 34], [44.5, 9.5], [45.6, 25]];
+    if (jm) { const x = tm === 0 ? 45.9 : 48.1; put(jm, 0, x, 25, 2); put(jm, t1, x, 25, 2); }
+    rest.forEach((id, i) => { const p = spots[i] || [40, 25], x = tm === 0 ? p[0] : 94 - p[0]; put(id, 0, x, p[1], 2); put(id, t1, x, p[1], 2); }); }
+  if (jv && nx0 && on[jv.team]?.length) { const g = ord(on[jv.team]).find(id => id !== jv.jump?.[jv.team]) || on[jv.team][0]; ball(t1 - .4, g); }
   for (let i = 0; i < ev.length;) {
     let j = i; while (j < ev.length && ev[j].t === ev[i].t) j++;
     const t = ev[i].t, nextT = j < ev.length ? ev[j].t : t + 12, grp0 = ev.slice(i, j);
@@ -933,10 +994,16 @@ function drawDots() {
       const p = posAt(id, S.t) || TABLE[tm]; el.setAttribute("transform", `translate(${p[0].toFixed(2)} ${p[1].toFixed(2)})`); el.style.display = ""; }
   }
   for (const [id, el] of S.dotEl) if (!live.has(id)) el.style.display = "none";
-  const b = end ? null : ballAt(S.t, live), bd = $("bdot");
+  let b = end ? null : ballAt(S.t, live); const bd = $("bdot"), jv = S.jumpEv;
+  for (const el of S.dotEl.values()) el.classList.toggle("jumper", !!(jv && S.t < jv.t + JUMP_LEN && (jv.jump || []).includes(el.dataset.id)));
+  if (jv && S.t >= jv.t && S.t < jv.t + JUMP_LEN) { const k = (S.t - jv.t) / JUMP_LEN, w = jv.team, up = Math.sin(Math.PI * Math.min(1, k / .55));
+    const g = ord5(w), tgt = g ? (posAt(g, S.t) || [47, 25]) : [w === 0 ? 40 : 54, 25];
+    b = k < .55 ? [47, 25 - 2.2 * up] : lerp([47, 25], tgt, (k - .55) / .45); bd.setAttribute("r", (k < .55 ? .6 + .55 * up : .6).toFixed(2)); } else bd.setAttribute("r", ".6");
   if (b) { bd.setAttribute("cx", b[0].toFixed(2)); bd.setAttribute("cy", b[1].toFixed(2)); bd.style.display = ""; } else bd.style.display = "none";
 }
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function ord5(t) { const on = S.st?.on?.[t]?.length ? S.st.on[t] : (S.ev[0]?.on?.[t] || []), j = S.jumpEv?.jump?.[t];   // the winner's most guard-like (takes the tip)
+  return on.filter(id => id !== j).sort((a, b) => (S.gs[b] ?? 0) - (S.gs[a] ?? 0))[0]; }
 function flight(e) {
   if (reduce) return;
   const [x, y] = shotXY(e), rx = e.team === 0 ? 5.25 : 88.75, ry = 25, NS = "http://www.w3.org/2000/svg", fx = $("fx");
@@ -955,7 +1022,9 @@ function pop(x, y, txt) { const el = document.createElementNS("http://www.w3.org
   const t0 = performance.now(); (function f(now) { const k = Math.min(1, (now - t0) / 700); el.setAttribute("y", y - 2 * k); el.style.opacity = String(1 - k);
     if (k < 1) requestAnimationFrame(f); else el.remove(); })(t0); }
 function fit(el, rowH, reserve = 0) { return Math.max(1, Math.floor((el.clientHeight - reserve) / rowH)); }
-function renderFeed() {
+function renderFeed() { return renderMoments(); }
+function renderFeedPBP() {
+  $("feed").className = "feed";
   const box = $("feed").parentElement, n = fit(box, 44), rows = [];
   for (let i = S.cur; i >= 0 && rows.length < n; i--) { const e = S.ev[i];
     if (e.type === "period_end") { rows.push(`<li class="pe">${evText(e)} · ${e.score[0]}-${e.score[1]}</li>`); continue; }
@@ -966,9 +1035,10 @@ function renderFeed() {
 }
 function renderFive() {
   const st = S.st; if (!st) return;
-  $("five").innerHTML = [0, 1].map(t => `<div style="min-width:0"><div class="lbl" style="color:var(--t${t})">${esc(tShort(t))} on floor</div><ol>` +
-    (st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => String(p.core_id || p.rg_id))).map(id => {
-      const b = st.box[id]; return `<li><span>${esc(lastName(id))}</span><span>${b ? fmt(dk(b), 1) : "0.0"}</span></li>`; }).join("") + "</ol></div>").join("");
+  $("five").innerHTML = [0, 1].map(t => { const ids = st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => String(p.core_id || p.rg_id));
+    return `<table><thead><tr><th style="color:var(--t${t})">${esc(tShort(t))} on floor</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>` +
+      ids.map(id => { const b = st.box[id] || { pts: 0, oreb: 0, dreb: 0, ast: 0 }, r = b.oreb + b.dreb, hot = b.pts >= 20 || [b.pts, r, b.ast].filter(x => x >= 10).length >= 2;
+        return `<tr class="${hot ? "hot" : ""}"><td>${esc(lastName(id))}</td><td><b>${b.pts}</b></td><td>${r}</td><td>${b.ast}</td></tr>`; }).join("") + "</tbody></table>"; }).join("");
 }
 
 // ------------------------------------------------------------------ paging
@@ -1247,6 +1317,91 @@ function renderDFS() {
     <ul class="rs">${(p.reasons || []).map((r, i) => `<li><span>${esc(r)}</span>${p.tested?.[i] ? `<span class="tested">Backtest: ${esc(p.tested[i])}</span>` : ""}</li>`).join("")}</ul>`;
 }
 
+
+// ------------------------------------------------------------------ v2: moments, the on-floor box, the jump ball (Chris 2026-11-07)
+const JUMP_LEN = 5;   // replay seconds the opening tip holds the clock (the toss, the tip, the ball to a guard)
+const TEAM_COLOR = { ATL: "#E03A3E", BOS: "#007A33", BKN: "#3d3d3d", BRK: "#3d3d3d", CHA: "#1D1160", CHO: "#1D1160", CHI: "#CE1141", CLE: "#860038",
+  DAL: "#00538C", DEN: "#0E2240", DET: "#C8102E", GSW: "#1D428A", GS: "#1D428A", HOU: "#CE1141", IND: "#002D62", LAC: "#C8102E", LAL: "#552583",
+  MEM: "#5D76A9", MIA: "#98002E", MIL: "#00471B", MIN: "#0C2340", NOP: "#0C2340", NO: "#0C2340", NYK: "#006BB6", NY: "#006BB6", OKC: "#007AC1",
+  ORL: "#0077C0", PHI: "#006BB6", PHO: "#1D1160", PHX: "#1D1160", POR: "#E03A3E", SAC: "#5A2D81", SAS: "#5b6670", SA: "#5b6670", TOR: "#CE1141",
+  UTA: "#002B5C", UTAH: "#002B5C", WAS: "#002B5C", WSH: "#002B5C" };
+const tColor = t => TEAM_COLOR[String(S.rp?.teams?.[t]?.abbr || "").toUpperCase()] || `var(--t${t})`;
+const badge = t => `<span class="badge" style="background:${tColor(t)}">${esc(tShort(t))}</span>`;
+const MKT = () => (typeof STD === "function" && STD()) ? STD().markets : S.rp?.markets;
+const SIMS_N = () => (typeof STD === "function" && STD()) ? STD().sims : S.rp?.sims;
+function moments() {   // the moments of the replayed game, by event index; pr 3 = always pops out, 2 = pops out, 1 = list only
+  const M = [], ev = S.ev, pts = {}, reb = {}, ast = {}, mk = MKT(), run = [0, 0], N = (SIMS_N() || 0).toLocaleString();
+  let firstDone = false, lastLead = 0, ddDone = new Set(), tdDone = new Set(), runMark = 0;
+  const fbShare = id => { const p = mk?.players?.[S.byId[id]?.rg_id]; return p?.fb ? p.fb.reduce((a, b) => a + b, 0) : null; };
+  const fav = () => { let b = null, bp = -1; for (const [rg, p] of Object.entries(mk?.players || {})) { const v = (p.fb || []).reduce((a, x) => a + x, 0); if (v > bp) { bp = v; b = p; } } return b ? [b.name, bp] : null; };
+  const lead = sc => Math.sign(sc[0] - sc[1]);
+  for (let i = 0; i < ev.length; i++) {
+    const e = ev[i], add = (pr, title, sub, team = e.team) => M.push({ i, t: e.t, pr, title, sub, team, q: e.period, clock: e.clock });
+    if (e.type === "jump") {
+      const [a, b] = (e.jump || []).map(x => x ? lastName(x) : ""), w = e.team;
+      M.push({ i, t: e.t, pr: 3, team: w, q: 1, clock: "12:00", title: a && b ? `Opening tip · ${w === 0 ? a : b}` : "Opening tip", sub: `${esc(tShort(w))} wins it${e.p_win ? ` — <b>${Math.round(100 * e.p_win)}%</b> of sims` : ""}${a && b ? ` · ${esc(w === 0 ? a : b)} vs ${esc(w === 0 ? b : a)}` : ""}` });
+      continue;
+    }
+    const scored = (e.type === "shot" && e.made) || (e.type === "fta" && e.made);
+    if (scored) {
+      const p = e.type === "shot" ? e.pts : 1, o = e.team;
+      if (!firstDone) { firstDone = true; const s = fbShare(e.player), f = fav();
+        add(3, `First basket · ${lastName(e.player)}`, s !== null ? `<b>${(100 * s).toFixed(1)}%</b> of ${N} sims${f && f[0] !== nm(e.player) ? ` · sims' favorite ${esc(f[0].split(" ").slice(-1)[0])} ${(100 * f[1]).toFixed(1)}%` : " · the sims' favorite"}` : "first points of the game"); }
+      run[o] += p; run[1 - o] = 0;
+      if (run[o] >= 8 && run[o] - runMark >= 4 && run[1 - o] === 0) { runMark = run[o]; add(2, `${tShort(o)} on a ${run[o]}-0 run`, `${e.score[0]}-${e.score[1]} · Q${Math.min(e.period, 5)} ${e.clock}`); }
+      if (run[o] === p) runMark = 0;
+      const before = pts[e.player] || 0; pts[e.player] = before + p;
+      for (const m of [20, 30, 40, 50]) if (before < m && pts[e.player] >= m) add(m >= 30 ? 3 : 2, `${lastName(e.player)} · ${pts[e.player]} points`, `${pts[e.player]} pts · ${reb[e.player] || 0} reb · ${ast[e.player] || 0} ast`);
+      if (e.type === "shot" && e.assist) ast[e.assist] = (ast[e.assist] || 0) + 1;
+      if (e.type === "shot" && e.pts === 3) add(1, `${lastName(e.player)} from three`, e.assist ? `assist ${esc(lastName(e.assist))}` : (PT[e.play_type] || ""));
+      const nx = ev[i + 1];
+      if (e.type === "shot" && nx && nx.type === "fta" && nx.n === 1 && nx.player === e.player && nx.gt === e.gt) add(2, `And one · ${lastName(e.player)}`, `${e.pts} + the free throw`);
+      const L = lead(e.score);
+      if (L !== 0 && L !== lastLead && lastLead !== 0 && e.period >= 4) add(2, `Lead change · ${tShort(o)}`, `${e.score[0]}-${e.score[1]} · ${qName(e.period)} ${e.clock}`);
+      if (L !== 0) lastLead = L;
+    }
+    if (e.type === "rebound" && e.player) reb[e.player] = (reb[e.player] || 0) + 1;
+    if (e.type === "shot" && !e.made && e.block) add(1, `Blocked · ${lastName(e.block)}`, `on ${esc(lastName(e.player))}`, 1 - e.team);
+    if (e.type === "turnover" && e.steal) add(1, `Steal · ${lastName(e.steal)}`, `from ${esc(lastName(e.player))}`, 1 - e.team);
+    for (const id of [e.player, e.assist].filter(Boolean)) {   // double- / triple-doubles
+      const c = [pts[id] || 0, reb[id] || 0, ast[id] || 0].filter(x => x >= 10).length;
+      if (c >= 2 && !ddDone.has(id)) { ddDone.add(id); const t = S.byId[id]?.team ?? e.team; M.push({ i, t: e.t, pr: 2, title: `Double-double · ${lastName(id)}`, sub: `${pts[id] || 0} pts · ${reb[id] || 0} reb · ${ast[id] || 0} ast`, team: t, q: e.period, clock: e.clock }); }
+      if (c >= 3 && !tdDone.has(id)) { tdDone.add(id); const t = S.byId[id]?.team ?? e.team; M.push({ i, t: e.t, pr: 3, title: `Triple-double · ${lastName(id)}`, sub: `${pts[id] || 0} pts · ${reb[id] || 0} reb · ${ast[id] || 0} ast`, team: t, q: e.period, clock: e.clock }); }
+    }
+    if (e.type === "period_end") {
+      const top = Object.entries(pts).sort((a, b) => b[1] - a[1])[0], fin = i === ev.length - 1, w = e.score[0] > e.score[1] ? 0 : 1;
+      M.push({ i, t: e.t, pr: fin ? 3 : 2, title: fin ? `Final · ${tShort(w)} wins` : `End of the ${qName(e.period)}`, team: fin ? w : (e.score[0] >= e.score[1] ? 0 : 1),
+        sub: `${esc(tShort(0))} ${e.score[0]} - ${e.score[1]} ${esc(tShort(1))}${top ? ` · ${esc(lastName(top[0]))} ${top[1]} pts` : ""}`, q: e.period, clock: "0:00" });
+    }
+  }
+  return M;
+}
+// pop-outs: one at a time; while one shows, the next waits (a lower one is dropped when two more are waiting)
+const POP = { q: [], until: 0, el: null, timer: 0 };
+function popQueue(m) {
+  if (reduce) return;
+  POP.q.push(m); POP.q.sort((a, b) => b.pr - a.pr); if (POP.q.length > 2) POP.q.length = 2;
+  if (!POP.timer) popNext();
+}
+function popNext() {
+  const el = POP.el || (POP.el = (() => { const d = document.createElement("div"); d.className = "popout"; d.setAttribute("aria-live", "polite"); $("courtbox").appendChild(d); return d; })());
+  const m = POP.q.shift(); if (!m) { el.classList.remove("on"); POP.timer = 0; return; }
+  el.innerHTML = `<span class="stripe" style="background:${tColor(m.team)}"></span>${badge(m.team)}<div style="min-width:0;padding:8px 0"><div class="pt1">${esc(m.title)}</div><div class="pt2">${m.sub || ""}</div></div>`;
+  el.classList.add("on");
+  POP.timer = setTimeout(() => { el.classList.remove("on"); POP.timer = setTimeout(popNext, 240); }, m.pr >= 3 ? 2600 : 1900);
+}
+function popClear() { clearTimeout(POP.timer); POP.timer = 0; POP.q = []; POP.el?.classList.remove("on"); }
+function renderMoments() {
+  const box = $("feed").parentElement;
+  if (S.feedMode === "pbp") return renderFeedPBP();
+  const n = fit(box, mobile() ? 42 : 48), rows = [];
+  for (let k = (S.moms || []).length - 1; k >= 0 && rows.length < n; k--) { const m = S.moms[k]; if (m.i > S.cur) continue;
+    rows.push(`<li>${badge(m.team)}<div class="mt"><strong class="mtt">${esc(m.title)}</strong><span>${m.sub || ""}</span></div><span class="mc">${m.clock ? `${m.q > 4 ? "OT" : "Q" + m.q} ${esc(m.clock)}` : ""}</span></li>`); }
+  $("feed").className = "moments";
+  $("feed").innerHTML = rows.join("") || `<li><span></span><div class="mt"><strong class="mtt">Press Play</strong><span>Moments pop up here as the game goes</span></div><span></span></li>`;
+  $("feedCt").textContent = "";
+}
+
 // ------------------------------------------------------------------ views
 function showView() {
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
@@ -1277,7 +1432,7 @@ $("views").addEventListener("click", e => {
   const ts = e.target.closest(".team-seg button"); if (ts) { const key = ts.closest(".team-seg").dataset.key; S[key] = +ts.dataset.t;
     if (key === "outTeam") S.outSel = null; ts.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === ts))); renderView(); return; }
   const sg = e.target.closest(".seg button[data-v]"); if (sg) { const id = sg.parentElement.id;
-    if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
+    if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "feedMode") S.feedMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
     if (id === "betPart") S.betPart = sg.dataset.v; if (id === "propMode") S.propMode = sg.dataset.v; if (id === "propScope") S.propScope = sg.dataset.v; if (id === "propOnly") S.propOnly = sg.dataset.v;
     if (id === "fbKind") S.fbKind = sg.dataset.v; if (id === "ladScope") S.ladScope = sg.dataset.v; if (id === "dfsKind" || id === "dfsScope") { S[id] = sg.dataset.v; S.dfsSel = null; }
     sg.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === sg))); renderView(); return; }
