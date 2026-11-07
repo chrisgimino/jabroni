@@ -43,7 +43,7 @@ button { cursor: pointer }
 .brand .an { display: block; height: 26px; border-radius: 5px }
 @media (max-width: 520px) { .brand .an { height: 18px } .brand span { display: none } }
 /* Action Replay: the standard sim only (Replay and Box) */
-.tabs button:not([data-view="replay"]):not([data-view="box"]) { display: none }
+.tabs button[data-view="players"] { display: none }
 .top .grow { flex: 1; min-width: 0 }
 .top select { max-width: 100%; width: 100%; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 5px 8px; min-height: 32px }
 .upd { color: var(--muted); font-size: 12px; white-space: nowrap }
@@ -208,6 +208,39 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
 .lines-t { max-width: 640px }
 .emptyapp { position: absolute; inset: 0; z-index: 10; background: var(--ground); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; height: 100%; color: var(--muted); text-align: center }
 .emptyapp b { color: var(--ink); font-size: 18px }
+
+/* insights (nbasq_insights): betting, props, first basket, ladders, DFS */
+.warn { flex: 0 0 auto; background: #fff6e0; border: 1px solid #e6c36a; color: #5c4300; border-radius: 8px; padding: 5px 10px; font-size: 12.5px }
+.warn summary { cursor: pointer; list-style: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.warn summary::-webkit-details-marker { display: none }
+.warn[open] summary { white-space: normal }
+.warn .q { font-weight: 800; background: #f2d27a; border-radius: 4px; padding: 0 4px; font-size: 11px }
+.warn .wd { margin-top: 5px; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--ink) }
+.why { flex: 0 0 auto; font-size: 13.5px; line-height: 1.45; border-left: 3px solid var(--accent); padding: 1px 0 1px 10px; max-height: 4.4em; overflow: hidden }
+.tested-note { flex: 0 0 auto; font-size: 11.5px; color: var(--muted); line-height: 1.35; max-height: 2.8em; overflow: hidden }
+.sig.lean { background: #fdf0d5; color: #8a5a00 } .sig.unc { background: #ece9e1; color: #6d5e3a }
+.tw { overflow-x: auto; overflow-y: hidden; max-width: 100% }
+.tw .t th:first-child, .tw .t td:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1 }
+.t td small { color: var(--faint); font-size: 11px; margin-left: 3px }
+.ins-two { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 8px; flex: 1; min-height: 0 }
+@media (max-width: 760px) { .ins-two { grid-template-columns: minmax(0, 1fr) } .ins-two > .panel + .panel { display: none } .why { max-height: 6em } }
+.lad { display: flex; align-items: center; gap: 8px; height: 56px; border-bottom: 1px solid var(--rule); padding: 0 4px; min-width: 0 }
+.lad .who { flex: 0 0 170px; min-width: 0 } .lad .who b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.lad .who span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.rungs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0 }
+.rungs::-webkit-scrollbar { display: none }
+.rung { flex: 0 0 auto; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 2px 8px; font-size: 12px; line-height: 1.25; text-align: center; background: var(--surface) }
+.rung b { display: block; font-size: 13px } .rung span { color: var(--muted); font-size: 11px }
+.rung.hot { border-color: var(--good); background: var(--good-soft) }
+.lad .ev { flex: 0 0 auto; text-align: right; font-size: 12px; color: var(--muted) } .lad .ev b { display: block; color: var(--good); font-size: 14px }
+@media (max-width: 760px) { .lad .who { flex-basis: 110px } .lad .ev { display: none } }
+.tfirst { flex: 0 0 auto; display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--muted); flex-wrap: wrap }
+.tfirst b { color: var(--ink) }
+.splitbar { flex: 1; min-width: 120px; max-width: 320px; height: 10px; border-radius: 5px; overflow: hidden; display: flex }
+.splitbar i { display: block; height: 100% }
+.lad .tsw { display: inline-block; width: 9px; height: 9px; border-radius: 2px; flex: 0 0 auto }
+.mobile-only { display: none }
+@media (max-width: 760px) { .mobile-only { display: inline-flex } .ins-two[data-part="alt"] > .panel:first-child { display: none } .ins-two[data-part="alt"] > .panel + .panel { display: flex } }
 </style>
 </head>
 <body>
@@ -230,12 +263,14 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
   <nav class="tabs" role="tablist" id="tabs">
     <button role="tab" data-view="replay" aria-selected="true">Replay</button>
     <button role="tab" data-view="box" aria-selected="false">Box</button>
-    <button role="tab" data-view="angles" aria-selected="false">DFS &amp; props</button>
+    <button role="tab" data-view="bet" aria-selected="false">Betting</button>
+    <button role="tab" data-view="props" aria-selected="false">Props</button>
+    <button role="tab" data-view="fb" aria-selected="false">First basket</button>
+    <button role="tab" data-view="ladders" aria-selected="false">Ladders</button>
     <button role="tab" data-view="edges" aria-selected="false">Play-type edges</button>
     <button role="tab" data-view="profiles" aria-selected="false">Team profiles</button>
     <button role="tab" data-view="out" aria-selected="false">Who's out</button>
     <button role="tab" data-view="players" aria-selected="false">Players</button>
-    <button role="tab" data-view="lines" aria-selected="false">Lines</button>
   </nav>
 
   <main class="views" id="views">
@@ -291,6 +326,41 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
       </div>
     </section>
 
+
+    <section class="view" data-v="bet" hidden>
+      <div class="row wrap mobile-only"><div class="seg" id="betPart"><button data-v="lines" aria-pressed="true">Game lines</button><button data-v="alt" aria-pressed="false">Alt totals · margin</button></div></div>
+      <div id="betWarn"></div><div id="betWhy"></div>
+      <div class="ins-two" id="betTwo" data-part="lines">
+        <div class="panel" style="min-height:0"><div class="lbl">Game lines · sim vs the books</div><div class="fill" id="betT"></div></div>
+        <div class="panel" style="min-height:0"><div class="lbl">Alt team totals · winning margin · overtime</div><div class="fill" id="betAlt"></div></div>
+      </div>
+      <div id="betTested"></div>
+    </section>
+
+    <section class="view" data-v="props" hidden>
+      <div class="row wrap"><div class="seg" id="propMode"><button data-v="main" aria-pressed="true">Main lines</button><button data-v="alt" aria-pressed="false">Alt lines &amp; milestones</button></div>
+        <div class="seg" id="propScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div>
+        <div class="seg" id="propOnly"><button data-v="all" aria-pressed="true">All</button><button data-v="picks" aria-pressed="false">Leans +</button></div></div>
+      <div id="propWarn"></div>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="propT"></div></div>
+      <div id="propTested"></div>
+    </section>
+
+    <section class="view" data-v="fb" hidden>
+      <div class="row wrap"><div class="seg" id="fbKind"><button data-v="first_basket" aria-pressed="true">First basket</button><button data-v="first_basket_method" aria-pressed="false">By method</button><button data-v="first_fg" aria-pressed="false">First FG</button><button data-v="first_3" aria-pressed="false">First 3</button><button data-v="most_points" aria-pressed="false">Most pts</button><button data-v="leading_rebounder" aria-pressed="false">Top reb</button><button data-v="specials" aria-pressed="false">Specials</button></div></div>
+      <div id="fbWarn"></div><div class="tfirst" id="fbTeam"></div>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="fbT"></div></div>
+      <div id="fbTested"></div>
+    </section>
+
+    <section class="view" data-v="ladders" hidden>
+      <div class="row wrap"><div class="seg" id="ladScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div>
+        <span class="lbl" style="margin-left:6px">Rungs the sim and the books together price best · green = EV 20%+, the level that won in 2025-26</span></div>
+      <div id="ladWarn"></div>
+      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="ladT"></div></div>
+      <div id="ladTested"></div>
+    </section>
+
     <section class="view" data-v="edges" hidden>
       <div class="row wrap"><div class="seg team-seg" data-key="edgeTeam" data-label="offense"></div></div>
       <div class="panel" style="flex:1;min-height:0"><div class="fill" id="edgeT"></div></div>
@@ -339,7 +409,7 @@ const SOURCES = [
 ];
 const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 10, endT: 2880, cur: -2, st: null,
   team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
-  mode: "std", angScope: "game", angSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
+  mode: "std", angScope: "game", angSel: null, propMode: "main", propScope: "game", propOnly: "all", fbKind: "first_basket", ladScope: "game", dfsKind: "upside", dfsScope: "game", dfsSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
 const mobile = () => matchMedia("(max-width: 760px)").matches;
 const fmt = (x, d = 1) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (+x).toFixed(d);
 const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x)) return "–"; const r = (+x).toFixed(d); return +r === 0 ? (0).toFixed(d) : (+r > 0 ? "+" : "") + r; };
@@ -410,7 +480,7 @@ async function pick(gid) {
   if (!mu && S.src) { try { mu = await getJSON(S.src.mu(gid)); } catch (e) { mu = null; } }
   if (!rp?.standard) { noStd(gid); return; }   // replay files from before nba.go 9724605c have no standard sim
   S.rp = rp; S.mu = mu; prepare();
-  Object.assign(S, { t: 0, cur: -2, st: null, pt: null, team: -1, angSel: null, outSel: null, page: {} });
+  Object.assign(S, { t: 0, cur: -2, st: null, pt: null, team: -1, angSel: null, outSel: null, dfsSel: null, page: {} });
   $("fx").innerHTML = ""; $("dots").innerHTML = ""; S.dotEl = new Map(); renderStatic(); seek(0, false);
 }
 
@@ -1039,6 +1109,144 @@ function renderLines() {
     ${row("Vegas", "vegas_team_total")}${row("SQ team score", "sq_team_score")}${row("SQ used (75%)", "sq_total_used")}${row("SQ sims", "sq_sim_points")}${row("Main", "main_grid_points")}</tbody></table>`;
 }
 
+const SIMKEY = "std";   // which sims' insights this page shows: "sq" (SQ page) or "std" (Action page)
+
+// ------------------------------------------------------------------ insights (nbasq_insights in the nightly's matchups mode; Chris 2026-11-06)
+// Each game's matchup file carries insights.sq (the SQ sims) and insights.std (the standard sims): game lines, props, alt lines,
+// ladders, first events, DFS (SQ only), the team-based injury warnings and Gemini's whys. This page shows SIMKEY's.
+const STR = { strong: ["Strong", "up"], lean: ["Lean", "lean"], uncertain: ["⚠ Uncertain", "unc"] };
+const pctf = (x, d = 0) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (100 * x).toFixed(d) + "%";
+const odds = a => (a === null || a === undefined) ? "–" : (a > 0 ? "+" + a : String(a));
+const evf = x => (x === null || x === undefined) ? "–" : sgn(100 * x, 1) + "%";
+const evc = x => x === null || x === undefined ? "" : x >= .04 ? "up" : x < 0 ? "down" : "";
+const strTag = s => s && STR[s] ? `<span class="sig ${STR[s][1]}">${STR[s][0]}</span>` : "";
+const INS = (gid = S.gid) => (String(gid) === String(S.gid) ? S.mu : S.local[gid]?.mu)?.insights || null;
+const SEC = (gid = S.gid) => INS(gid)?.[SIMKEY] || null;
+const allGames = () => { const ids = new Set([String(S.gid), ...Object.keys(S.local).filter(k => S.local[k].mu?.insights)]); return [...ids]; };
+const gameLbl = gid => { const g = S.games.find(x => String(x.schedule_id) === String(gid)); return g ? (g.teams || []).join("-") : ""; };
+function noIns(el) { el.innerHTML = `<div class="empty-note">No market read for this game yet: the insights come with the hourly matchups run (books post player props about 14 hours before tip).</div>`; }
+function warnHTML() {
+  const W = INS()?.warnings || []; if (!W.length) return "";
+  return W.map(w => `<details class="warn"${S.warnOpen ? " open" : ""}><summary>⚠ <b>${esc(w.team)}</b>: ${w.players.map(x => `${esc(x.name)} <span class="q">${esc(x.status)}</span> ${fmt(x.plan_min, 0)} min projected`).join(" · ")} — everything ${esc(w.team)}'s result decides is uncertain until his status is known</summary>
+    ${w.players.map(x => { const o = x.without;
+      return `<div class="wd">${o ? `<div><b>Without ${esc(x.name)}</b> (our what-if): ${esc(w.team)} ${fmt(o.with.team_pts)} → ${fmt(o.without.team_pts)} pts, win ${pctf(o.with.win)} → ${pctf(o.without.win)}${(o.teammates_up || []).filter(m => m.dk_change > 0).length ? " · up: " + o.teammates_up.filter(m => m.dk_change > 0).map(m => `${esc(m.name)} ${sgn(m.dk_change)} DK`).join(", ") : ""}</div>`
+        : `<div>No what-if for ${esc(x.name)} yet today (it runs once a day).</div>`}
+        ${(x.signals || []).map(s => `<div>• ${esc(s)} <span class="tag np">not tested</span></div>`).join("")}</div>`; }).join("")}</details>`).join("");
+}
+function whyHTML(k) { const w = INS()?.why?.[k]; return w ? `<div class="why">${esc(w)}</div>` : ""; }
+function testedHTML(...keys) { const T = INS()?.tested || {}; const t = keys.map(k => T[k]).filter(Boolean); return t.length ? `<div class="tested-note">Backtest: ${t.map(esc).join(" ")}</div>` : ""; }
+function insTable(el, key, head, rows) {   // pagedTable inside a sideways-scrolling box with the first column frozen
+  el.innerHTML = `<div class="tw"><table class="t"><thead>${head}</thead><tbody></tbody></table></div>`;
+  const per = fit(el, 30, 28 + (rows.length * 30 + 28 > el.clientHeight ? 32 : 0) + (el.scrollWidth > el.clientWidth ? 12 : 0)), g = pg(key, rows.length, per);
+  el.innerHTML = `<div class="tw"><table class="t"><thead>${head}</thead><tbody>${rows.slice(g.from, g.to).join("")}</tbody></table></div>${pagerHTML(key, g)}`;
+}
+const pname = n => mobile() ? (String(n).split(" ").slice(1).join(" ") || n) : n;
+const tsw = ab => { const t = teamIdx(ab); return `<span class="tsw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>`; };
+
+function renderBet() {
+  const sec = SEC();
+  $("betWarn").innerHTML = warnHTML(); $("betWhy").innerHTML = whyHTML(`${S.gid}:${SIMKEY}`);
+  $("betTested").innerHTML = testedHTML("moneyline", SIMKEY === "sq" ? "sq_lines" : "spread"); $("betTwo").dataset.part = S.betPart || "lines";
+  if (!sec || !sec.game || !Object.keys(sec.game).length) { noIns($("betT")); $("betAlt").innerHTML = ""; return; }
+  const g = sec.game, rows = [];
+  const R = (bet, line, price, book, sim, mkt, extra) => rows.push(`<tr><td>${bet}</td><td>${line}</td><td>${odds(price)}${book ? `<small>${esc(book)}</small>` : ""}</td><td><b>${pctf(sim, 1)}</b></td><td>${pctf(mkt, 1)}</td>
+    <td class="${sim !== null && mkt !== null && sim - mkt > .02 ? "up" : sim !== null && mkt !== null && sim - mkt < -.02 ? "down" : ""}">${sim !== null && mkt !== null ? sgn(100 * (sim - mkt), 1) : "–"}</td><td class="hide-m">${extra || ""}</td></tr>`);
+  for (const r of g.moneyline?.teams || []) R(`${tsw(r.team)}${esc(r.team)} win`, "", r.best_price, r.best_book, r.sim, r.market,
+    r.confidence ? `sim ${esc(r.confidence.band)} → won ${pctf(r.confidence.backtest_real)}` : "");
+  for (const r of g.spread?.teams || []) R(`${tsw(r.team)}${esc(r.team)} spread`, sgn(r.line), r.best_price, r.best_book, r.sim, r.market, "coin flip at the close");
+  if (g.total) { R("Over", fmt(g.total.line), g.total.over?.best_price, g.total.over?.best_book, g.total.sim_over, g.total.market_over, "coin flip at the close");
+    R("Under", fmt(g.total.line), g.total.under?.best_price, g.total.under?.best_book, g.total.sim_over === null ? null : 1 - g.total.sim_over, g.total.market_over === null ? null : 1 - g.total.market_over, ""); }
+  for (const r of g.team_totals?.teams || []) R(`${tsw(r.team)}${esc(r.team)} over`, fmt(r.line), null, null, r.sim_over, r.market_over, `sim avg ${fmt(r.sim_mean)}`);
+  insTable($("betT"), "betT", `<tr><th>Bet</th><th>Line</th><th>Best</th><th>Sim</th><th title="the books' average no-vig chance">Books</th><th>Sim − books</th><th class="hide-m">Backtest says</th></tr>`, rows);
+  const alt = [];
+  for (const a of g.alt_team_totals || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} ${esc(a.side)} ${fmt(a.line)}</td><td>${odds(a.best_price)}<small>${esc(a.best_book)}</small></td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
+  for (const a of g.winning_margin || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} by ${esc(a.band)}</td><td>${odds(a.best_price)}<small>${esc(a.best_book)}</small></td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
+  if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (!o) continue; const p = sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim;
+    alt.push(`<tr><td>Overtime ${sd}</td><td>${odds(o.best_price)}<small>${esc(o.best_book)}</small></td><td>${pctf(p, 1)}</td><td class="${evc(o.ev)}">${evf(o.ev)}</td><td></td></tr>`); }
+  insTable($("betAlt"), "betAlt", `<tr><th>Bet</th><th>Best</th><th>Sim</th><th>EV</th><th></th></tr>`, alt.length ? alt : [`<tr><td colspan="5">Nothing the sim prices 5%+ over the best price</td></tr>`]);
+}
+
+function propRows() {
+  const gids = S.propScope === "slate" ? allGames() : [String(S.gid)], out = [];
+  for (const gid of gids) { const sec = SEC(gid); if (!sec) continue;
+    for (const r of (S.propMode === "alt" ? sec.alts : sec.props) || []) out.push({ ...r, gid }); }
+  const evOf = r => S.propMode === "alt" ? r.ev : Math.max(r.over?.ev ?? -9, r.under?.ev ?? -9);
+  return out.filter(r => S.propOnly !== "picks" || ["strong", "lean"].includes(r.strength)).sort((a, b) => (a.uncertain - b.uncertain) || (evOf(b) - evOf(a)));
+}
+function renderProps() {
+  $("propWarn").innerHTML = S.propScope === "slate" ? "" : warnHTML(); $("propTested").innerHTML = testedHTML(S.propMode === "alt" ? "ladders" : "props");
+  if (!SEC() && S.propScope !== "slate") { noIns($("propT")); return; }
+  const rs = propRows(), sl = S.propScope === "slate";
+  const rows = S.propMode === "alt"
+    ? rs.map(r => `<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td>${sl ? `<td class="hide-m">${esc(gameLbl(r.gid))}</td>` : ""}<td>${esc(r.stat)} ${r.k}+</td><td>${odds(r.price)}<small>${esc(r.book)}</small></td>
+        <td>${pctf(r.sim, 1)}</td><td>${pctf(r.market, 1)}</td><td><b>${pctf(r.blend, 1)}</b></td><td class="${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`)
+    : rs.map(r => { const s = r.pick, b = s ? r[s] : null;
+        return `<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td>${sl ? `<td class="hide-m">${esc(gameLbl(r.gid))}</td>` : ""}<td>${esc(r.stat)} ${fmt(r.line)}</td><td>${pctf(r.sim_over, 1)}</td><td>${pctf(r.market_over, 1)}<small>${r.books}</small></td>
+        <td><b>${pctf(r.blend_over, 1)}</b></td><td>${s ? esc(s[0].toUpperCase() + s.slice(1)) : ""} ${b ? odds(b.price) : ""}${b ? `<small>${esc(b.book)}</small>` : ""}</td><td class="${evc(b?.ev)}">${evf(b?.ev)}</td><td>${strTag(r.strength)}</td></tr>`; });
+  const head = S.propMode === "alt"
+    ? `<tr><th>Player</th>${sl ? `<th class="hide-m">Game</th>` : ""}<th>Bet</th><th>Best</th><th>Sim</th><th title="books' median chance">Books</th><th title="sim and books together">Blend</th><th>EV</th><th></th></tr>`
+    : `<tr><th>Player</th>${sl ? `<th class="hide-m">Game</th>` : ""}<th>Line</th><th>Sim over</th><th title="books' average no-vig over chance (books)">Books</th><th title="sim and books together">Blend</th><th>Pick · best</th><th>EV</th><th></th></tr>`;
+  insTable($("propT"), "prop" + S.propMode + S.propScope + S.propOnly, head, rows.length ? rows : [`<tr><td colspan="9">No lines</td></tr>`]);
+}
+
+function renderFB() {
+  const sec = SEC(), F = sec?.first;
+  $("fbWarn").innerHTML = warnHTML(); $("fbTested").innerHTML = testedHTML("first");
+  if (!F) { noIns($("fbT")); $("fbTeam").innerHTML = ""; return; }
+  const tf = F.team_first?.teams || [];
+  $("fbTeam").innerHTML = tf.length === 2 ? `<span>Scores first</span><b>${esc(tf[0].team)} ${pctf(tf[0].sim)}</b><span class="splitbar"><i style="width:${100 * tf[0].sim}%;background:var(--t0)"></i><i style="flex:1;background:var(--t1)"></i></span><b>${pctf(tf[1].sim)} ${esc(tf[1].team)}</b><span>opening-tip odds + who shoots first</span>` : "";
+  const k = S.fbKind, rows = [];
+  if (k === "first_basket_method" || k === "specials") {
+    for (const r of F[k] || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${esc(r.method || r.market)}</td><td>${odds(r.best_price)}<small>${esc(r.best_book)}</small></td><td><b>${pctf(r.sim, 1)}</b></td><td class="${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`);
+    insTable($("fbT"), "fb" + k, `<tr><th>Player</th><th>Bet</th><th>Best</th><th>Sim</th><th>EV</th><th></th></tr>`, rows.length ? rows : [`<tr><td colspan="6">Nothing priced 5%+ over the best price</td></tr>`]);
+    return;
+  }
+  const m = F[k];
+  for (const r of m?.players || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${odds(r.best_price)}</td><td>${pctf(r.sim, 1)}</td><td>${pctf(r.market, 1)}</td><td><b>${pctf(r.blend, 1)}</b></td>
+    <td class="${evc(r.ev_blend)}">${evf(r.ev_blend)}</td><td class="hide-m ${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`);
+  insTable($("fbT"), "fb" + k, `<tr><th>Player</th><th>Best</th><th>Sim</th><th title="books' no-vig chance (each book's list adds to 100%)">Books</th><th title="sim and books together">Blend</th><th>EV</th><th class="hide-m">EV sim only</th><th></th></tr>`,
+    rows.length ? rows : [`<tr><td colspan="8">The books haven't posted this market for the game</td></tr>`]);
+}
+
+function renderLadders() {
+  $("ladWarn").innerHTML = S.ladScope === "slate" ? "" : warnHTML(); $("ladTested").innerHTML = testedHTML("ladders");
+  const gids = S.ladScope === "slate" ? allGames() : [String(S.gid)], L = [];
+  for (const gid of gids) for (const l of SEC(gid)?.ladders || []) L.push({ ...l, gid });
+  L.sort((a, b) => (a.uncertain - b.uncertain) || (b.ev_per_unit - a.ev_per_unit));
+  const el = $("ladT");
+  if (!L.length) { el.innerHTML = `<div class="empty-note">No ladder where two or more rungs price 10%+ over the best price.</div>`; return; }
+  el.innerHTML = ""; const per = fit(el, 56, L.length * 56 > el.clientHeight ? 34 : 0), g = pg("lad" + S.ladScope, L.length, per);
+  el.innerHTML = L.slice(g.from, g.to).map(l => `<div class="lad">${tsw(l.team)}<div class="who"><b>${esc(pname(l.name))}</b><span>${esc(l.stat)}${S.ladScope === "slate" ? " · " + esc(gameLbl(l.gid)) : ""}${l.uncertain ? " · ⚠" : ""}</span></div>
+    <div class="rungs">${l.rungs.map(r => `<div class="rung ${r.ev >= .20 && !l.uncertain ? "hot" : ""}" title="sim ${pctf(r.sim, 1)} · books ${pctf(r.market, 1)} · ${esc(r.book)}"><b>${r.k}+ ${odds(r.price)}</b><span>${pctf(r.blend)} · ${evf(r.ev)}</span></div>`).join("")}</div>
+    <div class="ev"><b>${evf(l.ev_per_unit)}</b>per rung</div></div>`).join("") + pagerHTML("lad" + S.ladScope, g);
+}
+
+function dfsItems() {
+  const gids = S.dfsScope === "slate" ? allGames() : [String(S.gid)], out = [];
+  for (const gid of gids) for (const p of SEC(gid)?.dfs?.[S.dfsKind] || []) out.push({ ...p, gid, key: gid + "|" + p.core_id });
+  return out.sort((a, b) => (a.uncertain - b.uncertain) || ((b.sq_dk || 0) - (a.sq_dk || 0)));
+}
+function renderDFS() {
+  $("dfsWarn").innerHTML = S.dfsScope === "slate" ? "" : warnHTML();
+  const items = dfsItems(), el = $("dfsList");
+  if (!items.length) { el.innerHTML = `<div class="empty-note">No player fires a ${esc(S.dfsKind)} rule${S.dfsScope === "game" ? " in this game" : ""}.</div>`; $("dfsPager").innerHTML = ""; $("dfsDetail").innerHTML = ""; $("dfsMD").classList.add("closed"); return; }
+  if (!S.dfsSel || !items.find(i => i.key === S.dfsSel)) S.dfsSel = mobile() ? null : items[0].key;
+  $("dfsPager").innerHTML = ""; const per = fit(el, 56, items.length * 56 > el.clientHeight ? 38 : 0), g = pg("dfs" + S.dfsKind + S.dfsScope, items.length, per);
+  const lab = { upside: ["▲ Upside", "up"], downside: ["▼ Downside", "down"], volatile: ["↕ Volatile", "nt"] }[S.dfsKind];
+  el.innerHTML = `<ul class="list">${items.slice(g.from, g.to).map(p => `<li data-dfs="${esc(p.key)}" aria-selected="${p.key === S.dfsSel}">${tsw(p.team)}
+    <div class="who"><b>${esc(p.name)}</b><span><span class="sig ${lab[1]}">${lab[0]}</span>${p.uncertain ? ` <span class="sig unc">⚠ Uncertain</span>` : ""}${S.dfsScope === "slate" ? " " + esc(gameLbl(p.gid)) : ""}</span></div>
+    <div class="nums"><b>${fmt(p.sq_dk)}</b><br>SQ DK</div></li>`).join("")}</ul>`;
+  $("dfsPager").innerHTML = pagerHTML("dfs" + S.dfsKind + S.dfsScope, g);
+  $("dfsMD").classList.toggle("closed", !S.dfsSel);
+  const p = items.find(i => i.key === S.dfsSel); if (!p) { $("dfsDetail").innerHTML = ""; return; }
+  const why = INS(p.gid)?.why?.[`${p.gid}:dfs:${S.dfsKind}:${p.core_id}`];
+  $("dfsDetail").innerHTML = `<button class="back" data-back="dfs">‹ List</button>
+    <div><h3>${tsw(p.team)}${esc(p.name)}</h3><div class="sub">${esc(p.team)}${p.uncertain ? " · ⚠ his team has a questionable player: uncertain" : ""}</div></div>
+    ${why ? `<div class="why">${esc(why)}</div>` : ""}
+    <div class="kp"><span>SQ <b>${fmt(p.sq_dk)}</b></span><span>Main <b>${fmt(p.main_dk)}</b></span>${p.dk_own !== null && p.dk_own !== undefined ? `<span>Own <b>${fmt(p.dk_own)}%</b></span>` : ""}</div>
+    <ul class="rs">${(p.reasons || []).map((r, i) => `<li><span>${esc(r)}</span>${p.tested?.[i] ? `<span class="tested">Backtest: ${esc(p.tested[i])}</span>` : ""}</li>`).join("")}</ul>`;
+}
+
 // ------------------------------------------------------------------ views
 function showView() {
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
@@ -1048,7 +1256,7 @@ function showView() {
 function renderView() {
   if (!S.rp) return;
   ({ replay: () => { renderShots(); renderFeed(); renderFive(); drawDots(); }, box: renderBox, angles: renderAngles, edges: renderEdges, profiles: renderProfiles,
-     out: renderOut, players: renderPlayers, lines: renderLines })[S.view]?.();
+     out: renderOut, players: renderPlayers, lines: renderLines, bet: renderBet, props: renderProps, fb: renderFB, ladders: renderLadders, dfs: renderDFS })[S.view]?.();
 }
 
 // ------------------------------------------------------------------ wiring
@@ -1070,11 +1278,14 @@ $("views").addEventListener("click", e => {
     if (key === "outTeam") S.outSel = null; ts.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === ts))); renderView(); return; }
   const sg = e.target.closest(".seg button[data-v]"); if (sg) { const id = sg.parentElement.id;
     if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
+    if (id === "betPart") S.betPart = sg.dataset.v; if (id === "propMode") S.propMode = sg.dataset.v; if (id === "propScope") S.propScope = sg.dataset.v; if (id === "propOnly") S.propOnly = sg.dataset.v;
+    if (id === "fbKind") S.fbKind = sg.dataset.v; if (id === "ladScope") S.ladScope = sg.dataset.v; if (id === "dfsKind" || id === "dfsScope") { S[id] = sg.dataset.v; S.dfsSel = null; }
     sg.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === sg))); renderView(); return; }
   const p = e.target.closest("[data-pg]"); if (p) { S.page[p.dataset.pg] = (S.page[p.dataset.pg] || 0) + +p.dataset.d; renderView(); return; }
   const a = e.target.closest("[data-ang]"); if (a) { S.angSel = a.dataset.ang; renderAngles(); return; }
   const o = e.target.closest("[data-out]"); if (o) { S.outSel = o.dataset.out; renderOut(); return; }
-  const bk = e.target.closest("[data-back]"); if (bk) { if (bk.dataset.back === "ang") S.angSel = null; else S.outSel = null; renderView(); return; }
+  const dl = e.target.closest("[data-dfs]"); if (dl) { S.dfsSel = dl.dataset.dfs; renderDFS(); return; }
+  const bk = e.target.closest("[data-back]"); if (bk) { if (bk.dataset.back === "ang") S.angSel = null; else if (bk.dataset.back === "dfs") S.dfsSel = null; else S.outSel = null; renderView(); return; }
   const h = e.target.closest("[data-sort]"); if (h) { const k = h.dataset.sort; S.sortDir = S.sortKey === k ? -S.sortDir : -1; S.sortKey = k; renderPlayers(); }
 });
 const svg = $("court"), tip = $("tip"), cb = $("courtbox");
@@ -1089,6 +1300,7 @@ svg.addEventListener("pointermove", showTip); svg.addEventListener("pointerdown"
 svg.addEventListener("pointerleave", () => tip.hidden = true);
 document.addEventListener("keydown", e => { if (e.target.closest("input, select, textarea")) return;
   if (e.code === "Space") { e.preventDefault(); S.playing ? stop() : play(); } else if (e.key === "ArrowRight") jumpShot(1); else if (e.key === "ArrowLeft") jumpShot(-1); });
+$("views").addEventListener("toggle", e => { if (!e.target.matches?.("details.warn") || S.warnOpen === e.target.open) return; S.warnOpen = e.target.open; renderView(); }, true);
 let rz = 0; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (S.rp) { renderStatic(); } }, 120); });
 boot();
 })();
