@@ -237,24 +237,27 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
 .mobile-only { display: none }
 @media (max-width: 760px) { .mobile-only { display: inline-flex } .ins-two[data-part="alt"] > .panel:first-child { display: none } .ins-two[data-part="alt"] > .panel + .panel { display: flex } }
 
-/* ---- v2: dark look (Chris 2026-11-07) ---- */
+/* ---- v2: dark look, neutral blacks (Chris 2026-11-07); the light court stays ---- */
 :root {
-  --ground: #0b1017; --surface: #131a25; --ink: #e9eef6; --muted: #9ba8bb; --faint: #6c788b; --rule: #222c3b; --rule-strong: #334155;
-  --panel2: #1a2331; --accent-soft: color-mix(in srgb, var(--accent) 20%, transparent);
+  --ground: #08080a; --surface: #121214; --ink: #f2f2f3; --muted: #a3a3ab; --faint: #6f6f78; --rule: #232327; --rule-strong: #323237;
+  --panel2: #1b1b1e; --accent-soft: color-mix(in srgb, var(--accent) 20%, transparent);
   --good: #3fcf7e; --good-soft: rgba(63, 207, 126, .14); --bad: #ff6f5e; --bad-soft: rgba(255, 111, 94, .14);
-  --board: #0f1622; --board-ink: #ffffff; --board-muted: #94a2b8; --board-rule: #263246;
-  --court: #3a2a1e; --court-line: #d9c6a3; --paint: #47321f;
-  --t0: #3b82f6; --t1: #f97316;
+  --board: #0d0d0f; --board-ink: #ffffff; --board-muted: #9b9ba3; --board-rule: #2a2a2e;
+  --court: #f4efe6; --court-line: #c4b8a3; --paint: #ece4d6;
+  --t0: #2563eb; --t1: #ea580c;
   color-scheme: dark;
 }
 .seg button[aria-pressed="true"], .chip[aria-pressed="true"] { color: var(--ground) }
-.tip { background: #e9eef6; color: #0b1017 }
-.ball, #bdot { fill: #f28c28 } .pulse { stroke: #f28c28 }
-.warn { background: #2a2210; border-color: #5c4a1c; color: #f2d58a } .warn .q { background: #5c4a1c; color: #ffe7a6 } .warn .wd { color: var(--ink) }
+.tip { background: #f2f2f3; color: #08080a }
+.ball, #bdot { fill: #e8761c } .pulse { stroke: #e8761c }
+.lastlbl { fill: #121214 } .pop { fill: #121214 } #court .half-lbl { fill: #b8a98f; opacity: .5 }
+#court .logo circle { fill: #0a0a0a }
+.board { border: 1px solid var(--rule) }
+.panel { border-color: var(--rule) }
+.warn { background: #241d0c; border-color: #57461a; color: #f2d58a } .warn .q { background: #57461a; color: #ffe7a6 } .warn .wd { color: var(--ink) }
 .sig.lean { background: rgba(240, 180, 60, .15); color: #f0b43c } .sig.unc { background: rgba(203, 191, 154, .12); color: #cbbf9a }
 .rung.hot { border-color: var(--good); background: var(--good-soft) }
-.top .brand img.an { filter: invert(1) hue-rotate(180deg) }
-#teamChips, #ptChips, #legend, #shots, #ftlbl { display: none !important }
+#teamChips, #ptChips, #legend { display: none !important }
 #court .half-lbl { opacity: .35 }
 /* on-floor box */
 .five { gap: 10px; grid-template-columns: minmax(0, 1fr) !important }
@@ -275,7 +278,7 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
 .badge { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-weight: 800; color: #fff; letter-spacing: .02em; flex: 0 0 auto;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .18) }
 .popout { position: absolute; left: 50%; top: 7%; transform: translate(-50%, -8px); opacity: 0; pointer-events: none; z-index: 6; min-width: min(78%, 360px); max-width: 92%;
-  display: grid; grid-template-columns: 6px auto minmax(0, 1fr); align-items: center; gap: 0 12px; background: rgba(10, 15, 23, .94); border: 1px solid rgba(255, 255, 255, .12);
+  display: grid; grid-template-columns: 6px auto minmax(0, 1fr); align-items: center; gap: 0 12px; background: rgba(8, 8, 10, .94); border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 10px; padding: 0 16px 0 0; box-shadow: 0 10px 30px rgba(0, 0, 0, .45); transition: opacity .22s, transform .22s; overflow: hidden }
 .popout.on { opacity: 1; transform: translate(-50%, 0) }
 .popout .stripe { align-self: stretch } .popout .badge { width: 40px; height: 40px; font-size: 12px; margin: 10px 0 }
@@ -677,7 +680,7 @@ function jumpShot(dir) {
 const shotXY = e => e.team === 0 ? [e.x, e.y] : [94 - e.x, e.y];
 const shotPts = e => e.pts ?? (e.zone === "AB3" || e.zone === "CNR3" ? 3 : 2);   // misses carry no pts
 function renderShots() {   // during play: only the latest shot; at the final: the whole shot chart on the floor
-  const full = S.t >= S.endT; let h = "", last = -1;
+  const full = false; let h = "", last = -1;   // no shot chart at the final (Chris 11-07); the live labels stay
   const mark = (e, i) => { const [x, y] = shotXY(e), dim = (S.team >= 0 && e.team !== S.team) || (S.pt && e.play_type !== S.pt);
     const mk = e.made ? `<circle class="made" cx="${x}" cy="${y}" r=".75"/>` : `<path class="miss" d="M${x - .55} ${y - .55}L${x + .55} ${y + .55}M${x + .55} ${y - .55}L${x - .55} ${y + .55}"/>`;
     return `<g class="mk t${e.team}${dim ? " dim" : ""}" data-i="${i}">${mk}<circle class="hit" cx="${x}" cy="${y}" r="1.7"/></g>`; };
