@@ -1,1 +1,152 @@
-{}
+{
+ "1952": {
+  "file": "1952.png",
+  "abbr": "MIA",
+  "color": "98002E"
+ },
+ "1968": {
+  "file": "1968.png",
+  "abbr": "IND",
+  "color": "FFC633"
+ },
+ "1995": {
+  "file": "1995.png",
+  "abbr": "NOP",
+  "color": "002B5C"
+ },
+ "2002": {
+  "file": "2002.png",
+  "abbr": "NYK",
+  "color": "006BB6"
+ },
+ "2024": {
+  "file": "2024.png",
+  "abbr": "PHX",
+  "color": "E56020"
+ },
+ "2036": {
+  "file": "2036.png",
+  "abbr": "MEM",
+  "color": "0F586C"
+ },
+ "2046": {
+  "file": "2046.png",
+  "abbr": "DAL",
+  "color": "007DC5"
+ },
+ "2060": {
+  "file": "2060.png",
+  "abbr": "LAL",
+  "color": "FDB927"
+ },
+ "2065": {
+  "file": "2065.png",
+  "abbr": "MIN",
+  "color": "005083"
+ },
+ "2070": {
+  "file": "2070.png",
+  "abbr": "CHI",
+  "color": "CE1141"
+ },
+ "2076": {
+  "file": "2076.png",
+  "abbr": "SAS",
+  "color": "BAC3C9"
+ },
+ "2080": {
+  "file": "2080.png",
+  "abbr": "GSW",
+  "color": "FDB927"
+ },
+ "2082": {
+  "file": "2082.png",
+  "abbr": "PHI",
+  "color": "ED174C"
+ },
+ "2104": {
+  "file": "2104.png",
+  "abbr": "POR",
+  "color": "E03A3E"
+ },
+ "2126": {
+  "file": "2126.png",
+  "abbr": "BOS",
+  "color": "008348"
+ },
+ "2127": {
+  "file": "2127.png",
+  "abbr": "UTA",
+  "color": "4E008E"
+ },
+ "2143": {
+  "file": "2143.png",
+  "abbr": "WAS",
+  "color": "002B5C"
+ },
+ "2152": {
+  "file": "2152.png",
+  "abbr": "SAC",
+  "color": "724C9F"
+ },
+ "2172": {
+  "file": "2172.png",
+  "abbr": "DET",
+  "color": "ED174C"
+ },
+ "2178": {
+  "file": "2178.png",
+  "abbr": "TOR",
+  "color": "CE1141"
+ },
+ "2190": {
+  "file": "2190.png",
+  "abbr": "LAC",
+  "color": "ED174C"
+ },
+ "2200": {
+  "file": "2200.png",
+  "abbr": "HOU",
+  "color": "CE1141"
+ },
+ "2216": {
+  "file": "2216.png",
+  "abbr": "DEN",
+  "color": "4D90CD"
+ },
+ "2217": {
+  "file": "2217.png",
+  "abbr": "CLE",
+  "color": "860038"
+ },
+ "2226": {
+  "file": "2226.png",
+  "abbr": "BKN",
+  "color": "061922"
+ },
+ "2233": {
+  "file": "2233.png",
+  "abbr": "CHA",
+  "color": "1D1160"
+ },
+ "2240": {
+  "file": "2240.png",
+  "abbr": "ATL",
+  "color": "E13A3E"
+ },
+ "2241": {
+  "file": "2241.png",
+  "abbr": "MIL",
+  "color": "00471B"
+ },
+ "7106": {
+  "file": "7106.png",
+  "abbr": "ORL",
+  "color": "007DC5"
+ },
+ "17317": {
+  "file": "17317.png",
+  "abbr": "OKC",
+  "color": "007DC3"
+ }
+}
