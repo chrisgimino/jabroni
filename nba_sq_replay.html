@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SQ Replay Room</title>
+<title>SQ Sims</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -527,6 +527,24 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 .mk .made { stroke: #fff }
 #h0, #h1 { display: none }   /* desktop: the on-floor box covers the bottom apron, so the labels sit on the top one */
 @media (max-width: 760px) { .courtbox { aspect-ratio: 105 / 58 } #h0, #h1 { display: inline } #h0t, #h1t { display: none } }
+
+/* 2026-11-10 14:00 the shot callout + bigger shot markers */
+.callout.t0 { --c: var(--t0) } .callout.t1 { --c: var(--t1) }
+.callout .co-bg { fill: rgba(10, 10, 12, .94); stroke: rgba(255, 255, 255, .45); stroke-width: .14 }
+.callout .co-bar { fill: var(--c) }
+.callout .co-badge { fill: #1fb062 } .callout.no .co-badge { fill: #e5392d }
+.callout .co-name { font: 900 2.2px var(--text); fill: #fff; letter-spacing: .04em }
+.callout .co-sub { font: 700 1.55px var(--text); fill: #fff }
+.callout.ok .co-sub { fill: #7fe0a6 } .callout.no .co-sub { fill: #ff9a91 }
+.callout .co-sub2 { font: 600 1.35px var(--text); fill: #c9c9cf }
+.callout .co-res { font: 900 3.4px var(--disp, var(--text)); fill: #fff; text-anchor: middle; letter-spacing: .02em }
+.callout.no .co-res { font-size: 2.35px }
+.callout .co-in { animation: coPop .24s cubic-bezier(.2, 1.4, .4, 1); transform-box: view-box; transform-origin: 0 0 }
+@keyframes coPop { from { opacity: 0; transform: scale(.55) } to { opacity: 1; transform: scale(1) } }
+@media (prefers-reduced-motion: reduce) { .callout .co-in { animation: none } }
+.mk .made { stroke: #fff; stroke-width: .34 }
+.mk .ring { fill: none; stroke: #1fb062; stroke-width: .3 }
+.mk .miss { stroke: #ff3b2f; stroke-width: .5 } .mk .miss-u { stroke: #fff; stroke-width: .95; stroke-linecap: round; fill: none }
 </style>
 </head>
 <body>
@@ -534,7 +552,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 
 <div class="app">
   <header class="top">
-    <div class="brand">SQ <span>Replay</span></div>
+    <div class="brand">SQ <span>Sims</span></div>
     <div class="grow"><select id="gamePick" aria-label="Game"></select></div>
     <span class="upd" id="upd"></span>
     <label class="filebtn">Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
@@ -580,7 +598,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
               <g class="logo" aria-hidden="true"><circle cx="47" cy="25" r="5.8"/><image x="41.6" y="24.117" width="10.8" height="1.766" href="data:image/png;base64,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"/></g>
               <text class="half-lbl" id="h0" x="23.5" y="52.85" text-anchor="middle"></text>
               <text class="half-lbl" id="h1" x="70.5" y="52.85" text-anchor="middle"></text>
-              <g id="shots"></g><g id="dots"></g><g id="ftlbl"></g><circle id="bdot" class="ball" r=".6" style="display:none"/><g id="fx"></g>
+              <g id="shots"></g><g id="dots"></g><circle id="bdot" class="ball" r=".6" style="display:none"/><g id="fx"></g><g id="ftlbl"></g>
             </svg>
             <div class="tip" id="tip" hidden></div>
             <div class="boxov" id="boxov" hidden></div>
@@ -942,18 +960,52 @@ function jumpShot(dir) {
 // ------------------------------------------------------------------ replay view
 const shotXY = e => e.team === 0 ? [e.x, e.y] : [94 - e.x, e.y];
 const shotPts = e => e.pts ?? (e.zone === "AB3" || e.zone === "CNR3" ? 3 : 2);   // misses carry no pts
+
+// ------------------------------------------------------------------ the shot callout: who shot, made / missed, how (Chris 2026-11-10)
+function callout(o, tw) {   // o: {x, y (court ft), team, name, ok, res, sub}; tw = measured text width (else estimated)
+  const k = mobile() ? 1.45 : 1, NAME = String(o.name || "").toUpperCase();
+  tw = tw || Math.max(NAME.length * 1.45, (o.sub || "").length * .82, (o.sub2 || "").length * .72);
+  const BW = 7, H = 8.2, W = tw + 3.2 + BW;
+  const up = o.y + k * (-H - 2.1) >= -3.6;                        // room above the spot (the apron counts), else below
+  let bx = -W / 2; bx = Math.max(bx, (-5 - o.x) / k); bx = Math.min(bx, (99 - o.x) / k - W);
+  const by = up ? -H - 2 : 2, px = Math.min(Math.max(0, bx + 1.4), bx + W - 1.4);
+  const tri = up ? `M${px - 1.1} ${by + H - .05}L0 -.75L${px + 1.1} ${by + H - .05}Z` : `M${px - 1.1} ${by + .05}L0 .75L${px + 1.1} ${by + .05}Z`;
+  const xd = `M${o.x - .85} ${o.y - .85}L${o.x + .85} ${o.y + .85}M${o.x + .85} ${o.y - .85}L${o.x - .85} ${o.y + .85}`;
+  const spot = !o.spot ? "" : `<g class="mk t${o.team} top" pointer-events="none">${o.ok ? `<circle class="ring" cx="${o.x}" cy="${o.y}" r="1.75"/><circle class="made" cx="${o.x}" cy="${o.y}" r="1.1"/>`
+    : `<path class="miss-u" d="${xd}"/><path class="miss" d="${xd}"/>`}</g>`;
+  return spot + `<g class="callout t${o.team} ${o.ok ? "ok" : "no"}" transform="translate(${o.x.toFixed(2)} ${o.y.toFixed(2)}) scale(${k})"><g class="co-in">
+    <path class="co-bg" d="${tri}"/><rect class="co-bg" x="${bx}" y="${by}" width="${W}" height="${H}" rx=".8"/>
+    <rect class="co-bar" x="${bx}" y="${by}" width=".85" height="${H}" rx=".35"/>
+    <rect class="co-badge" x="${bx + W - BW}" y="${by}" width="${BW}" height="${H}" rx=".8"/><rect class="co-badge" x="${bx + W - BW}" y="${by}" width="1" height="${H}"/>
+    <text class="co-name" x="${bx + 1.8}" y="${by + 2.95}">${esc(NAME)}</text>
+    <text class="co-sub" x="${bx + 1.8}" y="${by + 5.2}">${esc(o.sub || "")}</text>
+    <text class="co-sub2" x="${bx + 1.8}" y="${by + 7.15}">${esc(o.sub2 || "")}</text>
+    <text class="co-res" x="${bx + W - BW / 2}" y="${by + H / 2 + 1.05}">${esc(o.res)}</text></g></g>`;
+}
 function renderShots() {   // during play: only the latest shot; at the final: the whole shot chart on the floor
   const full = false; let h = "", last = -1;   // no shot chart at the final (Chris 11-07); the live labels stay
   const mark = (e, i) => { const [x, y] = shotXY(e), dim = (S.team >= 0 && e.team !== S.team) || (S.pt && e.play_type !== S.pt);
-    const mk = e.made ? `<circle class="made" cx="${x}" cy="${y}" r=".75"/>` : `<path class="miss" d="M${x - .55} ${y - .55}L${x + .55} ${y + .55}M${x + .55} ${y - .55}L${x - .55} ${y + .55}"/>`;
+    const xd = `M${x - .85} ${y - .85}L${x + .85} ${y + .85}M${x + .85} ${y - .85}L${x - .85} ${y + .85}`;
+    const mk = e.made ? `<circle class="ring" cx="${x}" cy="${y}" r="1.75"/><circle class="made" cx="${x}" cy="${y}" r="1.1"/>` : `<path class="miss-u" d="${xd}"/><path class="miss" d="${xd}"/>`;
     return `<g class="mk t${e.team}${dim ? " dim" : ""}" data-i="${i}">${mk}<circle class="hit" cx="${x}" cy="${y}" r="1.7"/></g>`; };
-  let lastF = -1, fl = "";
+  let lastF = -1, co = null;
   for (let i = 0; i <= S.cur; i++) { const e = S.ev[i]; if (e.type === "fta") lastF = i; if (e.type !== "shot") continue; last = i; if (full) h += mark(e, i); }
   if (lastF > last && !full) { const e = S.ev[lastF], [x, y] = shotXY({ team: e.team, x: FT_U, y: 25 });   // at the line, above the players
-    fl = `<text class="lastlbl" x="${x}" y="${y - 2.2}" text-anchor="middle">${esc(lastName(e.player))} · FT ${e.k} of ${e.n} ${e.made ? "✓" : "✕"}</text>`; }
-  else if (last >= 0 && !full) { const e = S.ev[last], [x, y] = shotXY(e), ax = x < 12 ? "start" : x > 82 ? "end" : "middle";
-    h += mark(e, last) + `<text class="lastlbl" x="${x}" y="${y - 1.4}" text-anchor="${ax}">${esc(lastName(e.player))} · ${esc(PT[e.play_type] || "")}</text>`; }
-  $("shots").innerHTML = h; $("ftlbl").innerHTML = fl;
+    co = { x, y: y - .8, team: e.team, name: `${nm(e.player)} · ${tShort(e.team)}`, ok: !!e.made, res: e.made ? "+1" : "MISS",
+           sub: `${e.made ? "Made" : "Missed"} free throw ${e.k} of ${e.n}`, sub2: `Q${e.period} ${e.clock || ""}`.trim() }; }
+  else if (last >= 0 && !full) { const e = S.ev[last], [x, y] = shotXY(e);
+    const v = e.zone === "AB3" || e.zone === "CNR3" ? 3 : 2;
+    h += mark(e, last);
+    co = { x, y, spot: true, team: e.team, name: `${nm(e.player)} · ${tShort(e.team)}`, ok: !!e.made, res: e.made ? "+" + (e.pts || v) : "MISS",
+           sub: `${e.made ? "Made" : "Missed"} ${v === 3 ? "" : "2 "}${ZONE[e.zone] || e.zone || (v === 3 ? "3" : "")} · ${PT[e.play_type] || e.play_type || ""}`,
+           sub2: [`Q${e.period} ${e.clock || ""}`.trim(), e.made && e.assist ? "assist " + nm(e.assist) : "", !e.made && e.block ? "blocked by " + nm(e.block) : ""].filter(Boolean).join(" · ") }; }
+  $("shots").innerHTML = h;
+  if (co && !(Number.isFinite(+co.x) && Number.isFinite(+co.y))) co = null;   // no spot for it: no callout
+  const key = `${S.gid}|${co ? co.name + co.x + co.y + co.res + co.sub + co.sub2 : "-"}`;
+  if (key !== S.coKey) { S.coKey = key; $("ftlbl").innerHTML = co ? callout(co) : "";   // a new shot: drawn (and popped in) once
+    const g = co && $("ftlbl").querySelector(".callout");
+    if (g) { try { const tw = Math.max(...[...g.querySelectorAll(".co-name,.co-sub,.co-sub2")].map(t => t.getComputedTextLength()));
+      if (tw > 0) $("ftlbl").innerHTML = callout(co, tw); } catch (err) { /* keep the estimate */ } } }
 }
 
 // ------------------------------------------------------------------ the ten players: motion built from the play-by-play
