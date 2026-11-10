@@ -445,6 +445,10 @@ a.tkt:hover { filter: brightness(1.15) } a.tkt:focus-visible { outline: 3px soli
 .lnote { padding: 12px 16px; font: 600 13.5px/1.4 var(--text); color: var(--walnut) }
 .lnote.wait { color: var(--walnut2); font-size: 12.5px; border-top: 1px dashed rgba(44, 28, 12, .25); padding-top: 9px }
 .lanes-seg { display: none }
+.cdown { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 10px 16px 6px; padding: 10px 14px; border-radius: 10px; background: var(--board); color: var(--board-ink); border-bottom: 4px solid var(--accent) }
+.cdown .cd-l { font: 700 15px/1.2 var(--text); color: var(--board-muted) } .cdown .cd-t { font: 900 34px/1 var(--disp); letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--board-ink) }
+.cdown .cd-w { font: 600 13px/1.2 var(--text); color: var(--accent) }
+#parBoard > .cdown { margin: 0 0 10px }
 /* parlay cards on the same maple, big Bet-all button */
 .pcard { background: repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 23px), linear-gradient(180deg, var(--maple), var(--maple2)); color: var(--walnut); border: 0; border-radius: 12px; padding: 14px 16px }
 .pcard h4 { font: 800 22px/1.1 var(--disp); color: var(--walnut) } .pcard .ps { color: var(--walnut2); font-size: 12.5px }
@@ -1804,7 +1808,7 @@ function parlayCard(title, sub, legs, book, oddsTxt, sameGame) {
 }
 function renderParlay() {
   const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sg = SEC()?.sgp;
-  let h = `<div class="bb-h">Parlay of the day</div>`;
+  let h = cdHTML("parlay") + `<div class="bb-h">Parlay of the day</div>`;
   const pars = slots.map(s => [s.slot, s.sims?.[SIMKEY]?.parlay]).filter(([, p]) => p);
   h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`,
       `One book (${esc(p.book)}), four different games. All four hit in ${pctf(p.p, 1)} of our sims; the book pays ${odds(p.odds)}.`, p.legs, p.book, odds(p.odds))).join("")
@@ -2011,10 +2015,29 @@ function renderLanes(kind) {
   const seg = $("laneSeg_" + kind); if (seg) seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === scope)));
 }
 // best bets: the day's picks as lanes, newest slot first
+// countdown to the next release (picks + parlay of the day at 11:30 AM, 3:30 and 5:30 PM ET), ticking every second
+const DROPS = [[11, 30, "11:30 AM"], [15, 30, "3:30 PM"], [17, 30, "5:30 PM"]];
+function etNow() {   // seconds since midnight ET, from the browser's clock
+  const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23" })
+    .formatToParts(new Date()).filter(x => x.type !== "literal").map(x => [x.type, +x.value]));
+  return p.hour * 3600 + p.minute * 60 + p.second;
+}
+function nextDrop() {
+  const t = etNow(), d = DROPS.find(([h, m]) => h * 3600 + m * 60 > t);
+  return d ? { secs: d[0] * 3600 + d[1] * 60 - t, label: d[2] + " ET", tomorrow: false } : { secs: 86400 - t + 11 * 3600 + 1800, label: "11:30 AM ET tomorrow", tomorrow: true };
+}
+const hms = x => { const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), sec = x % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0"); };
+function cdHTML(what) {
+  const n = nextDrop(), last = etNow() - (DROPS.filter(([h, m]) => h * 3600 + m * 60 <= etNow()).map(([h, m]) => h * 3600 + m * 60).pop() ?? -1e9);
+  const fresh = last >= 0 && last < 600;   // a release takes a few minutes to run and push
+  return `<div class="cdown" data-cd="${what}"><span class="cd-l">${fresh ? `${esc(what)} releasing now` : `Next ${esc(what)}`}</span>
+    <span class="cd-t">${fresh ? "refresh in a few min" : hms(n.secs)}</span><span class="cd-w">${fresh ? "" : esc(n.label)}</span></div>`;
+}
+setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { if (el.offsetParent) el.outerHTML = cdHTML(el.dataset.cd); }); }, 1000);
 function renderBest() {
   const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
-  if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3><div class="lnote">The first picks come at 11:30 AM ET, then 3:30 and 5:30: 3–4 each time from the whole slate.</div></div>`; return; }
-  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate</small></h3><ol>` + slots.map(s => {
+  if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3>${cdHTML("best bets")}<div class="lnote">3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate.</div></div>`; return; }
+  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
     const ps = (s.sims?.[SIMKEY]?.picks || []).map(p => { const d = dec1(p.price); return { gid: p.gid, team: p.team, who: p.text, what: "", price: p.price, book: p.book, dl: p.dl, ev: p.ev, be: 1 / d, p: Math.min(.995, (1 + p.ev) / d) }; });
     return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor.</li>`); }).join("") + `</ol></div>`;
 }
