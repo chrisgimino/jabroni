@@ -2120,7 +2120,8 @@ function laneHTML(x, showGame) {
   const be = 100 * x.be, p = 100 * x.p, lg = x.team ? logoImg(x.gid, x.team, "") : "", t = x.team ? teamIdx(x.team) : -1;
   const col = String(x.gid) === String(S.gid) && t >= 0 ? `var(--t${t})` : "var(--accent)";
   const right = p > 78;   // our label flips to the left of the ball near the end of the track
-  const cap = `<span style="${be < 26 ? "left:0" : `right:${100 - be}%;padding-right:6px`}">needs <b>${be.toFixed(0)}%</b></span>` +
+  const tight = right && p - be < (mobile() ? 36 : 14);   // both labels would sit between the line and the ball
+  const cap = `<span style="${be < 26 || tight ? "left:0" : `right:${100 - be}%;padding-right:6px`}">needs <b>${be.toFixed(0)}%</b></span>` +
     `<span style="${right ? `right:${Math.max(0, 100 - p)}%;padding-right:12px;text-align:right` : `left:${p}%;padding-left:12px`}">we say <b>${p.toFixed(0)}%</b></span>`;
   const tk = x.pass ? `<div class="tkt pass" title="Past our number at every book now"><b>PASS</b><small>not a bet now</small></div>` : x.dl ? `<a class="tkt" href="${DLURL(x.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${esc(x.what)} at ${odds(x.price)} on ${esc(x.book || "")}"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><em>Bet now ›</em></a>`
     : `<div class="tkt off" title="No bet link from the book yet"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
