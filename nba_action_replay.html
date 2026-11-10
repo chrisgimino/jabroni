@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&display=swap">
 <style>
 /* Layout: one screen, never scrolls. Top bar -> navy scoreboard -> view tabs -> the one view on screen. Long lists page
    (‹ 1/3 ›) instead of scrolling; lists open a detail panel (beside on desktop, over the list on phones).
@@ -412,6 +413,47 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
 .chipbet { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; text-decoration: none; white-space: nowrap }
 .gain { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; background: var(--panel2); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 9px; margin-bottom: 6px }
 @media (max-width: 760px) { .cmp, .cmp-head { grid-template-columns: 50px minmax(0, 1fr) 92px minmax(0, 1fr) 50px } .edge-row { grid-template-columns: minmax(0, 1fr) 104px minmax(0, 1fr) } .ptrow { grid-template-columns: 92px minmax(0, 1fr) 48px } }
+
+/* 2026-11-10 lanes: each bet is a strip of hardwood; painted line = what the price needs, ball = our chance */
+:root { --maple: #e6c896; --maple2: #dcb983; --grain: rgba(120, 72, 28, .10); --walnut: #2c1c0c; --walnut2: #6b4a2a; --paintline: #fffaf0; --ball: #e8742a; --disp: "Big Shoulders Display", "Archivo", sans-serif }
+.lanes { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 12px; align-items: start }
+.lanes-top { display: flex; flex-direction: column; gap: 6px; min-width: 0 } .lanes-top > div:first-child { min-width: 0 }
+.lcol { min-height: 0; max-height: 100%; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
+  background: repeating-linear-gradient(0deg, var(--grain) 0 1px, transparent 1px 23px), linear-gradient(180deg, var(--maple), var(--maple2)); color: var(--walnut) }
+.lcol > h3 { margin: 0; padding: 12px 16px 8px; font: 800 24px/1 var(--disp); letter-spacing: .01em; color: var(--walnut); display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 2px solid var(--paintline) }
+.lcol > h3 small { font: 600 12.5px/1.2 var(--text); color: var(--walnut2) }
+.lcol ol { list-style: none; margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; flex: 1 }
+.lane { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 14px; align-items: center; padding: 11px 14px 12px 16px; border-bottom: 1px solid rgba(255, 250, 240, .55) }
+.ln-bet { font: 700 21px/1.05 var(--disp); color: var(--walnut); display: flex; align-items: center; gap: 7px; min-width: 0 }
+.ln-bet span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.ln-bet img { width: 22px; height: 22px; object-fit: contain; flex: 0 0 auto }
+.ln-bet i { font-style: normal; font-weight: 600; color: var(--walnut2) }
+.ln-ctx { font: 600 12px/1.3 var(--text); color: var(--walnut2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.track { position: relative; height: 14px; margin: 9px 0 3px; border-radius: 7px; background: rgba(44, 28, 12, .10); box-shadow: inset 0 1px 0 rgba(44, 28, 12, .12) }
+.track .gap { position: absolute; top: 2px; bottom: 2px; border-radius: 5px; opacity: .85 }
+.track .be { position: absolute; top: -4px; bottom: -4px; width: 3px; margin-left: -1.5px; background: var(--paintline); box-shadow: 0 0 0 1px rgba(44, 28, 12, .25) }
+.track .ball { position: absolute; top: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #f8a465 0 18%, var(--ball) 55%, #b9551a 100%); box-shadow: 0 1px 2px rgba(44, 28, 12, .45) }
+.track .ball::before, .track .ball::after { content: ""; position: absolute; inset: 0; border-radius: 50% }
+.track .ball::before { border-left: 1.4px solid rgba(44, 20, 6, .7); border-right: 1.4px solid rgba(44, 20, 6, .7); transform: scaleX(.42) }
+.track .ball::after { border-top: 1.4px solid rgba(44, 20, 6, .7); transform: scaleY(.0001); top: 50% }
+.cap { position: relative; height: 15px; font: 600 11.5px/15px var(--text); color: var(--walnut2) }
+.cap span { position: absolute; white-space: nowrap } .cap b { color: var(--walnut); font-weight: 800 }
+.tkt { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; height: 64px; border-radius: 6px; text-decoration: none;
+  background: var(--board); color: var(--board-ink); border-bottom: 4px solid var(--accent); box-shadow: 0 2px 0 rgba(44, 28, 12, .35) }
+.tkt b { font: 800 25px/1 var(--disp); letter-spacing: .01em } .tkt small { font: 600 11px/1.1 var(--text); color: var(--board-muted); max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.tkt em { font: 800 11px/1 var(--text); font-style: normal; color: var(--accent) }
+a.tkt:hover { filter: brightness(1.15) } a.tkt:focus-visible { outline: 3px solid var(--paintline); outline-offset: 2px }
+.tkt.off { opacity: .55 }
+.lnote { padding: 12px 16px; font: 600 13.5px/1.4 var(--text); color: var(--walnut) }
+.lnote.wait { color: var(--walnut2); font-size: 12.5px; border-top: 1px dashed rgba(44, 28, 12, .25); padding-top: 9px }
+.lanes-seg { display: none }
+@media (max-width: 760px) {
+  .lanes { grid-template-columns: minmax(0, 1fr) } .lanes[data-scope="game"] .lcol[data-scope="slate"], .lanes[data-scope="slate"] .lcol[data-scope="game"] { display: none }
+  .lanes-seg { display: inline-flex; align-self: flex-start } .lane { grid-template-columns: minmax(0, 1fr) 78px; gap: 10px; padding: 10px 10px 11px 12px }
+  .ln-bet { font-size: 19px; align-items: flex-start } .ln-bet span { white-space: normal } .ln-bet img { margin-top: 1px } .tkt { height: 58px } .tkt b { font-size: 22px }
+}
 </style>
 </head>
 <body>
@@ -500,7 +542,7 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
 
 
     <section class="view" data-v="best" hidden>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill scroll" id="bestBoard"></div></div>
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column" id="bestBoard"></div>
     </section>
 
     <section class="view" data-v="parlay" hidden>
@@ -512,33 +554,23 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
     </section>
 
     <section class="view" data-v="bet" hidden>
-      <div id="betWarn"></div><div id="betWhy"></div>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="betBoard"></div></div>
-      <div id="betTested"></div>
+      <div class="lanes-top"><div id="betWarn"></div><div class="seg lanes-seg" id="laneSeg_bet"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
+      <div class="lanes" id="lanes_bet"></div>
     </section>
 
     <section class="view" data-v="props" hidden>
-      <div class="row wrap"><div class="seg" id="propMode"><button data-v="main" aria-pressed="true">Main lines</button><button data-v="alt" aria-pressed="false">Alt lines &amp; milestones</button></div>
-        <div class="seg" id="propScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div>
-        <div class="seg" id="propOnly"><button data-v="all" aria-pressed="true">All</button><button data-v="picks" aria-pressed="false">Leans +</button></div></div>
-      <div id="propWarn"></div>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="propT"></div></div>
-      <div id="propTested"></div>
+      <div class="lanes-top"><div id="propsWarn2"></div><div class="seg lanes-seg" id="laneSeg_props"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
+      <div class="lanes" id="lanes_props"></div>
     </section>
 
     <section class="view" data-v="fb" hidden>
-      <div class="row wrap"><div class="seg" id="fbKind"><button data-v="first_basket" aria-pressed="true">First basket</button><button data-v="first_basket_method" aria-pressed="false">By method</button><button data-v="first_fg" aria-pressed="false">First FG</button><button data-v="first_3" aria-pressed="false">First 3</button><button data-v="most_points" aria-pressed="false">Most pts</button><button data-v="leading_rebounder" aria-pressed="false">Top reb</button><button data-v="specials" aria-pressed="false">Specials</button></div></div>
-      <div id="fbWarn"></div><div class="tfirst" id="fbTeam"></div>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="fbT"></div></div>
-      <div id="fbTested"></div>
+      <div class="lanes-top"><div id="fbWarn2"></div><div class="seg lanes-seg" id="laneSeg_fb"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
+      <div class="lanes" id="lanes_fb"></div>
     </section>
 
     <section class="view" data-v="ladders" hidden>
-      <div class="row wrap"><div class="seg" id="ladScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div>
-        <span class="lbl" style="margin-left:6px">Rungs the sim and the books together price best · green = EV 20%+, the level that won in 2025-26</span></div>
-      <div id="ladWarn"></div>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill" id="ladT"></div></div>
-      <div id="ladTested"></div>
+      <div class="lanes-top"><div id="laddersWarn2"></div><div class="seg lanes-seg" id="laneSeg_ladders"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
+      <div class="lanes" id="lanes_ladders"></div>
     </section>
 
     <section class="view" data-v="players" hidden>
@@ -1739,7 +1771,7 @@ function flashOf(k, x) {
 
 // ------------------------------------------------------------------ best bets / parlays / results (this page's own board)
 const BOARD = SIMKEY === "sq" ? "sq" : "action";
-const SLOT_LBL = { "11:00": "11 AM", "15:00": "3 PM", "17:00": "5 PM" };
+const SLOT_LBL = { "11:30": "11:30 AM", "15:30": "3:30 PM", "17:30": "5:30 PM", "11:00": "11 AM", "15:00": "3 PM", "17:00": "5 PM" };
 const WHY_LBL = { "always take": "Big edge", "daily mix": "Daily mix", edge: "Edge" };
 const DLMULTI = ids => `https://switchboard.actionnetwork.com/v2/deeplink?${ids.map((d, i) => `deeplinkId[${i}]=${encodeURIComponent(d)}`).join("&")}&context=action-articles`;
 const gameLogos = (gid, game) => String(game || "").split(" at ").map(ab => logoImg(gid, ab.trim())).join("");
@@ -1751,18 +1783,6 @@ function pickCard(p) {
   const lg = p.team ? logoImg(p.gid, p.team) : gameLogos(p.gid, p.game);
   return `<li class="bc"><div class="bc-m"><div class="bc-k">${esc(p.type)}<span class="sig ${p.why === "always take" ? "up" : "nt"}">${esc(WHY_LBL[p.why] || p.why || "")}</span></div>
     <div class="bc-b">${lg}${esc(p.text)}</div><div class="bc-s">${esc(p.game)} · Sim ${pctf(p.sim, 0)} · EV <span class="up">${evf(p.ev)}</span> · ${p.books} books</div></div>${priceBtn(p.price, p.book, p.dl)}</li>`;
-}
-function renderBest() {
-  const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse(), R = bb?.rules || {};
-  const fl = k => R[k] ? Math.round(100 * R[k].floor) + "%" : "";
-  const intro = `<div class="bb-intro">3–4 picks at 11 AM, 3 PM and 5 PM ET from the whole slate (${SIMKEY === "sq" ? "ShotQuality sims" : "our sims"} + the books). No bet under the floor
-    (props ${fl("prop") || "8%"}, alt lines ${fl("alt") || "20%"}, specials ${fl("special") || "15%"}, game lines ${fl("game") || "6%"} EV); edges too big to be real, uncertain games and one-book prices are left out; no repeats in a day.</div>`;
-  if (!slots.length) { el.innerHTML = intro + `<div class="empty-note">No picks yet today: the first ones come at 11 AM ET.</div>`; return; }
-  const top = el.scrollTop;
-  el.innerHTML = intro + slots.map(s => { const v = s.sims?.[SIMKEY] || {}, ps = v.picks || [];
-    return `<div class="bb-h">${esc(SLOT_LBL[s.slot] || s.slot)} ET<span class="sub2">${ps.length ? ps.length + " pick" + (ps.length > 1 ? "s" : "") : "no bet cleared the floor"}</span></div>` +
-      (ps.length ? `<ol class="betlist bb">${ps.map(pickCard).join("")}</ol>` : ""); }).join("");
-  el.scrollTop = top;
 }
 const legLi = l => `<li>${(l.team && logoImg(l.gid, l.team)) || "<span></span>"}<div><b>${esc(l.text)}</b><span>${esc(l.game)} · sim ${pctf(l.p, 0)}</span></div><em>${odds(l.odds)}</em></li>`;
 function parlayCard(title, sub, legs, book, oddsTxt) {
@@ -1776,7 +1796,7 @@ function renderParlay() {
   const pars = slots.map(s => [s.slot, s.sims?.[SIMKEY]?.parlay]).filter(([, p]) => p);
   h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`,
       `One book (${esc(p.book)}), four different games. All four hit in ${pctf(p.p, 1)} of our sims; the book pays ${odds(p.odds)}.`, p.legs, p.book, odds(p.odds))).join("")
-    : `<div class="empty-note">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The parlay of the day comes with the picks at 11 AM, 3 PM and 5 PM ET."}</div>`;
+    : `<div class="empty-note">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The parlay of the day comes with the picks at 11:30 AM, 3:30 PM and 5:30 PM ET."}</div>`;
   h += `<div class="bb-h">This game's same-game parlay</div>`;
   h += sg ? parlayCard(`${sg.legs.length} legs · ${esc(gameLbl(S.gid))}`, `Each leg +EV at ${esc(sg.book)}. Legs in one game move together, so the book prices the parlay itself (as separate bets: ${odds(sg.odds_if_separate)}).`,
       sg.legs, sg.book, "SGP") : `<div class="empty-note">No same-game parlay for this game: it needs 2+ legs that are +EV at one book.</div>`;
@@ -1832,6 +1852,84 @@ function renderResults() {
   el.innerHTML = h;
 }
 
+
+// ------------------------------------------------------------------ lanes: only the best bets you can make now (Chris 2026-11-10)
+// A bet shows when it clears the best-bet rules: EV at its floor and under its ceiling (too good = bad data), 2+ books,
+// nothing heavier than -200, alt lines 25%+ / specials 8%+ / game lines 25%+ to hit. Our chance = the one the EV uses.
+const LRULE = { prop: [.08, .35], alt: [.20, .80], special: [.15, .60], game: [.06, .20] };
+const LMIN = { alt: .25, special: .08, game: .25 };
+const dec1 = a => a > 0 ? 1 + a / 100 : 1 + 100 / Math.abs(a);
+const LANE_N = { game: 6, slate: 10 };
+function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kind, team, who, what, price, book, dl, ev, books, unc}]
+  const sec = SEC(gid); if (!sec) return [];
+  const out = [], g = sec.game || {}, F = sec.first || {};
+  const add = (k, x) => { if (x.price === null || x.price === undefined || x.ev === null || x.ev === undefined) return; out.push({ gid, k, books: 2, unc: false, ...x }); };
+  const nmr = r => r.name || nm(r.core_id);
+  if (kind === "bet") {
+    for (const r of g.moneyline?.teams || []) add("game", { team: r.team, who: r.team, what: "to win", price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.moneyline.books ?? 2, unc: !!g.moneyline.uncertain });
+    for (const r of g.spread?.teams || []) add("game", { team: r.team, who: r.team, what: sgn(r.line), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.spread.books ?? 2, unc: !!g.spread.uncertain });
+    if (g.total) for (const sd of ["over", "under"]) { const o = g.total[sd]; if (o) add("game", { team: null, who: sd === "over" ? "Over" : "Under", what: `${fmt(g.total.line)} total points`, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: g.total.books ?? 2, unc: !!g.total.uncertain }); }
+    for (const a of g.alt_team_totals || []) add("game", { team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${fmt(a.line)} points`, price: a.best_price, book: a.best_book, dl: a.dl, ev: a.ev, books: a.books ?? 2, unc: a.strength === "uncertain" });
+    if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (o) add("special", { team: null, who: "Overtime", what: sd, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: o.books ?? 2 }); }
+  }
+  if (kind === "props") {
+    for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (o) add("prop", { team: r.team, who: nmr(r), what: `${sd} ${fmt(r.line)} ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: o.price, book: o.book, dl: o.dl, ev: o.ev, books: r.books ?? 2, unc: !!r.uncertain }); }
+    for (const r of sec.alts || []) add("alt", { team: r.team, who: nmr(r), what: `${r.k}+ ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: r.price, book: r.book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: !!r.uncertain });
+  }
+  if (kind === "ladders") for (const l of sec.ladders || []) for (const r of l.rungs || [])
+    add("alt", { team: l.team, who: l.name || nm(l.core_id), what: `${r.k}+ ${STATW[String(l.stat).toLowerCase()] || l.stat}`, price: r.price, book: r.book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: !!l.uncertain });
+  if (kind === "fb") {
+    for (const [key, lab] of [["first_basket", "first basket"], ["first_fg", "first field goal"], ["first_3", "first 3-pointer"], ["most_points", "most points"], ["leading_rebounder", "most rebounds"]]) {
+      const m = F[key]; for (const r of m?.players || []) add("special", { team: r.team, who: nmr(r), what: lab, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev_blend ?? r.ev, books: r.books ?? 2, unc: !!m.uncertain }); }
+    const HOWS = { "Free Throw": "free throw", "Two Point Field Goal": "2-pointer", "Three Point Field Goal": "3-pointer" };
+    for (const r of F.first_basket_method || []) add("special", { team: r.team, who: nmr(r), what: `first basket on a ${HOWS[r.method] || r.method}`, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+    for (const r of F.specials || []) add("special", { team: r.team, who: nmr(r), what: String(r.market).replace(/^Double-double$/, "double-double").replace(/^Triple-double$/, "triple-double"), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+  }
+  for (const x of out) { const d = dec1(x.price); x.be = 1 / d; x.p = Math.min(.995, (1 + x.ev) / d); }
+  return out;
+}
+const laneOK = x => { const R = LRULE[x.k]; return x.ev >= R[0] && x.ev <= R[1] && x.price >= -200 && (x.books ?? 2) >= 2 && x.p >= (LMIN[x.k] || 0); };
+const laneRank = (a, b) => b.ev / LRULE[b.k][0] - a.ev / LRULE[a.k][0];
+function laneHTML(x, showGame) {
+  const be = 100 * x.be, p = 100 * x.p, lg = x.team ? logoImg(x.gid, x.team, "") : "", t = x.team ? teamIdx(x.team) : -1;
+  const col = String(x.gid) === String(S.gid) && t >= 0 ? `var(--t${t})` : "var(--accent)";
+  const right = p > 78;   // our label flips to the left of the ball near the end of the track
+  const cap = `<span style="${be < 26 ? "left:0" : `right:${100 - be}%;padding-right:6px`}">needs <b>${be.toFixed(0)}%</b></span>` +
+    `<span style="${right ? `right:${Math.max(0, 100 - p)}%;padding-right:12px;text-align:right` : `left:${p}%;padding-left:12px`}">we say <b>${p.toFixed(0)}%</b></span>`;
+  const tk = x.dl ? `<a class="tkt" href="${DLURL(x.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${esc(x.what)} at ${odds(x.price)} on ${esc(x.book || "")}"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><em>Bet</em></a>`
+    : `<div class="tkt off" title="No bet link from the book yet"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
+  return `<li class="lane"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
+    ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}
+    <div class="track" role="img" aria-label="Needs ${be.toFixed(0)}% to break even, we say ${p.toFixed(0)}%"><span class="gap" style="left:${be}%;width:${Math.max(.5, p - be)}%;background:${col}"></span><span class="be" style="left:${be}%"></span><span class="ball" style="left:${p}%"></span></div>
+    <div class="cap">${cap}</div></div>${tk}</li>`;
+}
+const STATW = { points: "points", rebounds: "rebounds", assists: "assists", "3pm": "threes", "pts+reb+ast": "pts + reb + ast", "pts+reb": "pts + reb", "pts+ast": "pts + ast",
+  "reb+ast": "reb + ast", steals: "steals", blocks: "blocks", "stl+blk": "steals + blocks", turnovers: "turnovers" };
+const POOL_TXT = { bet: "game lines", props: "props", fb: "first basket and specials", ladders: "alt lines" };
+function renderLanes(kind) {
+  const el = $("lanes_" + kind); if (!el) return;
+  const mine = poolOf(kind, S.gid), good = mine.filter(laneOK), held = good.filter(x => x.unc), clean = good.filter(x => !x.unc).sort(laneRank).slice(0, LANE_N.game);
+  const scope = S.laneScope || (clean.length ? "game" : "slate");   // nothing here: the slate first
+  el.dataset.scope = scope;
+  const slate = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, LANE_N.slate);
+  const warnNames = [...new Set((INS()?.warnings || []).flatMap(w => (w.players || []).map(p => p.name)))];
+  const wait = held.length ? `<div class="lnote wait">${held.length} more ${held.length > 1 ? "bets wait" : "bet waits"} on ${esc(andList(warnNames))}'s status.</div>` : "";
+  const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${clean.length ? `${clean.length} worth betting` : ""}</small></h3>` +
+    (clean.length ? `<ol>${clean.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
+  const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${slate.length ? `top ${slate.length}` : ""}</small></h3>` +
+    (slate.length ? `<ol>${slate.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">Nothing on the slate beats its price right now.</div>`) + `</div>`;
+  el.innerHTML = gameCol + slateCol;
+  const seg = $("laneSeg_" + kind); if (seg) seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === scope)));
+}
+// best bets: the day's picks as lanes, newest slot first
+function renderBest() {
+  const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
+  if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3><div class="lnote">The first picks come at 11:30 AM ET, then 3:30 and 5:30: 3–4 each time from the whole slate.</div></div>`; return; }
+  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate</small></h3><ol>` + slots.map(s => {
+    const ps = (s.sims?.[SIMKEY]?.picks || []).map(p => { const d = dec1(p.price); return { gid: p.gid, team: p.team, who: p.text, what: "", price: p.price, book: p.book, dl: p.dl, ev: p.ev, be: 1 / d, p: Math.min(.995, (1 + p.ev) / d) }; });
+    return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor.</li>`); }).join("") + `</ol></div>`;
+}
+
 // ------------------------------------------------------------------ views
 function showView() {
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
@@ -1840,7 +1938,8 @@ function showView() {
 }
 function renderView() {
   if (!S.rp) return;
-  ({ replay: () => { renderShots(); renderFeed(); renderFive(); drawDots(); }, box: renderBox, angles: renderAngles, best: renderBest, parlay: renderParlay, results: renderResults, players: renderPlayers, lines: renderLines, bet: renderBet, props: renderProps, fb: renderFB, ladders: renderLadders, dfs: renderDFS })[S.view]?.();
+  ({ replay: () => { renderShots(); renderFeed(); renderFive(); drawDots(); }, box: renderBox, angles: renderAngles, best: renderBest, parlay: renderParlay, results: renderResults, players: renderPlayers, lines: renderLines, bet: () => { $("betWarn").innerHTML = warnHTML(); renderLanes("bet"); }, props: () => { $("propsWarn2").innerHTML = warnHTML(); renderLanes("props"); },
+     fb: () => { $("fbWarn2").innerHTML = warnHTML(); renderLanes("fb"); }, ladders: () => { $("laddersWarn2").innerHTML = warnHTML(); renderLanes("ladders"); }, dfs: renderDFS })[S.view]?.();
 }
 
 // ------------------------------------------------------------------ wiring
@@ -1857,7 +1956,7 @@ $("teamChips").addEventListener("click", e => { const sb = e.target.closest("[da
   $("teamChips").querySelectorAll("[data-team]").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.team === S.team))); renderShots(); });
 $("ptChips").addEventListener("click", e => { const b = e.target.closest("[data-pt]"); if (!b) return; S.pt = b.dataset.pt || null;
   $("ptChips").querySelectorAll("[data-pt]").forEach(x => x.setAttribute("aria-pressed", String((x.dataset.pt || null) === S.pt))); renderShots(); });
-$("views").addEventListener("click", e => {
+$("views").addEventListener("click", e => { const lb = e.target.closest("button[data-lane]"); if (lb) { S.laneScope = lb.dataset.lane; renderView(); return; }
   const ts = e.target.closest(".team-seg button"); if (ts) { const key = ts.closest(".team-seg").dataset.key; S[key] = +ts.dataset.t;
     if (key === "outTeam") S.outSel = null; ts.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === ts))); renderView(); return; }
   const sg = e.target.closest(".seg button[data-v]"); if (sg) { const id = sg.parentElement.id;
