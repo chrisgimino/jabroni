@@ -755,7 +755,7 @@ const qName = p => p <= 4 ? ["1st", "2nd", "3rd", "4th"][p - 1] : (p === 5 ? "OT
 function renderStatic() {
   const rp = S.rp;
   for (const t of [0, 1]) {
-    const lu = logoURL(S.mu?.core_teams?.[t]), sw = lu ? `<img class="tlogo" src="${lu}" alt="" onerror="this.remove()">` : `<i style="background:var(--t${t})"></i>`;
+    const lu = logoURL(S.mu?.core_teams?.[t]), sw = logoReady(lu) ? `<img class="tlogo" src="${lu}" alt="">` : `<i style="background:var(--t${t})"></i>`;
     $("n" + t).innerHTML = t === 0 ? sw + esc(mobile() ? tShort(t) : tFull(t)) : esc(mobile() ? tShort(t) : tFull(t)) + sw;
     const tm = rp.teams[t];
     $("l" + t).textContent = `Vegas ${fmt(tm.vegas_total)} · SQ ${fmt(tm.sq_mean_points)}`;
@@ -1767,12 +1767,19 @@ function renderFive() {   // the box score on the court: the ten on the floor, o
 
 
 // ------------------------------------------------------------------ logos (pushed once to nba_logos/ by the nightly's logos mode)
-const LOGO = { map: null };
+const LOGO = { map: null, ok: new Map(), t: 0 };
+function logoReady(u) {   // a logo is drawn only once it has loaded: a missing file never flashes in and out on each re-render
+  if (!u) return false;
+  if (!LOGO.ok.has(u)) { LOGO.ok.set(u, null); const im = new Image();
+    im.onload = () => { LOGO.ok.set(u, true); clearTimeout(LOGO.t); LOGO.t = setTimeout(() => { if (S.rp) renderStatic(); }, 200); };
+    im.onerror = () => LOGO.ok.set(u, false); im.src = u; }
+  return LOGO.ok.get(u) === true;
+}
 fetch("nba_logos/index.json", { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(m => { LOGO.map = m || {}; if (S.rp) renderStatic(); });
 const muOf = gid => (gid === undefined || String(gid) === String(S.gid)) ? S.mu : S.local[gid]?.mu;
 const logoURL = core => !core ? null : LOGO.map?.[core]?.file ? `nba_logos/${LOGO.map[core].file}` : `nba_logos/${core}.png`;   // the file by team ID even without the list
 const logoImg = (gid, ab, cls = "tsw") => { const m = muOf(gid), i = m?.teams?.indexOf(ab), u = i >= 0 ? logoURL(m?.core_teams?.[i]) : null;
-  return u ? `<img class="${cls}" src="${u}" alt="" loading="lazy" onerror="this.remove()">` : ""; };
+  return logoReady(u) ? `<img class="${cls}" src="${u}" alt="">` : ""; };
 
 // ------------------------------------------------------------------ bet flashes (Bets panel): green toward the bet, red against
 function flashOf(k, x) {
