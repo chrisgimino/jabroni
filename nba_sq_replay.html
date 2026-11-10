@@ -292,6 +292,63 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
   .five { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 8px } .five td { height: 19px; font-size: 12px } .five th { height: 17px }
   .moments li { height: 42px }
 }
+/* ---- v3 (Chris 2026-11-10): featured Bets panel, box score overlay on the court, every bet links out ---- */
+.rp { grid-template-columns: minmax(0, 1fr) minmax(380px, 44%) }
+.bets { flex: 1; min-height: 0; gap: 8px; padding: 12px 12px 10px }
+.bets-hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.bets-t { font-size: 19px; font-weight: 800; letter-spacing: .02em; margin-right: auto }
+.bets-sub { font-size: 12px; color: var(--muted); line-height: 1.35; flex: 0 0 auto }
+.bets-sub b { color: var(--ink) }
+.bets-fill { overflow-y: auto; overscroll-behavior: contain }
+.betlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+.betlist li.pe { font-size: 13px; color: var(--muted); padding: 10px 2px }
+.bc { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--panel2); border: 1px solid var(--rule); border-radius: 9px; padding: 8px 8px 8px 11px }
+.bc-m { min-width: 0 }
+.bc-k { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 6px; align-items: center; min-height: 16px }
+.bc-b { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px }
+.bc-b .tsw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px }
+.bc-s { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.bc-r { font-size: 12px; margin-top: 3px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.bc-r.won { color: var(--good); font-weight: 700 } .bc-r.live { color: var(--ink) }
+.bc.cashed { border-color: color-mix(in srgb, var(--good) 55%, var(--rule)); background: color-mix(in srgb, var(--good) 7%, var(--panel2)) }
+.bc-p { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 82px; max-width: 104px; padding: 6px 8px; border-radius: 8px;
+  background: var(--accent); color: var(--accent-ink, #fff); text-decoration: none; line-height: 1.15; border: 1px solid var(--accent) }
+.bc-p b { font-size: 16.5px; font-weight: 800 } .bc-p small { font-size: 10.5px; opacity: .85; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bc-p span { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; opacity: .9; margin-top: 1px }
+a.bc-p:hover { filter: brightness(1.08) }
+.bc-p.off { background: var(--surface); color: var(--ink); border-color: var(--rule-strong) }
+.bc.none { grid-template-columns: minmax(0, 1fr); opacity: .62 } .bc.none .bc-b { font-size: 13px; font-weight: 600; color: var(--muted) }
+.rgs { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap }
+.rg { font-size: 11.5px; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 1px 6px; color: var(--ink); text-decoration: none; white-space: nowrap }
+a.rg:hover { border-color: var(--accent) }
+.rg.hit { border-color: var(--good); background: var(--good-soft) } .rg.miss { opacity: .5 }
+a.px { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--accent) } a.px:hover { color: var(--accent) }
+a.rung { color: inherit; text-decoration: none; display: block } a.rung:hover { border-color: var(--accent) }
+.boxseg { position: absolute; left: 8px; top: 8px; z-index: 5; background: rgba(8, 8, 10, .82); border-color: rgba(255, 255, 255, .18) }
+.boxseg button { font-size: 11.5px; padding: 3px 8px; color: #c9c9cf }
+.boxseg button[aria-pressed="true"] { background: #f2f2f3; color: #08080a }
+.boxov { position: absolute; z-index: 4; background: rgba(8, 8, 10, .86); backdrop-filter: blur(2px); border: 1px solid rgba(255, 255, 255, .12); border-radius: 8px;
+  color: #f2f2f3; padding: 6px 10px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px }
+.boxov[hidden] { display: none }
+.boxov[data-mode="floor"] { left: 8px; right: 8px; bottom: 8px }
+.boxov[data-mode="full"] { left: 8px; right: 8px; top: 40px; bottom: 8px; overflow: auto; align-content: start }
+.boxov table { width: 100%; border-collapse: collapse }
+.boxov th { font-size: 10px; font-weight: 700; color: #a3a3ab; text-align: right; padding: 0 4px; height: 18px; letter-spacing: .04em; white-space: nowrap }
+.boxov th:first-child { text-align: left; text-transform: uppercase; letter-spacing: .07em; font-size: 10.5px }
+.boxov td { font-size: 12.5px; text-align: right; padding: 0 4px; height: 20px; border-top: 1px solid rgba(255, 255, 255, .09); white-space: nowrap }
+.boxov td:first-child { text-align: left; max-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis }
+.boxov td b { font-weight: 800 }
+.boxov tr.on td:first-child { font-weight: 800 } .boxov tr.on td:first-child::after { content: " \2022"; color: var(--accent) }
+.boxov tr.hot td:first-child { color: var(--accent) }
+@media (max-width: 760px) {
+  .rp { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) }
+  .bets { padding: 9px 9px 8px } .bets-t { font-size: 16px } .bets-hd .seg button { font-size: 12px; padding: 4px 8px }
+  .bc { padding: 7px 7px 7px 9px; gap: 8px } .bc-b { font-size: 13.5px } .bc-p { min-width: 70px } .bc-p b { font-size: 15px }
+  .boxov { gap: 8px; padding: 4px 6px } .boxov[data-mode="floor"] { left: 4px; right: 4px; bottom: 4px }
+  .boxov[data-mode="full"] { grid-template-columns: minmax(0, 1fr); left: 4px; right: 4px; top: 32px; bottom: 4px }
+  .boxov td { font-size: 11px; height: 16px } .boxov th { height: 15px } .boxov .hide-m { display: none }
+  .boxseg { left: 4px; top: 4px } .boxseg button { font-size: 10.5px; padding: 2px 6px }
+}
 </style>
 </head>
 <body>
@@ -342,6 +399,8 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
               <g id="shots"></g><g id="dots"></g><g id="ftlbl"></g><circle id="bdot" class="ball" r=".6" style="display:none"/><g id="fx"></g>
             </svg>
             <div class="tip" id="tip" hidden></div>
+            <div class="boxov" id="boxov" hidden></div>
+            <div class="seg boxseg" id="boxOv" aria-label="Box score on the court"><button data-v="off">Box off</button><button data-v="floor">On floor</button><button data-v="full">Full box</button></div>
           </div>
           <div class="ctl">
             <button class="btn primary" id="play">Play</button>
@@ -355,10 +414,10 @@ table.t { border-collapse: collapse; width: 100%; table-layout: auto }
           <div class="legend" id="legend"></div>
         </div>
         <div class="rp-right">
-          <div class="panel five" id="five"></div>
-          <div class="panel" style="flex:1;min-height:0">
-            <div class="row"><div class="seg" id="feedMode"><button data-v="moments" aria-pressed="true">Moments</button><button data-v="pbp" aria-pressed="false">Play-by-play</button></div><span class="spacer"></span><span class="lbl" id="feedCt"></span></div>
-            <div class="fill"><ol class="feed" id="feed"></ol></div>
+          <div class="panel bets" id="betsPanel">
+            <div class="bets-hd"><div class="bets-t">Bets</div><div class="seg" id="betsMode"><button data-v="trial" aria-pressed="true">From this sim</button><button data-v="all" aria-pressed="false">Best of all sims</button></div></div>
+            <div class="bets-sub" id="betsSub"></div>
+            <div class="fill bets-fill"><ol class="betlist" id="feed"></ol></div>
           </div>
         </div>
       </div>
@@ -572,6 +631,7 @@ function prepare() {
   S.endT = S.ev.length ? S.ev[S.ev.length - 1].t : 2880;
   S.endG = S.ev.length ? S.ev[S.ev.length - 1].gt : 2880;
   S.periods = S.ev.filter(e => e.type === "period_end").map(e => e.t);
+  S.tr = trialFacts(); S.betC = null;
   S.muP = {}; for (const p of (S.mu?.players || [])) S.muP[p.core_id] = p;
   S.gs = {}; for (const [id, p] of Object.entries(S.byId)) { const m = Math.max(6, +p.sq_min || 0);   // guard-like (+) to big-like (−)
     S.gs[id] = (1.6 * (+p.sq_ast || 0) + .6 * (+p.sq_fg3m || 0) - .55 * (+p.sq_reb || 0) - 1.6 * (+p.sq_blk || 0)) / m; }
@@ -1015,7 +1075,7 @@ function pop(x, y, txt) { const el = document.createElementNS("http://www.w3.org
   const t0 = performance.now(); (function f(now) { const k = Math.min(1, (now - t0) / 700); el.setAttribute("y", y - 2 * k); el.style.opacity = String(1 - k);
     if (k < 1) requestAnimationFrame(f); else el.remove(); })(t0); }
 function fit(el, rowH, reserve = 0) { return Math.max(1, Math.floor((el.clientHeight - reserve) / rowH)); }
-function renderFeed() { return renderMoments(); }
+function renderFeed() { return renderBets(); }
 function renderFeedPBP() {
   $("feed").className = "feed";
   const box = $("feed").parentElement, n = fit(box, 44), rows = [];
@@ -1026,7 +1086,7 @@ function renderFeedPBP() {
   $("feed").innerHTML = rows.join("") || `<li class="pe">Tip-off · press Play</li>`;
   $("feedCt").textContent = `${S.cur + 1} / ${S.ev.length}`;
 }
-function renderFive() {
+function renderFiveOld() {
   const st = S.st; if (!st) return;
   $("five").innerHTML = [0, 1].map(t => { const ids = st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => String(p.core_id || p.rg_id));
     return `<table><thead><tr><th style="color:var(--t${t})">${esc(tShort(t))} on floor</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>` +
@@ -1212,20 +1272,20 @@ function renderBet() {
   $("betTested").innerHTML = testedHTML("moneyline", SIMKEY === "sq" ? "sq_lines" : "spread"); $("betTwo").dataset.part = S.betPart || "lines";
   if (!sec || !sec.game || !Object.keys(sec.game).length) { noIns($("betT")); $("betAlt").innerHTML = ""; return; }
   const g = sec.game, rows = [];
-  const R = (bet, line, price, book, sim, mkt, extra) => rows.push(`<tr><td>${bet}</td><td>${line}</td><td>${odds(price)}${book ? `<small>${esc(book)}</small>` : ""}</td><td><b>${pctf(sim, 1)}</b></td><td>${pctf(mkt, 1)}</td>
+  const R = (bet, line, price, book, sim, mkt, extra, dl) => rows.push(`<tr><td>${bet}</td><td>${line}</td><td>${px(price, book, dl)}</td><td><b>${pctf(sim, 1)}</b></td><td>${pctf(mkt, 1)}</td>
     <td class="${sim !== null && mkt !== null && sim - mkt > .02 ? "up" : sim !== null && mkt !== null && sim - mkt < -.02 ? "down" : ""}">${sim !== null && mkt !== null ? sgn(100 * (sim - mkt), 1) : "–"}</td><td class="hide-m">${extra || ""}</td></tr>`);
   for (const r of g.moneyline?.teams || []) R(`${tsw(r.team)}${esc(r.team)} win`, "", r.best_price, r.best_book, r.sim, r.market,
-    r.confidence ? `sim ${esc(r.confidence.band)} → won ${pctf(r.confidence.backtest_real)}` : "");
-  for (const r of g.spread?.teams || []) R(`${tsw(r.team)}${esc(r.team)} spread`, sgn(r.line), r.best_price, r.best_book, r.sim, r.market, "coin flip at the close");
-  if (g.total) { R("Over", fmt(g.total.line), g.total.over?.best_price, g.total.over?.best_book, g.total.sim_over, g.total.market_over, "coin flip at the close");
-    R("Under", fmt(g.total.line), g.total.under?.best_price, g.total.under?.best_book, g.total.sim_over === null ? null : 1 - g.total.sim_over, g.total.market_over === null ? null : 1 - g.total.market_over, ""); }
+    r.confidence ? `sim ${esc(r.confidence.band)} → won ${pctf(r.confidence.backtest_real)}` : "", r.dl);
+  for (const r of g.spread?.teams || []) R(`${tsw(r.team)}${esc(r.team)} spread`, sgn(r.line), r.best_price, r.best_book, r.sim, r.market, "coin flip at the close", r.dl);
+  if (g.total) { R("Over", fmt(g.total.line), g.total.over?.best_price, g.total.over?.best_book, g.total.sim_over, g.total.market_over, "coin flip at the close", g.total.over?.dl);
+    R("Under", fmt(g.total.line), g.total.under?.best_price, g.total.under?.best_book, g.total.sim_over === null ? null : 1 - g.total.sim_over, g.total.market_over === null ? null : 1 - g.total.market_over, "", g.total.under?.dl); }
   for (const r of g.team_totals?.teams || []) R(`${tsw(r.team)}${esc(r.team)} over`, fmt(r.line), null, null, r.sim_over, r.market_over, `sim avg ${fmt(r.sim_mean)}`);
   insTable($("betT"), "betT", `<tr><th>Bet</th><th>Line</th><th>Best</th><th>Sim</th><th title="the books' average no-vig chance">Books</th><th>Sim − books</th><th class="hide-m">Backtest says</th></tr>`, rows);
   const alt = [];
-  for (const a of g.alt_team_totals || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} ${esc(a.side)} ${fmt(a.line)}</td><td>${odds(a.best_price)}<small>${esc(a.best_book)}</small></td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
-  for (const a of g.winning_margin || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} by ${esc(a.band)}</td><td>${odds(a.best_price)}<small>${esc(a.best_book)}</small></td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
+  for (const a of g.alt_team_totals || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} ${esc(a.side)} ${fmt(a.line)}</td><td>${px(a.best_price, a.best_book, a.dl)}</td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
+  for (const a of g.winning_margin || []) alt.push(`<tr><td>${tsw(a.team)}${esc(a.team)} by ${esc(a.band)}</td><td>${px(a.best_price, a.best_book, a.dl)}</td><td>${pctf(a.sim, 1)}</td><td class="${evc(a.ev)}">${evf(a.ev)}</td><td>${strTag(a.strength)}</td></tr>`);
   if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (!o) continue; const p = sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim;
-    alt.push(`<tr><td>Overtime ${sd}</td><td>${odds(o.best_price)}<small>${esc(o.best_book)}</small></td><td>${pctf(p, 1)}</td><td class="${evc(o.ev)}">${evf(o.ev)}</td><td></td></tr>`); }
+    alt.push(`<tr><td>Overtime ${sd}</td><td>${px(o.best_price, o.best_book, o.dl)}</td><td>${pctf(p, 1)}</td><td class="${evc(o.ev)}">${evf(o.ev)}</td><td></td></tr>`); }
   insTable($("betAlt"), "betAlt", `<tr><th>Bet</th><th>Best</th><th>Sim</th><th>EV</th><th></th></tr>`, alt.length ? alt : [`<tr><td colspan="5">Nothing the sim prices 5%+ over the best price</td></tr>`]);
 }
 
@@ -1241,11 +1301,11 @@ function renderProps() {
   if (!SEC() && S.propScope !== "slate") { noIns($("propT")); return; }
   const rs = propRows(), sl = S.propScope === "slate";
   const rows = S.propMode === "alt"
-    ? rs.map(r => `<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td>${sl ? `<td class="hide-m">${esc(gameLbl(r.gid))}</td>` : ""}<td>${esc(r.stat)} ${r.k}+</td><td>${odds(r.price)}<small>${esc(r.book)}</small></td>
+    ? rs.map(r => `<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td>${sl ? `<td class="hide-m">${esc(gameLbl(r.gid))}</td>` : ""}<td>${esc(r.stat)} ${r.k}+</td><td>${px(r.price, r.book, r.dl)}</td>
         <td>${pctf(r.sim, 1)}</td><td>${pctf(r.market, 1)}</td><td><b>${pctf(r.blend, 1)}</b></td><td class="${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`)
     : rs.map(r => { const s = r.pick, b = s ? r[s] : null;
         return `<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td>${sl ? `<td class="hide-m">${esc(gameLbl(r.gid))}</td>` : ""}<td>${esc(r.stat)} ${fmt(r.line)}</td><td>${pctf(r.sim_over, 1)}</td><td>${pctf(r.market_over, 1)}<small>${r.books}</small></td>
-        <td><b>${pctf(r.blend_over, 1)}</b></td><td>${s ? esc(s[0].toUpperCase() + s.slice(1)) : ""} ${b ? odds(b.price) : ""}${b ? `<small>${esc(b.book)}</small>` : ""}</td><td class="${evc(b?.ev)}">${evf(b?.ev)}</td><td>${strTag(r.strength)}</td></tr>`; });
+        <td><b>${pctf(r.blend_over, 1)}</b></td><td>${s ? esc(s[0].toUpperCase() + s.slice(1)) : ""} ${b ? px(b.price, b.book, b.dl) : ""}</td><td class="${evc(b?.ev)}">${evf(b?.ev)}</td><td>${strTag(r.strength)}</td></tr>`; });
   const head = S.propMode === "alt"
     ? `<tr><th>Player</th>${sl ? `<th class="hide-m">Game</th>` : ""}<th>Bet</th><th>Best</th><th>Sim</th><th title="books' median chance">Books</th><th title="sim and books together">Blend</th><th>EV</th><th></th></tr>`
     : `<tr><th>Player</th>${sl ? `<th class="hide-m">Game</th>` : ""}<th>Line</th><th>Sim over</th><th title="books' average no-vig over chance (books)">Books</th><th title="sim and books together">Blend</th><th>Pick · best</th><th>EV</th><th></th></tr>`;
@@ -1260,12 +1320,12 @@ function renderFB() {
   $("fbTeam").innerHTML = tf.length === 2 ? `<span>Scores first</span><b>${esc(tf[0].team)} ${pctf(tf[0].sim)}</b><span class="splitbar"><i style="width:${100 * tf[0].sim}%;background:var(--t0)"></i><i style="flex:1;background:var(--t1)"></i></span><b>${pctf(tf[1].sim)} ${esc(tf[1].team)}</b><span>opening-tip odds + who shoots first</span>` : "";
   const k = S.fbKind, rows = [];
   if (k === "first_basket_method" || k === "specials") {
-    for (const r of F[k] || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${esc(r.method || r.market)}</td><td>${odds(r.best_price)}<small>${esc(r.best_book)}</small></td><td><b>${pctf(r.sim, 1)}</b></td><td class="${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`);
+    for (const r of F[k] || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${esc(r.method || r.market)}</td><td>${px(r.best_price, r.best_book, r.dl)}</td><td><b>${pctf(r.sim, 1)}</b></td><td class="${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`);
     insTable($("fbT"), "fb" + k, `<tr><th>Player</th><th>Bet</th><th>Best</th><th>Sim</th><th>EV</th><th></th></tr>`, rows.length ? rows : [`<tr><td colspan="6">Nothing priced 5%+ over the best price</td></tr>`]);
     return;
   }
   const m = F[k];
-  for (const r of m?.players || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${odds(r.best_price)}</td><td>${pctf(r.sim, 1)}</td><td>${pctf(r.market, 1)}</td><td><b>${pctf(r.blend, 1)}</b></td>
+  for (const r of m?.players || []) rows.push(`<tr><td>${tsw(r.team)}${esc(pname(r.name))}</td><td>${px(r.best_price, r.best_book, r.dl)}</td><td>${pctf(r.sim, 1)}</td><td>${pctf(r.market, 1)}</td><td><b>${pctf(r.blend, 1)}</b></td>
     <td class="${evc(r.ev_blend)}">${evf(r.ev_blend)}</td><td class="hide-m ${evc(r.ev)}">${evf(r.ev)}</td><td>${strTag(r.strength)}</td></tr>`);
   insTable($("fbT"), "fb" + k, `<tr><th>Player</th><th>Best</th><th>Sim</th><th title="books' no-vig chance (each book's list adds to 100%)">Books</th><th title="sim and books together">Blend</th><th>EV</th><th class="hide-m">EV sim only</th><th></th></tr>`,
     rows.length ? rows : [`<tr><td colspan="8">The books haven't posted this market for the game</td></tr>`]);
@@ -1280,7 +1340,8 @@ function renderLadders() {
   if (!L.length) { el.innerHTML = `<div class="empty-note">No ladder where two or more rungs price 10%+ over the best price.</div>`; return; }
   el.innerHTML = ""; const per = fit(el, 56, L.length * 56 > el.clientHeight ? 34 : 0), g = pg("lad" + S.ladScope, L.length, per);
   el.innerHTML = L.slice(g.from, g.to).map(l => `<div class="lad">${tsw(l.team)}<div class="who"><b>${esc(pname(l.name))}</b><span>${esc(l.stat)}${S.ladScope === "slate" ? " · " + esc(gameLbl(l.gid)) : ""}${l.uncertain ? " · ⚠" : ""}</span></div>
-    <div class="rungs">${l.rungs.map(r => `<div class="rung ${r.ev >= .20 && !l.uncertain ? "hot" : ""}" title="sim ${pctf(r.sim, 1)} · books ${pctf(r.market, 1)} · ${esc(r.book)}"><b>${r.k}+ ${odds(r.price)}</b><span>${pctf(r.blend)} · ${evf(r.ev)}</span></div>`).join("")}</div>
+    <div class="rungs">${l.rungs.map(r => { const tag = r.dl ? "a" : "div", ln = r.dl ? ` href="${DLURL(r.dl)}" target="_blank" rel="noopener"` : "";
+      return `<${tag} class="rung ${r.ev >= .20 && !l.uncertain ? "hot" : ""}"${ln} title="sim ${pctf(r.sim, 1)} · books ${pctf(r.market, 1)} · ${esc(r.book)}"><b>${r.k}+ ${odds(r.price)}</b><span>${pctf(r.blend)} · ${evf(r.ev)}</span></${tag}>`; }).join("")}</div>
     <div class="ev"><b>${evf(l.ev_per_unit)}</b>per rung</div></div>`).join("") + pagerHTML("lad" + S.ladScope, g);
 }
 
@@ -1395,6 +1456,194 @@ function renderMoments() {
   $("feedCt").textContent = "";
 }
 
+// ------------------------------------------------------------------ v3 (Chris 2026-11-10): bets panel, deeplinks, box overlay
+// Every bet links out through Action's switchboard with the book's deeplink id for that outcome ("ML" + core's outcome id; each
+// side of a two-way bet has its own), carried by the insights as "dl" next to the best price.
+// The Bets panel (in place of the moments list), one bet per key market:
+//   From this sim     of the bets the replayed game cashes, the one with the best edge over all the sims (EV at the best price)
+//   Best of all sims  the best edge over all the sims (questionable-player games last)
+const DLURL = id => `https://switchboard.actionnetwork.com/v2/deeplink?deeplinkId[0]=${encodeURIComponent(id)}&context=action-articles`;
+function px(price, book, dl) {
+  const t = `${odds(price)}${book ? `<small>${esc(book)}</small>` : ""}`;
+  return dl && price !== null && price !== undefined ? `<a class="px" href="${DLURL(dl)}" target="_blank" rel="noopener" title="Bet it${book ? " at " + esc(book) : ""}">${t}</a>` : t;
+}
+const decOf = a => a > 0 ? 1 + a / 100 : 1 + 100 / Math.abs(a);
+const SV = { Points: b => b.pts, Rebounds: b => b.reb, Assists: b => b.ast, "3PM": b => b.m3, "Pts+Reb+Ast": b => b.pts + b.reb + b.ast,
+  "Pts+Reb": b => b.pts + b.reb, "Pts+Ast": b => b.pts + b.ast, "Reb+Ast": b => b.reb + b.ast, Steals: b => b.stl, Blocks: b => b.blk,
+  "Stl+Blk": b => b.stl + b.blk, Turnovers: b => b.tov };
+const SVU = { Points: "pts", Rebounds: "reb", Assists: "ast", "3PM": "threes", "Pts+Reb+Ast": "PRA", "Pts+Reb": "pts+reb", "Pts+Ast": "pts+ast",
+  "Reb+Ast": "reb+ast", Steals: "stl", Blocks: "blk", "Stl+Blk": "stl+blk", Turnovers: "TO" };
+const Z0 = { pts: 0, reb: 0, ast: 0, m3: 0, stl: 0, blk: 0, tov: 0 };
+const BET_CATS = [["fb", "First basket"], ["ml", "Moneyline"], ["spread", "Spread"], ["total", "Total"], ["pts", "Points"], ["reb", "Rebounds"],
+  ["ast", "Assists"], ["prop", "Other props"], ["ladder", "Ladder"], ["mostpts", "Most points"], ["mostreb", "Most rebounds"], ["special", "Specials"]];
+const CAT_OF = { Points: "pts", Rebounds: "reb", Assists: "ast" };
+const ATS = at => at ? `${at.q > 4 ? (at.q === 5 ? "OT" : "OT" + (at.q - 4)) : "Q" + at.q} ${at.clock || ""}`.trim() : "";
+
+function trialFacts() {   // the replayed game's results (same counting as the box), each with the event that settled it
+  const P = {}, snaps = {}, sc = [0, 0], tot = [], p3 = {}; let first = null, ffg = null, f3 = null, last = null;
+  const B = id => (P[id] ||= { ...Z0 });
+  for (const e of S.ev || []) {
+    const hit = new Set(), at = { t: e.t, q: e.period, clock: e.clock };
+    const early = (id, v) => { if (e.gt > 180) return; const x = (p3[id] ||= { v: 0, hist: [] }); x.v += v; x.hist.push({ v: x.v, ...at }); };
+    if (e.type === "shot" && e.made) { const b = B(e.player); b.pts += e.pts; if (e.pts === 3) b.m3++; hit.add(e.player);
+      if (e.assist) { B(e.assist).ast++; hit.add(e.assist); }
+      if (!first) first = { id: e.player, how: e.pts === 3 ? 2 : 1, ...at }; if (!ffg) ffg = { id: e.player, ...at }; if (e.pts === 3 && !f3) f3 = { id: e.player, ...at };
+      early(e.player, e.pts); }
+    else if (e.type === "shot" && e.block) { B(e.block).blk++; hit.add(e.block); }
+    else if (e.type === "fta" && e.made) { B(e.player).pts++; hit.add(e.player); if (!first) first = { id: e.player, how: 0, ...at }; early(e.player, 1); }
+    else if (e.type === "rebound" && e.player && (e.kind === "offensive" || e.kind === "defensive")) { B(e.player).reb++; hit.add(e.player); }
+    else if (e.type === "turnover" && e.player) { B(e.player).tov++; hit.add(e.player); if (e.steal) { B(e.steal).stl++; hit.add(e.steal); } }
+    for (const id of hit) (snaps[id] ||= []).push({ ...P[id], ...at });
+    if (e.score && (e.score[0] !== sc[0] || e.score[1] !== sc[1])) { sc[0] = e.score[0]; sc[1] = e.score[1]; tot.push({ s: [sc[0], sc[1]], ...at }); }
+    last = at;
+  }
+  const fb = stateAt(S.endT).box, played = new Set(Object.keys(fb).filter(id => (fb[id].sec || 0) > 0));
+  return { P, snaps, sc, tot, p3, first, ffg, f3, fin: last, ot: (last?.q || 4) > 4, played };
+}
+const fval = (tr, id, stat) => SV[stat] && tr.played.has(String(id)) ? SV[stat](tr.P[id] || Z0) : null;   // null: didn't play (void)
+const cross = (tr, id, stat, thr) => (tr.snaps[id] || []).find(s => SV[stat](s) >= thr) || null;
+const ddCross = (tr, id, n) => (tr.snaps[id] || []).find(s => [s.pts, s.reb, s.ast, s.stl, s.blk].filter(x => x >= 10).length >= n) || null;
+const liveBox = id => { const b = S.st?.box?.[id]; return b ? { pts: b.pts, reb: b.oreb + b.dreb, ast: b.ast, m3: b.m3, stl: b.stl, blk: b.blk, tov: b.tov } : { ...Z0 }; };
+const liveScore = () => S.st?.score || [0, 0];
+
+function betCands(sec, tr) {   // every priced bet in the insights, with how it went in the replayed game
+  const out = [], g = sec.game || {}, F = sec.first || {}, fin = tr.fin, sc = tr.sc, nmOf = r => esc(r.name || nm(r.core_id));
+  const add = x => { if (x.price !== null && x.price !== undefined) out.push({ unc: false, str: "", ...x }); };
+  const ti = ab => teamIdx(ab);
+  // game lines
+  for (const r of g.moneyline?.teams || []) { const t = ti(r.team), w = sc[0] === sc[1] ? null : (sc[t] > sc[1 - t]);
+    add({ cat: "ml", team: r.team, text: `${esc(r.team)} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.moneyline.uncertain,
+      res: { won: w, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` }, live: () => { const s = liveScore(); return `${esc(tShort(0))} ${s[0]}-${s[1]} ${esc(tShort(1))}`; } }); }
+  for (const r of g.spread?.teams || []) { const t = ti(r.team), m = sc[t] - sc[1 - t] + r.line;
+    add({ cat: "spread", team: r.team, text: `${esc(r.team)} ${sgn(r.line)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.spread.uncertain,
+      res: { won: m === 0 ? null : m > 0, at: fin, txt: `${esc(r.team)} ${sc[t] >= sc[1 - t] ? "by" : "loses by"} ${Math.abs(sc[t] - sc[1 - t])}` },
+      live: () => { const s = liveScore(); return `${esc(r.team)} ${sgn(s[t] - s[1 - t], 0)} now`; } }); }
+  if (g.total) { const L = g.total.line, T = sc[0] + sc[1];
+    for (const sd of ["over", "under"]) { const o = g.total[sd]; if (!o) continue; const p = g.total.sim_over === null ? null : (sd === "over" ? g.total.sim_over : 1 - g.total.sim_over);
+      const won = T === L ? null : (sd === "over" ? T > L : T < L), at = sd === "over" && won ? tr.tot.find(x => x.s[0] + x.s[1] > L) : fin;
+      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${fmt(L)}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: p, ev: o.ev, unc: !!g.total.uncertain,
+        res: { won, at, txt: `${T} total` }, live: () => { const s = liveScore(); return `${s[0] + s[1]} of ${fmt(L)} so far`; } }); } }
+  // player props: main lines and the alt lines / milestones worth a look
+  for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (!o) continue;
+    const v = fval(tr, r.core_id, r.stat), L = r.line, won = v === null || v === L ? null : (sd === "over" ? v > L : v < L);
+    const at = sd === "over" && won ? cross(tr, r.core_id, r.stat, Math.floor(L) + 1) : fin, u = SVU[r.stat] || "";
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${sd === "over" ? "Over" : "Under"} ${fmt(L)} ${esc(r.stat)}`, price: o.price, book: o.book, dl: o.dl,
+      sim: r.sim_over === null ? null : (sd === "over" ? r.sim_over : 1 - r.sim_over), ev: o.ev, str: r.pick === sd ? r.strength : "", unc: !!r.uncertain,
+      res: { won, at, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${sd === "over" ? `of ${fmt(L)} ` : ""}${u}${sd === "over" ? "" : " so far"}`,
+      now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far` }); }
+  for (const r of sec.alts || []) { const v = fval(tr, r.core_id, r.stat), won = v === null ? null : v >= r.k, u = SVU[r.stat] || "";
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${r.k}+ ${esc(r.stat)}`, price: r.price, book: r.book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength,
+      unc: !!r.uncertain, res: { won, at: won ? cross(tr, r.core_id, r.stat, r.k) : fin, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} of ${r.k} ${u}`,
+      now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far` }); }
+  // ladders: one card; each rung is its own bet (own link)
+  for (const l of sec.ladders || []) { const v = fval(tr, l.core_id, l.stat), u = SVU[l.stat] || "";
+    const rungs = l.rungs.map(r => ({ ...r, hit: v !== null && v >= r.k, at: v !== null && v >= r.k ? cross(tr, l.core_id, l.stat, r.k) : null }));
+    const hits = rungs.filter(r => r.hit), units = hits.reduce((a, r) => a + decOf(r.price) - 1, 0) - (rungs.length - hits.length);
+    out.push({ cat: "ladder", team: l.team, text: `${nmOf(l)} · ${esc(l.stat)} ladder`, price: l.top_payout, book: "", dl: null, sim: null, ev: l.ev_per_unit, unc: !!l.uncertain, str: "",
+      rungs, units, trialRank: units, res: { won: hits.length > 0, at: hits.length ? hits[0].at : fin, txt: `${hits.length} of ${rungs.length} rungs · ${sgn(units, 1)} units · ${v} ${u}` },
+      live: () => `${SV[l.stat] ? SV[l.stat](liveBox(l.core_id)) : "–"} ${u} so far` }); }
+  // first basket, most points, top rebounder (one list per market; EV = sim and books together, as the First basket tab)
+  const one = (m, cat, label, won, at, txt) => { for (const r of m?.players || []) add({ cat, team: r.team, text: `${nmOf(r)} ${label}`, price: r.best_price, book: r.best_book, dl: r.dl,
+    sim: r.sim, ev: r.ev_blend ?? r.ev, str: r.strength, unc: !!m.uncertain, res: { won: won(r), at: at(r), txt: txt(r) } }); };
+  const fbTxt = f => f ? `${esc(nm(f.id))} scored first` : "no basket";
+  one(F.first_basket, "fb", "first basket", r => !!tr.first && String(tr.first.id) === String(r.core_id), () => tr.first, () => fbTxt(tr.first));
+  const most = (stat, cat, m, label) => { const vals = Object.entries(tr.P).map(([id, b]) => [id, SV[stat](b)]), top = Math.max(0, ...vals.map(x => x[1])),
+      leaders = vals.filter(x => x[1] === top).map(x => x[0]), u = SVU[stat];
+    one(m, cat, label, r => leaders.includes(String(r.core_id)), () => fin, () => `${leaders.map(id => esc(lastName(id))).join(" / ")} ${top} ${u}${leaders.length > 1 ? " (tied)" : ""}`); };
+  most("Points", "mostpts", F.most_points, "most points"); most("Rebounds", "mostreb", F.leading_rebounder, "most rebounds");
+  // specials: first FG / first 3, first basket by method, double- / triple-double, early points, alt team totals, margin, overtime
+  one(F.first_fg, "special", "first field goal", r => !!tr.ffg && String(tr.ffg.id) === String(r.core_id), () => tr.ffg, () => tr.ffg ? `${esc(nm(tr.ffg.id))} hit the first field goal` : "");
+  one(F.first_3, "special", "first 3-pointer", r => !!tr.f3 && String(tr.f3.id) === String(r.core_id), () => tr.f3, () => tr.f3 ? `${esc(nm(tr.f3.id))} hit the first 3` : "none made");
+  const HOW = { "Free Throw": 0, "Two Point Field Goal": 1, "Three Point Field Goal": 2 }, HOWS = ["free throw", "2-pointer", "3-pointer"];
+  for (const r of F.first_basket_method || []) { const won = !!tr.first && String(tr.first.id) === String(r.core_id) && tr.first.how === HOW[r.method];
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev,
+      str: r.strength, res: { won, at: tr.first, txt: tr.first ? `${esc(nm(tr.first.id))} · ${HOWS[tr.first.how]}` : "" } }); }
+  for (const r of F.specials || []) { let won = false, at = fin, txt = "";
+    const b = tr.P[r.core_id] || Z0, m = /^(\d+)\+ pts first 3 min/.exec(r.market || "");
+    if (m) { const k = +m[1], x = tr.p3[r.core_id]; won = !!x && x.v >= k; at = won ? x.hist.find(h => h.v >= k) : fin; txt = `${x ? x.v : 0} pts in the first 3 min`; }
+    else { const n = r.market === "Triple-double" ? 3 : 2, c = ddCross(tr, r.core_id, n); won = tr.played.has(String(r.core_id)) ? !!c : null; at = c || fin; txt = `${b.pts} pts · ${b.reb} reb · ${b.ast} ast`; }
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} ${esc(r.market)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength, unc: !!r.uncertain,
+      res: { won, at, txt } }); }
+  for (const a of g.alt_team_totals || []) { const t = ti(a.team), v = sc[t], won = v === a.line ? null : (a.side === "Over" ? v > a.line : v < a.line);
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} ${esc(a.side)} ${fmt(a.line)} team points`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+      res: { won, at: a.side === "Over" && won ? tr.tot.find(x => x.s[t] > a.line) : fin, txt: `${esc(a.team)} ${v}` }, live: () => `${esc(a.team)} ${liveScore()[t]} so far` }); }
+  for (const a of g.winning_margin || []) { const t = ti(a.team), m = sc[t] - sc[1 - t], mm = /^(\d+)(?:-(\d+)|\+)$/.exec(String(a.band).trim());
+    const won = !!mm && m >= +mm[1] && (mm[2] === undefined || m <= +mm[2]);
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} wins by ${esc(a.band)}`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+      res: { won, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` } }); }
+  if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (!o) continue;
+    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim, ev: o.ev,
+      res: { won: sd === "yes" ? tr.ot : !tr.ot, at: fin, txt: tr.ot ? "went to overtime" : "decided in regulation" } }); }
+  return out;
+}
+
+function betCard(label, x, n, mode) {
+  if (!x) return `<li class="bc none"><div class="bc-m"><div class="bc-k">${esc(label)}</div><div class="bc-b">${
+    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : "Not on the board for this game yet"}</div></div></li>`;
+  let status = "", cashed = false;
+  if (mode === "trial" && x.res) {
+    const at = x.res.at, done = at && S.t >= at.t;
+    if (x.rungs) { const got = x.rungs.filter(r => r.hit && r.at && S.t >= r.at.t).length;
+      status = S.t >= S.endT ? `<div class="bc-r won">✓ ${x.res.txt}</div>` : `<div class="bc-r live">◷ ${got} of ${x.rungs.length} rungs so far · ${x.live ? x.live() : ""}</div>`; cashed = S.t >= S.endT; }
+    else if (done) { status = `<div class="bc-r won">✓ Cashed ${at === S.tr.fin ? "at the final" : ATS(at)} · ${S.t >= S.endT || !(x.now || x.live) ? x.res.txt : (x.now || x.live)()}</div>`; cashed = true; }
+    else { const lv = x.live ? x.live() : "", atFin = !at || at === S.tr.fin;
+      status = `<div class="bc-r live">◷ ${lv}${lv && atFin ? " · " : ""}${atFin ? "settles at the final" : (lv ? "" : "not yet")}</div>`; }
+  }
+  const rg = x.rungs ? `<div class="rgs">${x.rungs.map(r => { const st = mode === "trial" ? (r.hit ? (r.at && S.t >= r.at.t ? " hit" : "") : (S.t >= S.endT ? " miss" : "")) : "";
+      const inner = `${r.k}+ <b>${odds(r.price)}</b>`;
+      return r.dl ? `<a class="rg${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" title="${esc(r.book)} · EV ${evf(r.ev)}">${inner}</a>` : `<span class="rg${st}">${inner}</span>`; }).join("")}</div>` : "";
+  const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs${x.unc ? " · ⚠ questionable player" : ""}`
+    : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.unc ? " · ⚠ questionable player" : ""}`;
+  const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
+    : x.dl ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>Bet ›</span></a>`
+    : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
+  return `<li class="bc${cashed ? " cashed" : ""}"><div class="bc-m"><div class="bc-k">${esc(label)}${strTag(x.str)}</div>
+    <div class="bc-b">${x.team ? tsw(x.team) : ""}${x.text}</div><div class="bc-s">${sub}</div>${status}${rg}</div>${btn}</li>`;
+}
+function renderBets() {
+  const el = $("feed"); if (!el || !S.rp) return;
+  const mode = S.betsMode || "trial", sec = SEC(), sub = $("betsSub"), N = (SIMS_N() || 0).toLocaleString();
+  $("betsMode")?.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === mode)));
+  el.className = "betlist";
+  if (!sec || !S.tr) { sub.textContent = ""; el.innerHTML = `<li class="pe">No market read for this game yet: the bets come with the hourly matchups run (books post player props about 14 hours before tip).</li>`; return; }
+  if (!S.betC || S.betC.sec !== sec || S.betC.tr !== S.tr) S.betC = { sec, tr: S.tr, list: betCands(sec, S.tr) };
+  const C = S.betC.list, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
+  sub.innerHTML = mode === "trial"
+    ? `This sim: <b>${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}</b>${S.tr.ot ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all ${N} sims. Watch them cash as it plays.`
+    : `The best edge in each market over all ${N} sims, at the best price across the books. Tap a price to bet it.`;
+  const rows = BET_CATS.map(([key, label]) => {
+    const xs = C.filter(x => x.cat === key);
+    const pick = mode === "trial"
+      ? xs.filter(x => x.res?.won === true).sort((a, b) => (b.trialRank ?? b.ev ?? -9) - (a.trialRank ?? a.ev ?? -9))[0]
+      : xs.slice().sort((a, b) => (a.unc - b.unc) || byEv(a, b))[0];
+    return betCard(label, pick, xs.length, mode);
+  });
+  const box = el.parentElement, top = box.scrollTop; el.innerHTML = rows.join(""); box.scrollTop = top;
+}
+
+function renderFive() {   // the box score on the court: the ten on the floor, or the full box (off on phones until asked)
+  const el = $("boxov"), st = S.st; if (!el) return;
+  const mode = S.boxOv || (mobile() ? "off" : "floor");
+  $("boxOv")?.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === mode)));
+  if (mode === "off" || !st) { el.hidden = true; return; }
+  el.hidden = false; el.dataset.mode = mode;
+  const onNow = new Set([...st.on[0], ...st.on[1]]), Zb = { sec: 0, pts: 0, oreb: 0, dreb: 0, ast: 0, m3: 0, stl: 0, blk: 0, tov: 0 };
+  const hot = (b, r) => b.pts >= 20 || [b.pts, r, b.ast].filter(x => x >= 10).length >= 2;
+  if (mode === "floor") {
+    el.innerHTML = [0, 1].map(t => { const ids = st.on[t].length ? st.on[t] : S.rp.players.filter(p => p.team === t && p.starter).map(p => String(p.core_id || p.rg_id));
+      return `<table><thead><tr><th style="color:var(--t${t})">${esc(tShort(t))} on floor</th><th>PTS</th><th>REB</th><th>AST</th></tr></thead><tbody>` +
+        ids.map(id => { const b = st.box[id] || Zb, r = b.oreb + b.dreb;
+          return `<tr class="${hot(b, r) ? "hot" : ""}"><td>${esc(lastName(id))}</td><td><b>${b.pts}</b></td><td>${r}</td><td>${b.ast}</td></tr>`; }).join("") + "</tbody></table>"; }).join("");
+    return;
+  }
+  el.innerHTML = [0, 1].map(t => { const ps = S.rp.players.filter(p => p.team === t && ((st.box[String(p.core_id || p.rg_id)]?.sec || 0) > 0 || p.plan_min >= 8))
+      .map(p => String(p.core_id || p.rg_id)).sort((a, b) => (st.box[b]?.sec || 0) - (st.box[a]?.sec || 0));
+    return `<table><thead><tr><th style="color:var(--t${t})">${esc(tShort(t))}</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th class="hide-m">3PM</th><th class="hide-m">STL</th><th class="hide-m">BLK</th><th class="hide-m">TO</th><th>DK</th></tr></thead><tbody>` +
+      ps.map(id => { const b = st.box[id] || Zb, r = b.oreb + b.dreb;
+        return `<tr class="${onNow.has(id) ? "on" : ""}${hot(b, r) ? " hot" : ""}"><td>${esc(lastName(id))}</td><td>${Math.floor(b.sec / 60)}</td><td><b>${b.pts}</b></td><td>${r}</td><td>${b.ast}</td>
+          <td class="hide-m">${b.m3}</td><td class="hide-m">${b.stl}</td><td class="hide-m">${b.blk}</td><td class="hide-m">${b.tov}</td><td>${b.sec || b.pts ? fmt(dk({ fgm: 0, fga: 0, a3: 0, ftm: 0, fta: 0, ...b })) : "–"}</td></tr>`; }).join("") + "</tbody></table>"; }).join("");
+}
+
 // ------------------------------------------------------------------ views
 function showView() {
   document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
@@ -1424,7 +1673,7 @@ $("views").addEventListener("click", e => {
   const ts = e.target.closest(".team-seg button"); if (ts) { const key = ts.closest(".team-seg").dataset.key; S[key] = +ts.dataset.t;
     if (key === "outTeam") S.outSel = null; ts.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === ts))); renderView(); return; }
   const sg = e.target.closest(".seg button[data-v]"); if (sg) { const id = sg.parentElement.id;
-    if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "feedMode") S.feedMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
+    if (id === "boxMode") S.boxMode = sg.dataset.v; if (id === "feedMode") S.feedMode = sg.dataset.v; if (id === "boxOv") S.boxOv = sg.dataset.v; if (id === "betsMode") S.betsMode = sg.dataset.v; if (id === "angScope") { S.angScope = sg.dataset.v; S.angSel = null; } if (id === "profSide") S.profSide = sg.dataset.v;
     if (id === "betPart") S.betPart = sg.dataset.v; if (id === "propMode") S.propMode = sg.dataset.v; if (id === "propScope") S.propScope = sg.dataset.v; if (id === "propOnly") S.propOnly = sg.dataset.v;
     if (id === "fbKind") S.fbKind = sg.dataset.v; if (id === "ladScope") S.ladScope = sg.dataset.v; if (id === "dfsKind" || id === "dfsScope") { S[id] = sg.dataset.v; S.dfsSel = null; }
     sg.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === sg))); renderView(); return; }
