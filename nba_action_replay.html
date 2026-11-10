@@ -705,7 +705,7 @@ async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if 
 async function boot() {
   try {
     const b = await getJSON("nba_sq_replay_data.json");
-    S.index = b.index || { games: [] }; S.games = S.index.games || [];
+    S.index = b.index || { games: [] }; S.games = S.index.games || []; S.dataStamp = b.created_utc;
     for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
     if (S.games.length) { $("upd").textContent = `Updated ${stamp(b.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
   } catch (e) { /* no slate file */ }
@@ -715,6 +715,24 @@ async function boot() {
   if (!S.games.length) { showEmpty(); return; }
   $("upd").textContent = `Updated ${stamp(S.index.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id);
 }
+
+// ------------------------------------------------------------------ live data: re-read the slate file every 5 min and on return to the tab
+const REFRESH_MS = 5 * 60 * 1000;
+let refreshing = false, lastRefresh = Date.now();
+async function refreshData() {
+  if (refreshing || !S.games.length) return; refreshing = true; lastRefresh = Date.now();
+  try {
+    const b = await getJSON("nba_sq_replay_data.json");
+    if (!b?.index || b.created_utc === S.dataStamp) return;
+    S.dataStamp = b.created_utc; S.index = b.index; S.games = b.index.games || S.games;
+    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };   // S.rp (playing) stays as it is
+    const cur = S.local[S.gid]; if (cur?.mu) S.mu = cur.mu;           // this game's prices / insights; its replay keeps playing
+    $("upd").textContent = `Updated ${stamp(b.created_utc)}`;
+    if (S.view !== "replay") renderView();
+  } catch (e) { /* keep what is on screen */ } finally { refreshing = false; }
+}
+setInterval(refreshData, REFRESH_MS);
+document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastRefresh > 60 * 1000) refreshData(); });
 function stamp(s) {
   if (!s) return "";
   const d = new Date(s); if (isNaN(d)) return String(s);
