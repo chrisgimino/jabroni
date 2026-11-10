@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,700&display=swap">
 <style>
 /* Layout: one screen, never scrolls. Top bar -> navy scoreboard -> view tabs -> the one view on screen. Long lists page
    (‹ 1/3 ›) instead of scrolling; lists open a detail panel (beside on desktop, over the list on phones).
@@ -470,6 +471,62 @@ a.lrung:hover { filter: brightness(1.15) } a.lrung:focus-visible { outline: 3px 
   .lanes-seg { display: inline-flex; align-self: flex-start } .lane { grid-template-columns: minmax(0, 1fr) 78px; gap: 10px; padding: 10px 10px 11px 12px }
   .ln-bet { font-size: 19px; align-items: flex-start } .ln-bet span { white-space: normal } .ln-bet img { margin-top: 1px } .tkt { height: 58px } .tkt b { font-size: 22px }
 }
+
+/* 2026-11-10 13:15 every bet link reads as a button: green, raised, a BET NOW strip (Chris); bigger balls and logos on the lanes */
+:root { --bet: #1fb062; --bet2: #148f47; --betdk: #0b6b33 }
+.tkt { height: auto; min-height: 76px; justify-content: flex-start; padding: 8px 0 0; gap: 2px; overflow: hidden; cursor: pointer; border: 0; border-radius: 8px;
+  background: linear-gradient(180deg, var(--bet), var(--bet2)); color: #fff; box-shadow: 0 3px 0 var(--betdk), 0 6px 12px rgba(44, 28, 12, .30) }
+.tkt b { color: #fff; text-shadow: 0 1px 0 rgba(0, 0, 0, .18) } .tkt small { color: rgba(255, 255, 255, .9) }
+.tkt em { margin-top: auto; align-self: stretch; padding: 6px 0; background: var(--betdk); color: #fff; font: 900 12.5px/1 var(--text); letter-spacing: .08em; text-transform: uppercase; text-align: center }
+a.tkt:hover { filter: brightness(1.08) } a.tkt:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--betdk) }
+.tkt.off { background: #e4d5b7; color: var(--walnut); box-shadow: none; cursor: default; padding: 0; justify-content: center } .tkt.off b, .tkt.off small { color: var(--walnut); text-shadow: none }
+a.bc-p { background: linear-gradient(180deg, var(--bet), var(--bet2)); border: 0; color: #fff; box-shadow: 0 3px 0 var(--betdk), 0 5px 10px rgba(0, 0, 0, .25); overflow: hidden; padding-bottom: 0 }
+a.bc-p span { align-self: stretch; margin: 5px -8px 0; padding: 5px 0; background: var(--betdk); color: #fff; opacity: 1; font-size: 11px; font-weight: 900; text-align: center }
+a.bc-p:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--betdk) }
+.pcard > a.bc-p span { font-size: 13px; padding: 7px 0 }
+a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin: 3px -4px -5px; padding: 5px 0; background: var(--bet); color: #fff; font: 900 11px/1 var(--text); letter-spacing: .06em; text-transform: uppercase }
+.track { height: 16px; margin: 12px 0 5px; border-radius: 8px } .track .be { top: -6px; bottom: -6px; width: 4px; margin-left: -2px }
+.track .ball { width: 28px; height: 28px; margin: -14px 0 0 -14px } .track .ball::before, .track .ball::after { border-width: 1.8px }
+.ln-bet img { width: 30px; height: 30px } .ln-bet { gap: 9px }
+.pcard .legs li { grid-template-columns: 30px minmax(0, 1fr) auto } .pcard .legs li .lgw, .pcard .legs li .lgw img { width: 30px; height: 30px }
+@media (max-width: 760px) { .lane { grid-template-columns: minmax(0, 1fr) 90px } .tkt { min-height: 68px; padding-top: 6px } .tkt em { font-size: 11.5px; letter-spacing: .05em } .ln-bet img { width: 26px; height: 26px } }
+/* 2026-11-10 line moves + maple Parlay tab */
+.ln-move { font: 700 12px/1.3 var(--text); color: var(--walnut2); margin-top: 3px; white-space: normal }
+.ln-move b { color: var(--walnut) }
+.ln-move.bad { color: #a3261b } .ln-move.bad b { color: #a3261b }
+.ln-move.mv::before, .ln-move.bad::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; background: #c98a1a }
+.ln-move.bad::before { background: #c0392b }
+.lane.past .track, .lane.past .cap { opacity: .45; filter: grayscale(1) }
+.lane.past .ln-bet span { text-decoration: line-through; text-decoration-thickness: 2px; text-decoration-color: rgba(163, 38, 27, .7) }
+.tkt.pass { background: #e4d5b7; color: #a3261b; border-bottom: 4px solid #c0392b; box-shadow: none; cursor: default; padding: 0; justify-content: center }
+.tkt.pass b { font: 900 24px/1 var(--disp); letter-spacing: .04em } .tkt.pass small { color: var(--walnut2) }
+#parBoard { flex: 1; min-height: 0; display: flex; flex-direction: column }
+.pcol { height: 100% } .pcol .pscroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
+.pcol h3.h3b { margin: 0; padding: 12px 16px 8px; font: 800 24px/1 var(--disp); letter-spacing: .01em; color: var(--walnut); display: flex; align-items: baseline; gap: 10px;
+  border-bottom: 2px solid var(--paintline) }
+.pcol h3.h3b small { font: 600 12.5px/1.2 var(--text); color: var(--walnut2) }
+@media (max-width: 760px) { #bestBoard .lcol > h3, #parBoard .lcol > h3 { white-space: nowrap } #bestBoard .lcol > h3 small, #parBoard .lcol > h3 small { display: none } }
+.pcol .pcard { background: transparent; border-radius: 0; margin: 0; border-bottom: 2px solid var(--paintline); padding: 14px 16px }
+.pcard .ps .chk { display: block; margin-top: 4px; font-weight: 700; color: var(--walnut) } .pcard .ps .chk.bad { color: #a3261b }
+.pcard .legs li.past { opacity: .6 } .pcard .legs li.past b { text-decoration: line-through; text-decoration-color: rgba(163, 38, 27, .7) }
+.pcard .legs li .was { color: #9a5a0c; font-weight: 700 } .pcard .legs li.past .was { color: #a3261b }
+.pcard > .bc-p.pass { background: #e4d5b7; color: #a3261b; border: 0; border-bottom: 4px solid #c0392b }
+
+/* 2026-11-10 13:30 NBA floor: maple planks, home colour apron + paint, home city on the baselines, white lines */
+#court .apron { fill: var(--home2, #17305e) }
+#court .floor { fill: url(#wood) }
+#court .paint { fill: var(--home, #1d428a) }
+#court .ln { stroke: #fff; stroke-width: .24 }
+#court .ln.board { stroke-width: .42 }
+#court .rim { fill: none; stroke: #f26a1b; stroke-width: .26 } #court .rimarm { stroke: #f26a1b; stroke-width: .2 }
+#court .city { font: italic 700 4.1px "Playfair Display", Georgia, serif; fill: #fff; letter-spacing: .01em }
+#court .half-lbl, html #court .half-lbl { font: 800 2.3px var(--text); fill: #fff; opacity: .9; letter-spacing: .12em }
+#court .logo circle { stroke: #fff; stroke-width: .24 }
+.dot circle { stroke-width: .3 } .dot .halo { fill: rgba(20, 10, 0, .30); stroke: none }
+.dot text { font-size: 1.25px }
+.mk .made { stroke: #fff }
+#h0, #h1 { display: none }   /* desktop: the on-floor box covers the bottom apron, so the labels sit on the top one */
+@media (max-width: 760px) { .courtbox { aspect-ratio: 105 / 58 } #h0, #h1 { display: inline } #h0t, #h1t { display: none } }
 </style>
 </head>
 <body>
@@ -508,15 +565,21 @@ a.lrung:hover { filter: brightness(1.15) } a.lrung:focus-visible { outline: 3px 
       <div class="rp">
         <div class="panel rp-left">
           <div class="courtbox" id="courtbox">
-            <svg id="court" viewBox="-1.5 -1.5 97 53" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Court with the ten players of the replayed sim; the shot chart shows at the final">
-              <rect class="floor" x="0" y="0" width="94" height="50"/>
+            <svg id="court" viewBox="-5.5 -4 105 58" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Court with the ten players of the replayed sim; the shot chart shows at the final">
+              <defs><pattern id="wood" width="40" height="4.8" patternUnits="userSpaceOnUse"><rect x="-2.91" y="0.00" width="7.21" height=".8" fill="#ecca97"/><line x1="4.29" y1="0.00" x2="4.29" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="4.29" y="0.00" width="6.39" height=".8" fill="#d9ad73"/><line x1="10.68" y1="0.00" x2="10.68" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="10.68" y="0.00" width="10.29" height=".8" fill="#ddb279"/><line x1="20.97" y1="0.00" x2="20.97" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="20.97" y="0.00" width="10.66" height=".8" fill="#e0b77e"/><line x1="31.63" y1="0.00" x2="31.63" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="31.63" y="0.00" width="7.72" height=".8" fill="#e9c591"/><line x1="39.35" y1="0.00" x2="39.35" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="39.35" y="0.00" width="9.47" height=".8" fill="#e9c591"/><line x1="48.81" y1="0.00" x2="48.81" y2="0.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="0.80" x2="40" y2="0.80" stroke="rgba(110,64,22,.22)" stroke-width=".045"/><rect x="-2.17" y="0.80" width="10.41" height=".8" fill="#e9c591"/><line x1="8.24" y1="0.80" x2="8.24" y2="1.60" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="8.24" y="0.80" width="12.61" height=".8" fill="#e9c591"/><line x1="20.86" y1="0.80" x2="20.86" y2="1.60" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="20.86" y="0.80" width="13.58" height=".8" fill="#ecca97"/><line x1="34.44" y1="0.80" x2="34.44" y2="1.60" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="34.44" y="0.80" width="11.02" height=".8" fill="#e9c591"/><line x1="45.46" y1="0.80" x2="45.46" y2="1.60" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="1.60" x2="40" y2="1.60" stroke="rgba(110,64,22,.22)" stroke-width=".045"/><rect x="-5.19" y="1.60" width="9.17" height=".8" fill="#e3bb83"/><line x1="3.98" y1="1.60" x2="3.98" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="3.98" y="1.60" width="6.37" height=".8" fill="#d9ad73"/><line x1="10.35" y1="1.60" x2="10.35" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="10.35" y="1.60" width="7.07" height=".8" fill="#e6c08a"/><line x1="17.42" y1="1.60" x2="17.42" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="17.42" y="1.60" width="7.15" height=".8" fill="#e9c591"/><line x1="24.57" y1="1.60" x2="24.57" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="24.57" y="1.60" width="10.57" height=".8" fill="#e0b77e"/><line x1="35.14" y1="1.60" x2="35.14" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="35.14" y="1.60" width="12.53" height=".8" fill="#e3bb83"/><line x1="47.67" y1="1.60" x2="47.67" y2="2.40" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="2.40" x2="40" y2="2.40" stroke="rgba(110,64,22,.22)" stroke-width=".045"/><rect x="-0.93" y="2.40" width="10.57" height=".8" fill="#e3bb83"/><line x1="9.64" y1="2.40" x2="9.64" y2="3.20" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="9.64" y="2.40" width="8.98" height=".8" fill="#e0b77e"/><line x1="18.62" y1="2.40" x2="18.62" y2="3.20" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="18.62" y="2.40" width="11.70" height=".8" fill="#e0b77e"/><line x1="30.32" y1="2.40" x2="30.32" y2="3.20" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="30.32" y="2.40" width="6.48" height=".8" fill="#e3bb83"/><line x1="36.80" y1="2.40" x2="36.80" y2="3.20" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="36.80" y="2.40" width="9.97" height=".8" fill="#e0b77e"/><line x1="46.77" y1="2.40" x2="46.77" y2="3.20" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="3.20" x2="40" y2="3.20" stroke="rgba(110,64,22,.22)" stroke-width=".045"/><rect x="-3.85" y="3.20" width="8.51" height=".8" fill="#e0b77e"/><line x1="4.66" y1="3.20" x2="4.66" y2="4.00" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="4.66" y="3.20" width="13.39" height=".8" fill="#ddb279"/><line x1="18.05" y1="3.20" x2="18.05" y2="4.00" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="18.05" y="3.20" width="8.40" height=".8" fill="#d9ad73"/><line x1="26.45" y1="3.20" x2="26.45" y2="4.00" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="26.45" y="3.20" width="7.44" height=".8" fill="#d9ad73"/><line x1="33.89" y1="3.20" x2="33.89" y2="4.00" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="33.89" y="3.20" width="7.95" height=".8" fill="#e0b77e"/><line x1="41.84" y1="3.20" x2="41.84" y2="4.00" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="4.00" x2="40" y2="4.00" stroke="rgba(110,64,22,.22)" stroke-width=".045"/><rect x="-2.70" y="4.00" width="9.96" height=".8" fill="#ddb279"/><line x1="7.26" y1="4.00" x2="7.26" y2="4.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="7.26" y="4.00" width="11.84" height=".8" fill="#ddb279"/><line x1="19.09" y1="4.00" x2="19.09" y2="4.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="19.09" y="4.00" width="10.87" height=".8" fill="#e9c591"/><line x1="29.97" y1="4.00" x2="29.97" y2="4.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="29.97" y="4.00" width="6.94" height=".8" fill="#e6c08a"/><line x1="36.91" y1="4.00" x2="36.91" y2="4.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><rect x="36.91" y="4.00" width="7.32" height=".8" fill="#ddb279"/><line x1="44.23" y1="4.00" x2="44.23" y2="4.80" stroke="rgba(110,64,22,.28)" stroke-width=".05"/><line x1="0" y1="4.80" x2="40" y2="4.80" stroke="rgba(110,64,22,.22)" stroke-width=".045"/></pattern>
+                <radialGradient id="sheen" cx="50%" cy="45%" r="62%"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#5a3510" stop-opacity=".14"/></radialGradient></defs>
+              <rect class="apron" x="-5.5" y="-4" width="105" height="58" rx="1.2"/>
+              <rect class="floor" x="0" y="0" width="94" height="50"/><rect x="0" y="0" width="94" height="50" fill="url(#sheen)" pointer-events="none"/>
+              <text class="city" id="cityL" transform="translate(-2.75 25) rotate(-90)" text-anchor="middle"></text>
+              <text class="city" id="cityR" transform="translate(96.75 25) rotate(90)" text-anchor="middle"></text>
+              <text class="half-lbl top" id="h0t" x="23.5" y="-1.15" text-anchor="middle"></text><text class="half-lbl top" id="h1t" x="70.5" y="-1.15" text-anchor="middle"></text>
               <g id="halfL"></g><g id="halfR" transform="translate(94 0) scale(-1 1)"></g>
               <rect class="ln" x="0" y="0" width="94" height="50" fill="none" style="stroke-width:.3"/>
               <line class="ln" x1="47" y1="0" x2="47" y2="50"/>
               <circle class="ln" cx="47" cy="25" r="6" fill="none"/><circle class="ln" cx="47" cy="25" r="2" fill="none"/>
               <g class="logo" aria-hidden="true"><circle cx="47" cy="25" r="5.8"/><image x="41.6" y="24.117" width="10.8" height="1.766" href="data:image/png;base64,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"/></g>
-              <text class="half-lbl" id="h0" x="30" y="47.6" text-anchor="middle"></text>
-              <text class="half-lbl" id="h1" x="64" y="47.6" text-anchor="middle"></text>
+              <text class="half-lbl" id="h0" x="23.5" y="52.85" text-anchor="middle"></text>
+              <text class="half-lbl" id="h1" x="70.5" y="52.85" text-anchor="middle"></text>
               <g id="shots"></g><g id="dots"></g><g id="ftlbl"></g><circle id="bdot" class="ball" r=".6" style="display:none"/><g id="fx"></g>
             </svg>
             <div class="tip" id="tip" hidden></div>
@@ -564,7 +627,7 @@ a.lrung:hover { filter: brightness(1.15) } a.lrung:focus-visible { outline: 3px 
     </section>
 
     <section class="view" data-v="parlay" hidden>
-      <div class="panel" style="flex:1;min-height:0"><div class="fill scroll" id="parBoard"></div></div>
+      <div id="parBoard"></div>
     </section>
 
     <section class="view" data-v="results" hidden>
@@ -641,8 +704,10 @@ const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x
 
 // ------------------------------------------------------------------ court lines (both halves drawn, no <use>)
 const HALF = `<rect class="paint" x="0" y="17" width="19" height="16"/><rect class="ln" x="0" y="17" width="19" height="16" fill="none"/>
-  <circle class="ln" cx="19" cy="25" r="6" fill="none"/><path class="ln" d="M5.25 21 A4 4 0 0 1 5.25 29" fill="none"/>
-  <line class="ln" x1="4" y1="22" x2="4" y2="28" style="stroke-width:.3"/><circle class="ln" cx="5.25" cy="25" r=".75" fill="none" style="stroke-width:.22"/>
+  <path class="ln" d="M19 19 A6 6 0 0 1 19 31" fill="none"/><path class="ln" d="M19 19 A6 6 0 0 0 19 31" fill="none" stroke-dasharray=".9 .7"/>
+  <path class="ln" d="M7 17 v-.6 M8 17 v-.6 M11 17 v-.6 M14 17 v-.6 M7 33 v.6 M8 33 v.6 M11 33 v.6 M14 33 v.6 M28 0 v3 M28 50 v-3" fill="none"/>
+  <path class="ln" d="M5.25 21 A4 4 0 0 1 5.25 29" fill="none"/>
+  <line class="ln board" x1="4" y1="22" x2="4" y2="28"/><line class="rimarm" x1="4" y1="25" x2="4.5" y2="25"/><circle class="rim" cx="5.25" cy="25" r=".75"/>
   <path class="ln" d="M0 3 L14.2 3 A23.75 23.75 0 0 1 14.2 47 L0 47" fill="none"/>`;
 $("halfL").innerHTML = HALF; $("halfR").innerHTML = HALF;
 
@@ -752,14 +817,28 @@ function clockOf(t) { const p = periodOf(t), st = p <= 4 ? (p - 1) * 720 : 2880 
 const qName = p => p <= 4 ? ["1st", "2nd", "3rd", "4th"][p - 1] : (p === 5 ? "OT" : `OT${p - 4}`);
 
 // ------------------------------------------------------------------ static parts
+
+// ------------------------------------------------------------------ the floor: home team's colour + city (core team id -> colours, city)
+const FLOOR = { 2240: ["#c8102e", "Atlanta"], 2126: ["#007a33", "Boston"], 2226: ["#1a1a1a", "Brooklyn"], 2233: ["#00788c", "Charlotte"], 2070: ["#ce1141", "Chicago"],
+  2217: ["#860038", "Cleveland"], 2046: ["#00538c", "Dallas"], 2216: ["#0e2240", "Denver"], 2172: ["#1d42ba", "Detroit"], 2080: ["#1d428a", "Golden State"],
+  2200: ["#ce1141", "Houston"], 1968: ["#002d62", "Indiana"], 2190: ["#1d428a", "Los Angeles"], 2060: ["#552583", "Los Angeles"], 2036: ["#5d76a9", "Memphis"],
+  1952: ["#98002e", "Miami"], 2241: ["#00471b", "Milwaukee"], 2065: ["#0c2340", "Minnesota"], 1995: ["#0c2340", "New Orleans"], 2002: ["#006bb6", "New York"],
+  17317: ["#007ac1", "Oklahoma City"], 7106: ["#0077c0", "Orlando"], 2082: ["#006bb6", "Philadelphia"], 2024: ["#1d1160", "Phoenix"], 2104: ["#c8102e", "Portland"],
+  2152: ["#5a2d81", "Sacramento"], 2076: ["#1a1a1a", "San Antonio"], 2178: ["#ce1141", "Toronto"], 2127: ["#4b2a84", "Utah"], 2143: ["#002b5c", "Washington"] };
+function paintFloor() {
+  const h = S.rp?.teams?.findIndex(t => t.home === true), hi = h >= 0 ? h : 1, f = FLOOR[S.mu?.core_teams?.[hi]], c = $("court");
+  const col = f ? f[0] : "#1d428a", city = f ? f[1] : tFull(hi);
+  c.style.setProperty("--home", col); c.style.setProperty("--home2", `color-mix(in srgb, ${col} 82%, #000)`);
+  $("cityL").textContent = city; $("cityR").textContent = city;
+}
 function renderStatic() {
-  const rp = S.rp;
+  const rp = S.rp; paintFloor();
   for (const t of [0, 1]) {
     const lu = logoURL(S.mu?.core_teams?.[t]), sw = logoReady(lu) ? `<img class="tlogo" src="${lu}" alt="">` : `<i style="background:var(--t${t})"></i>`;
     $("n" + t).innerHTML = t === 0 ? sw + esc(mobile() ? tShort(t) : tFull(t)) : esc(mobile() ? tShort(t) : tFull(t)) + sw;
     const tm = rp.teams[t];
     $("l" + t).textContent = `Vegas ${fmt(tm.vegas_total)} · SQ ${fmt(tm.sq_mean_points)}`;
-    $("h" + t).textContent = tShort(t).toUpperCase();
+    $("h" + t).textContent = $("h" + t + "t").textContent = t === 0 ? `◀ ${tShort(t).toUpperCase()} SHOOTS THIS WAY` : `${tShort(t).toUpperCase()} SHOOTS THIS WAY ▶`;
   }
   $("simLbl").textContent = `typical sim · ${(rp.sim_index ?? 0) + 1} of ${(rp.sims || 0).toLocaleString()}`;
   $("scrub").max = Math.ceil(S.endT);
@@ -1149,7 +1228,7 @@ function drawDots() {
     const five = S.st.on[tm].length ? S.st.on[tm] : (S.ev[0]?.on?.[tm] || []);
     for (const id of five) { live.add(id); let el = S.dotEl.get(id);
       if (!el) { el = document.createElementNS(NS, "g"); el.setAttribute("class", "dot t" + tm); el.dataset.id = id; el.dataset.t = tm;
-        el.innerHTML = `<circle r="1.25"/><text y=".38">${esc(initials(id))}</text>`; g.appendChild(el); S.dotEl.set(id, el); }
+        el.innerHTML = `<circle class="halo" r="1.95"/><circle r="1.6"/><text y=".44">${esc(initials(id))}</text>`; g.appendChild(el); S.dotEl.set(id, el); }
       const p = posAt(id, S.t) || TABLE[tm]; el.setAttribute("transform", `translate(${p[0].toFixed(2)} ${p[1].toFixed(2)})`); el.style.display = ""; }
   }
   for (const [id, el] of S.dotEl) if (!live.has(id)) el.style.display = "none";
@@ -1715,7 +1794,7 @@ function betCard(label, x, n, mode) {
   const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs${x.unc ? " · ⚠ questionable player" : ""}`
     : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.unc ? " · ⚠ questionable player" : ""}`;
   const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
-    : x.dl ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>Bet ›</span></a>`
+    : x.dl ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>Bet now ›</span></a>`
     : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
   return `<li class="bc${cls}"><div class="bc-m"><div class="bc-k">${esc(label)}${strTag(x.str)}</div>
     <div class="bc-b">${x.team ? tsw(x.team) : ""}${x.text}</div><div class="bc-s">${sub}</div>${status}${rg}</div>${btn}</li>`;
@@ -1799,7 +1878,7 @@ const WHY_LBL = { "always take": "Big edge", "daily mix": "Daily mix", edge: "Ed
 const DLMULTI = ids => `https://switchboard.actionnetwork.com/v2/deeplink?${ids.map((d, i) => `deeplinkId[${i}]=${encodeURIComponent(d)}`).join("&")}&context=action-articles`;
 const gameLogos = (gid, game) => String(game || "").split(" at ").map(ab => logoImg(gid, ab.trim())).join("");
 function priceBtn(price, book, dl) {
-  return dl ? `<a class="bc-p" href="${DLURL(dl)}" target="_blank" rel="noopener"><b>${odds(price)}</b><small>${esc(book || "")}</small><span>Bet ›</span></a>`
+  return dl ? `<a class="bc-p" href="${DLURL(dl)}" target="_blank" rel="noopener"><b>${odds(price)}</b><small>${esc(book || "")}</small><span>Bet now ›</span></a>`
     : `<div class="bc-p off"><b>${odds(price)}</b><small>${esc(book || "")}</small></div>`;
 }
 function pickCard(p) {
@@ -1807,23 +1886,57 @@ function pickCard(p) {
   return `<li class="bc"><div class="bc-m"><div class="bc-k">${esc(p.type)}<span class="sig ${p.why === "always take" ? "up" : "nt"}">${esc(WHY_LBL[p.why] || p.why || "")}</span></div>
     <div class="bc-b">${lg}${esc(p.text)}</div><div class="bc-s">${esc(p.game)} · Sim ${pctf(p.sim, 0)} · EV <span class="up">${evf(p.ev)}</span> · ${p.books} books</div></div>${priceBtn(p.price, p.book, p.dl)}</li>`;
 }
-const legLi = (l, sameGame) => `<li><i class="lgw">${l.team ? logoImg(l.gid, l.team, "") : ""}</i><div class="lgt"><b>${esc(l.text)}</b><span>${sameGame ? "" : esc(l.game) + " · "}sim ${pctf(l.p, 0)}</span></div><em>${odds(l.odds)}</em></li>`;
-function parlayCard(title, sub, legs, book, oddsTxt, sameGame) {
-  const ids = legs.map(l => l.dl).filter(Boolean), ok = ids.length === legs.length;
-  return `<div class="pcard"><div><h4>${title}</h4><div class="ps">${sub}</div><ol class="legs">${legs.map(l => legLi(l, sameGame)).join("")}</ol></div>
-    ${ok ? `<a class="bc-p" href="${DLMULTI(ids)}" target="_blank" rel="noopener"><b>${oddsTxt}</b><small>${esc(book)}</small><span>Bet all ›</span></a>` : `<div class="bc-p off"><b>${oddsTxt}</b><small>${esc(book)}</small></div>`}</div>`;
+const legLi = (l, sameGame, z) => {
+  const st = z?.status, txt = z?.text || l.text, o = z?.odds ?? l.odds;
+  const was = st === "moved" ? ` · <span class="was">was ${z.text ? esc(l.text) + " " : ""}${odds(l.odds)}</span>` : st === "past" ? ` · <span class="was">${z.why ? esc(z.why) : "not +EV now"} (was ${odds(l.odds)})</span>` : "";
+  return `<li class="${st === "past" ? "past" : ""}"><i class="lgw">${l.team ? logoImg(l.gid, l.team, "") : ""}</i><div class="lgt"><b>${esc(txt)}</b><span>${sameGame ? "" : esc(l.game) + " · "}sim ${pctf(z?.p ?? l.p, 0)}${was}</span></div><em>${odds(o)}</em></li>`;
+};
+function parlayCard(title, sub, legs, book, oddsTxt, sameGame, now) {
+  const zs = now?.legs || [], pass = now?.status === "past";
+  const ids = legs.map((l, i) => zs[i]?.dl || l.dl).filter(Boolean), ok = ids.length === legs.length;
+  const btn = pass ? `<div class="bc-p off pass"><b>PASS</b><small>past our number</small></div>`
+    : ok ? `<a class="bc-p" href="${DLMULTI(ids)}" target="_blank" rel="noopener"><small>${sameGame ? "" : "est."}</small><b>${oddsTxt}</b><small>${esc(book)}</small><span>Bet all now ›</span></a>`
+    : `<div class="bc-p off"><small>${sameGame ? "" : "est."}</small><b>${oddsTxt}</b><small>${esc(book)}</small></div>`;
+  return `<div class="pcard"><div><h4>${title}</h4><div class="ps">${sub}</div><ol class="legs">${legs.map((l, i) => legLi(l, sameGame, zs[i])).join("")}</ol></div>${btn}</div>`;
+}
+function parlaySub(p) {
+  const n = p.now, base = `One book (${esc(p.book)}), four different games. All four hit in ${pctf(n?.p ?? p.p, 1)} of our sims.`;
+  if (!n || n.status === "same") return base + ` Estimated odds ${odds(p.odds)} (the legs' prices multiplied); ${esc(p.book)} sets the final price.` + (n ? `<span class="chk">Checked ${tET(n.t)}: every leg same price.</span>` : "");
+  if (n.status === "moved") return base + ` Estimated odds now ${odds(n.odds)} (posted ${odds(p.odds)}); ${esc(p.book)} sets the final price.<span class="chk">Checked ${tET(n.t)}: a leg moved, every leg still +EV.</span>`;
+  return base + `<span class="chk bad">Checked ${tET(n.t)}: a leg is past our number at ${esc(p.book)}. Pass this one.</span>`;
 }
 function renderParlay() {
   const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sg = SEC()?.sgp;
-  let h = cdHTML("parlay") + `<div class="bb-h">Parlay of the day</div>`;
   const pars = slots.map(s => [s.slot, s.sims?.[SIMKEY]?.parlay]).filter(([, p]) => p);
-  h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`,
-      `One book (${esc(p.book)}), four different games. All four hit in ${pctf(p.p, 1)} of our sims; the book pays ${odds(p.odds)}.`, p.legs, p.book, odds(p.odds))).join("")
-    : `<div class="empty-note">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The parlay of the day comes with the picks at 11:30 AM, 3:30 PM and 5:30 PM ET."}</div>`;
-  h += `<div class="bb-h">This game's same-game parlay</div>`;
-  h += sg ? parlayCard(`${sg.legs.length} legs · ${esc(gameLbl(S.gid))}`, `Each leg +EV at ${esc(sg.book)}. Legs in one game move together, so the book prices the parlay itself (as separate bets: ${odds(sg.odds_if_separate)}).`,
-      sg.legs, sg.book, "SGP", true) : `<div class="empty-note">No same-game parlay for this game: it needs 2+ legs that are +EV at one book.</div>`;
-  el.innerHTML = h;
+  let h = `<div class="lcol pcol"><h3>Parlay of the day<small>4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
+  h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`, parlaySub(p), p.legs, p.book,
+      odds(p.now?.odds ?? p.odds), false, p.now)).join("")
+    : `<div class="lnote">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
+  h += `<h3 class="h3b">Same-game parlay<small>${esc(gameLbl(S.gid))}</small></h3>`;
+  h += sg ? parlayCard(`${sg.legs.length} legs · ${esc(gameLbl(S.gid))}`, `Each leg +EV at ${esc(sg.book)}. Legs in one game move together, so ${esc(sg.book)} prices the parlay itself; we can't estimate it (the legs' prices multiplied would be ${odds(sg.odds_if_separate)}).`,
+      sg.legs, sg.book, "SGP", true) : `<div class="lnote">No same-game parlay for this game: it needs 2+ legs that are +EV at one book.</div>`;
+  el.innerHTML = h + `</div></div>`;
+}
+
+// ------------------------------------------------------------------ line moves (the nightly re-prices picks + parlays every matchups run)
+const tET = iso => { const m = String(iso || "").match(/T(\d{2}):(\d{2})/); if (!m) return ""; const h = +m[1]; return `${h % 12 || 12}:${m[2]} ${h < 12 ? "AM" : "PM"}`; };
+function pickLane(p) {   // a best bet as a lane: as it stands at the books now (p.now), with the posted one noted
+  const n = p.now, cur = n && n.price != null && n.status !== "past" ? n : null, pass = n?.status === "past";
+  const b = cur || (pass && n.price != null ? n : p), d = dec1(b.price);
+  let note = "", cls = "";
+  if (n?.status === "same") note = `Checked ${tET(n.t)}: same line and price`;
+  else if (n?.status === "moved") {
+    cls = "mv";
+    note = `${n.line_move ? "Line moved" : "Price moved"}, still a bet · posted <b>${esc(p.text)} ${odds(p.price)}</b> ${esc(p.book)} · ${tET(n.t)}`;
+  } else if (pass) {
+    cls = "bad";
+    note = n.price != null
+      ? (n.text === p.text ? `Past our number: now <b>${odds(n.price)}</b> ${esc(n.book)} · posted ${odds(p.price)}, play to ${odds(n.play_to)} · ${tET(n.t)}`
+                           : `Past our number: books now <b>${esc(n.text)} ${odds(n.price)}</b> · posted ${esc(p.text)} ${odds(p.price)} (play to ${odds(n.play_to)}) · ${tET(n.t)}`)
+      : `Past our number: no book has it at ${odds(n.play_to)} or better now · posted ${odds(p.price)} ${esc(p.book)} · ${tET(n.t)}`;
+  }
+  return { gid: p.gid, team: p.team, who: pass ? p.text : b.text, what: "", price: b.price, book: b.book, dl: b.dl, ev: b.ev, be: 1 / d,
+           p: Math.min(.995, Math.max(.005, (1 + b.ev) / d)), note, noteCls: cls, pass };
 }
 // charts (inline SVG, no library)
 function svgBars(rows, o = {}) {   // rows: [{label, v, n}] -> vertical bars around 0 (v in %)
@@ -1977,7 +2090,7 @@ function ladderHTML(x, showGame) {   // the rungs climb left to right, each a Be
   const lg = x.team ? logoImg(x.gid, x.team, "") : "", n = x.rungs.length;
   return `<li class="lane ladder"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
     ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}
-    <div class="lrungs">${x.rungs.map((r, i) => { const inner = `<span class="lr-k">${r.k}+</span><span class="lr-o">${odds(r.price)}</span><span class="lr-p">we say <strong>${(100 * r.p).toFixed(0)}%</strong></span><span class="lr-n">needs ${(100 * r.be).toFixed(0)}%</span><span class="lr-b">${esc(r.book || "")}</span><span class="lr-go">Bet</span>`;
+    <div class="lrungs">${x.rungs.map((r, i) => { const inner = `<span class="lr-k">${r.k}+</span><span class="lr-o">${odds(r.price)}</span><span class="lr-p">we say <strong>${(100 * r.p).toFixed(0)}%</strong></span><span class="lr-n">needs ${(100 * r.be).toFixed(0)}%</span><span class="lr-b">${esc(r.book || "")}</span><span class="lr-go">Bet now ›</span>`;
       const st = `margin-top:${(n - 1 - i) * 7}px`;
       return r.dl ? `<a class="lrung" style="${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${r.k}+ at ${odds(r.price)} on ${esc(r.book || "")}">${inner}</a>`
         : `<div class="lrung off" style="${st}">${inner}</div>`; }).join("")}</div></div></li>`;
@@ -1989,10 +2102,10 @@ function laneHTML(x, showGame) {
   const right = p > 78;   // our label flips to the left of the ball near the end of the track
   const cap = `<span style="${be < 26 ? "left:0" : `right:${100 - be}%;padding-right:6px`}">needs <b>${be.toFixed(0)}%</b></span>` +
     `<span style="${right ? `right:${Math.max(0, 100 - p)}%;padding-right:12px;text-align:right` : `left:${p}%;padding-left:12px`}">we say <b>${p.toFixed(0)}%</b></span>`;
-  const tk = x.dl ? `<a class="tkt" href="${DLURL(x.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${esc(x.what)} at ${odds(x.price)} on ${esc(x.book || "")}"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><em>Bet</em></a>`
+  const tk = x.pass ? `<div class="tkt pass" title="Past our number at every book now"><b>PASS</b><small>not a bet now</small></div>` : x.dl ? `<a class="tkt" href="${DLURL(x.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${esc(x.what)} at ${odds(x.price)} on ${esc(x.book || "")}"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><em>Bet now ›</em></a>`
     : `<div class="tkt off" title="No bet link from the book yet"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
-  return `<li class="lane"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
-    ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}
+  return `<li class="lane${x.pass ? " past" : ""}"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
+    ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}${x.note ? `<div class="ln-move ${x.noteCls || ""}">${x.note}</div>` : ""}
     <div class="track" role="img" aria-label="Needs ${be.toFixed(0)}% to break even, we say ${p.toFixed(0)}%"><span class="gap" style="left:${be}%;width:${Math.max(.5, p - be)}%;background:${col}"></span><span class="be" style="left:${be}%"></span><span class="ball" style="left:${p}%"></span></div>
     <div class="cap">${cap}</div></div>${tk}</li>`;
 }
@@ -2044,8 +2157,8 @@ setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { if (e
 function renderBest() {
   const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
   if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3>${cdHTML("best bets")}<div class="lnote">3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate.</div></div>`; return; }
-  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
-    const ps = (s.sims?.[SIMKEY]?.picks || []).map(p => { const d = dec1(p.price); return { gid: p.gid, team: p.team, who: p.text, what: "", price: p.price, book: p.book, dl: p.dl, ev: p.ev, be: 1 / d, p: Math.min(.995, (1 + p.ev) / d) }; });
+  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
+    const ps = (s.sims?.[SIMKEY]?.picks || []).map(pickLane);
     return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor.</li>`); }).join("") + `</ol></div>`;
 }
 
