@@ -469,6 +469,8 @@ a.tkt:hover { filter: brightness(1.15) } a.tkt:focus-visible { outline: 3px soli
   background: var(--board); color: var(--board-ink); border-bottom: 4px solid var(--accent); box-shadow: 0 2px 0 rgba(44, 28, 12, .35) }
 .lrung .lr-k { font: 800 15px/1 var(--disp); color: var(--board-muted) } .lrung .lr-o { font: 800 23px/1 var(--disp); color: var(--board-ink) }
 .lrung .lr-p { font: 600 10.5px/1.2 var(--text); color: var(--board-ink) } .lrung .lr-p strong { font-weight: 800 } .lrung .lr-n { font: 600 10px/1.2 var(--text); color: var(--board-muted) }
+.stk { flex: none; margin-left: 8px; padding: 3px 6px; border: 1.5px solid var(--accent); border-radius: 4px; color: var(--accent); font: 800 12px/1 var(--text); white-space: nowrap; align-self: center }
+.lrung .lr-u { font: 800 10px/1.1 var(--text); color: var(--accent) }
 .lrung .lr-b { font: 600 10px/1.1 var(--text); color: var(--board-muted); max-width: 86px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap } .lrung .lr-go { font: 800 11px/1 var(--text); color: var(--accent) }
 a.lrung:hover { filter: brightness(1.15) } a.lrung:focus-visible { outline: 3px solid var(--paintline); outline-offset: 2px } .lrung.off { opacity: .55 }
 @media (max-width: 760px) {
@@ -608,7 +610,6 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgba(146, 98, 244, 
     <button role="tab" data-view="parlay" aria-selected="false">Parlay</button>
     <button role="tab" data-view="bet" aria-selected="false">Betting</button>
     <button role="tab" data-view="props" aria-selected="false">Props</button>
-    <button role="tab" data-view="fb" aria-selected="false">First basket</button>
     <button role="tab" data-view="ladders" aria-selected="false">Ladders</button>
     <button role="tab" data-view="results" aria-selected="false">Results</button>
     <button role="tab" data-view="players" aria-selected="false">Players</button>
@@ -698,10 +699,6 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgba(146, 98, 244, 
       <div class="lanes" id="lanes_props"></div>
     </section>
 
-    <section class="view" data-v="fb" hidden>
-      <div class="lanes-top"><div id="fbWarn2"></div><div class="seg lanes-seg" id="laneSeg_fb"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
-      <div class="lanes" id="lanes_fb"></div>
-    </section>
 
     <section class="view" data-v="ladders" hidden>
       <div class="lanes-top"><div id="laddersWarn2"></div><div class="seg lanes-seg" id="laneSeg_ladders"><button data-lane="game" data-v="game">This game</button><button data-lane="slate" data-v="slate">Whole slate</button></div></div>
@@ -818,7 +815,7 @@ function showEmpty() {
 function short(full, abbr) { if (abbr && !/^\d+$/.test(abbr)) return abbr; if (!full) return abbr || "?"; const w = String(full).split(" "); return w[w.length - 1]; }
 
 // ------------------------------------------------------------------ book picker: best price (default) or one book's prices only
-S.book = (() => { try { return localStorage.getItem("nbaBook") || null; } catch (e) { return null; } })();
+S.book = (() => { try { const v = localStorage.getItem("nbaBookPP"); return v === null ? "Kalshi" : v || null; } catch (e) { return "Kalshi"; } })();   // Kalshi unless picked (Chris 2026-11-11)
 const bkTag = () => S.book ? `${esc(S.book)} only · ` : "";
 function atBook(x, bk) {   // a lane at one book: its price, link and edge (our chance stays); [] when that book doesn't offer it
   if (x.ladder) {
@@ -855,9 +852,11 @@ function fillBooks() {   // every book in this page's prices, slate-wide
       else if (v && typeof v === "object") walk(v, dp + 1); } };
   for (const g of S.games || []) walk(INS(g.schedule_id)?.[SIMKEY], 0);
   for (const s of S.index?.best_bets?.slots || []) Object.keys(s.sims?.[SIMKEY]?.by_book || {}).forEach(b => set.add(b));
-  const list = [...set].filter(b => b && b !== "null" && b !== "undefined").sort((a, b) => a.localeCompare(b));
+  const EX = ["Kalshi", "Polymarket", "Novig"];
+  const list = [...EX, ...[...set].filter(b => b && !EX.includes(b) && b !== "null" && b !== "undefined").sort((a, b) => a.localeCompare(b))];
   if (S.book && !list.includes(S.book)) list.push(S.book);
-  el.innerHTML = `<option value="">Best price · any book</option>` + list.map(b => `<option value="${esc(b)}"${b === S.book ? " selected" : ""}>${esc(b)} only</option>`).join("");
+  el.innerHTML = list.map(b => `<option value="${esc(b)}"${b === S.book ? " selected" : ""}>${esc(b)}</option>`).join("") +
+    `<option value=""${S.book ? "" : " selected"}>Best price · any exchange</option>`;
   el.classList.toggle("on", !!S.book);
 }
 function fillPicker() {
@@ -2086,7 +2085,8 @@ function renderParlay() {
   const parOf = s => { const sm = s.sims?.[SIMKEY]; return !S.book ? sm?.parlay : sm?.by_book ? sm.by_book[S.book]?.parlay : (sm?.parlay?.book === S.book ? sm.parlay : null); };
   const pars = slots.map(s => [s.slot, parOf(s)]).filter(([, p]) => p);
   let h = `<div class="lcol pcol"><h3>Parlay of the day<small>${bkTag()}4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
-  h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`, parlaySub(p), p.legs, p.book,
+  const parU = p => { if (p.now?.status === "past") return ""; const o = p.now?.odds ?? p.odds, pe = (1 + p.ev) / dec1(p.odds), u = stakeU(pe * dec1(o) - 1, o); return u ? ` · bet ${uTxt(u)}` : ""; };
+  h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET${parU(p)}`, parlaySub(p), p.legs, p.book,
       odds(p.now?.odds ?? p.odds), false, p.now)).join("")
     : `<div class="lnote">${slots.length ? (S.book ? `No parlay at ${esc(S.book)} today: it needs 4 games with a +EV leg there.` : "No parlay today: it needs 4 games with a +EV leg at the same book.") : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
   h += `<h3 class="h3b">Same-game parlay<small>${esc(gameLbl(S.gid))}</small></h3>`;
@@ -2163,7 +2163,7 @@ function renderResults() {
     const cum = (d, nm, color) => { let c = 0; return { name: nm, color, pts: d.map(x => [x[0].slice(5), c += x[3]]) }; };
     const ser = [cum(pk.days, "Picks", "var(--accent)")]; if (pa?.days?.length > 1) ser.push(cum(pa.days, "Parlays", "var(--t0)"));
     const roi = pk.n ? 100 * pk.units / pk.n : 0;
-    h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Every pick at 1 unit, graded each night from the box scores.${pa?.n ? ` Parlays: ${pa.won}-${pa.lost}, ${pa.units >= 0 ? "+" : ""}${pa.units.toFixed(1)} u.` : ""}</div>
+    h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Each pick and parlay sized 0.05–1 unit by edge and price (quarter-Kelly, 40-unit bankroll; 1 unit each before Nov 11), graded each night from the box scores.${pa?.n ? ` Parlays: ${pa.won}-${pa.lost}, ${pa.units >= 0 ? "+" : ""}${pa.units.toFixed(1)} u.` : ""}</div>
       <div class="kpis"><span><b>${pk.won}-${pk.lost}</b>record</span><span><b>${pk.units >= 0 ? "+" : ""}${pk.units.toFixed(1)} u</b>units</span><span><b>${roi >= 0 ? "+" : ""}${roi.toFixed(1)}%</b>return</span>
       ${Object.entries(L.groups || {}).map(([g, x]) => `<span><b>${x.won}-${x.n - x.won}</b>${esc(g)}</span>`).join("")}</div>${svgLine(ser, { aria: "Cumulative units 2026-27" })}</div>`;
   } else h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Starts with the first graded picks (the nightly grades them after the games).</div></div>`;
@@ -2181,6 +2181,11 @@ function renderResults() {
 const LRULE = { prop: [.08, .35], alt: [.20, .80], special: [.15, .60], game: [.06, .35] };   // moneyline: EV at most 20%, no +200 or longer
 const LMIN = { alt: .25, special: .08, game: .25 };
 const dec1 = a => a > 0 ? 1 + a / 100 : 1 + 100 / Math.abs(a);
+// bet size (Chris 2026-11-11): 0.05 to 1 unit, quarter-Kelly on a 40-unit bankroll = 10 x edge / (decimal odds - 1), capped at 1, nearest 0.05.
+// At the same edge a longer price gets less.
+const stakeU = (ev, price) => { const d = dec1(price); if (!(ev > 0) || !(d > 1)) return 0; return Math.min(1, Math.max(.05, Math.floor(10 * ev / (d - 1) / .05 + .5) * .05)); };
+const uTxt = u => (Math.round(u * 100) / 100).toFixed(2).replace(/0$/, "") + "u";
+const stkHTML = (ev, price) => { const u = stakeU(ev, price); return u ? `<b class="stk" title="bet size: quarter-Kelly on a 40-unit bankroll, 1 unit max">${uTxt(u)}</b>` : ""; };
 const LANE_N = { game: 6, slate: 10 };
 function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kind, team, who, what, price, book, dl, ev, books, unc}]
   const sec = SEC(gid); if (!sec) return [];
@@ -2221,7 +2226,7 @@ function ladderHTML(x, showGame) {   // the rungs climb left to right, each a Be
   const lg = x.team ? logoImg(x.gid, x.team, "") : "", n = x.rungs.length;
   return `<li class="lane ladder"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
     ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}
-    <div class="lrungs">${x.rungs.map((r, i) => { const inner = `<span class="lr-k">${r.k}+</span><span class="lr-o">${odds(r.price)}</span><span class="lr-p">we say <strong>${(100 * r.p).toFixed(0)}%</strong></span><span class="lr-n">needs ${(100 * r.be).toFixed(0)}%</span><span class="lr-b">${esc(r.book || "")}</span><span class="lr-go">Trade ›</span>`;
+    <div class="lrungs">${x.rungs.map((r, i) => { const inner = `<span class="lr-k">${r.k}+</span><span class="lr-o">${odds(r.price)}</span><span class="lr-p">we say <strong>${(100 * r.p).toFixed(0)}%</strong></span><span class="lr-n">needs ${(100 * r.be).toFixed(0)}%</span>${stakeU(r.ev, r.price) ? `<span class="lr-u">bet ${uTxt(stakeU(r.ev, r.price))}</span>` : ""}<span class="lr-b">${esc(r.book || "")}</span><span class="lr-go">Trade ›</span>`;
       const st = `margin-top:${(n - 1 - i) * 7}px`;
       return r.dl ? `<a class="lrung" style="${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${r.k}+ at ${odds(r.price)} on ${esc(r.book || "")}">${inner}</a>`
         : `<div class="lrung off" style="${st}">${inner}</div>`; }).join("")}</div></div></li>`;
@@ -2236,7 +2241,7 @@ function laneHTML(x, showGame) {
     `<span style="${right ? `right:${Math.max(0, 100 - p)}%;padding-right:12px;text-align:right` : `left:${p}%;padding-left:12px`}">we say <b>${p.toFixed(0)}%</b></span>`;
   const tk = x.pass ? `<div class="tkt pass" title="Past our number at every book now"><b>PASS</b><small>not a bet now</small></div>` : x.dl ? `<a class="tkt" href="${DLURL(x.dl)}" target="_blank" rel="noopener" aria-label="Bet ${esc(x.who)} ${esc(x.what)} at ${odds(x.price)} on ${esc(x.book || "")}"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><em>Trade ›</em></a>`
     : `<div class="tkt off" title="No bet link from the book yet"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
-  return `<li class="lane${x.pass ? " past" : ""}"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span></div>
+  return `<li class="lane${x.pass ? " past" : ""}"><div class="ln-main"><div class="ln-bet">${lg}<span>${esc(x.who)} <i>${esc(x.what)}</i></span>${x.pass ? "" : stkHTML(x.ev, x.price)}</div>
     ${showGame ? `<div class="ln-ctx">${esc(gameLbl(x.gid))}</div>` : ""}${x.note ? `<div class="ln-move ${x.noteCls || ""}">${x.note}</div>` : ""}
     <div class="track" role="img" aria-label="Needs ${be.toFixed(0)}% to break even, we say ${p.toFixed(0)}%"><span class="gap" style="left:${be}%;width:${Math.max(.5, p - be)}%;background:${col}"></span><span class="be" style="left:${be}%"></span><span class="ball" style="left:${p}%"></span></div>
     <div class="cap">${cap}</div></div>${tk}</li>`;
@@ -2310,7 +2315,7 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
-$("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBook", S.book || ""); } catch (er) { /* private window */ }
+$("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBookPP", S.book || ""); } catch (er) { /* private window */ }
   e.target.classList.toggle("on", !!S.book); renderView(); if (S.view === "replay") renderBets(); });
 $("fileIn").addEventListener("change", e => openFiles(e.target.files));
 $("play").addEventListener("click", () => S.playing ? stop() : play());
