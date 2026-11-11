@@ -587,6 +587,29 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .views small, .views em, .cap span, .tag, .q, .sig, .conf, .bc-k, .lr-b, .lr-n, .lr-p, .lr-go, .lrung strong, .chipbet, .rg, .was, .mu-h,
   .view[data-v="matchup"] .who, .view[data-v="players"] th { font-size: 12px }
 }
+
+/* ------------------------------------------------------------------ phone (Chris 2026-11-11): Replay bets sheet, stacked results */
+.bs-grab { display: none }
+@media (max-width: 760px) {
+  .view[data-v="replay"] .rp { display: block; height: 100%; overflow-y: auto; padding-bottom: 76px; box-sizing: border-box }
+  .view[data-v="replay"] .rp-right { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 70px; transition: height .25s ease }
+  .view[data-v="replay"] .rp-right.up { height: 82% }
+  .view[data-v="replay"] .rp-right .bets { height: 100%; box-sizing: border-box; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 24px rgba(0, 0, 0, .35); padding-top: 4px }
+  .view[data-v="replay"] .rp-right:not(.up) .bets-sub, .view[data-v="replay"] .rp-right:not(.up) .bets-fill { display: none }
+  .bs-grab { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 22px; padding: 2px 0 0; border: 0; background: none;
+             color: var(--muted); font: 700 12px/1 var(--text); cursor: pointer; touch-action: none }
+  .bs-grab i { width: 40px; height: 5px; border-radius: 3px; background: var(--rule-strong) }
+  .view[data-v="replay"] .bets-t { cursor: pointer }
+  .view[data-v="replay"] .bets-t::after { content: " \25B4"; color: var(--muted); font-size: .8em }
+  .view[data-v="replay"] .rp-right.up .bets-t::after { content: " \25BE" }
+  .rtab, .rtab tbody { display: block }
+  .rtab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; column-gap: 12px; row-gap: 3px; padding: 9px 2px; border-top: 1px solid var(--rule) }
+  .rtab td { display: block; padding: 0; border: 0; white-space: nowrap; font-size: 13px }
+  .rtab td:nth-child(1) { grid-column: 1; grid-row: 1; color: var(--muted) }
+  .rtab td:nth-child(3) { grid-column: 2; grid-row: 1 } .rtab td:nth-child(4) { grid-column: 3; grid-row: 1 } .rtab td:nth-child(5) { grid-column: 4; grid-row: 1; text-align: right }
+  .rtab td.t { grid-column: 1 / -1; grid-row: 2; white-space: normal; font-size: 14px; line-height: 1.35 }
+  .rtab td.t span { font-size: 12.5px }
+}
 </style>
 </head>
 <body>
@@ -2370,6 +2393,26 @@ function renderView() {
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
 
+// ------------------------------------------------------------------ phone (Chris 2026-11-11): Replay's Bets panel as a sheet you pull up
+(() => {
+  const right = document.querySelector('.view[data-v="replay"] .rp-right'), panel = $("betsPanel"), feed = $("feed");
+  if (!right || !panel || !feed) return;
+  const grab = document.createElement("button"); grab.type = "button"; grab.className = "bs-grab"; grab.setAttribute("aria-expanded", "false");
+  grab.innerHTML = `<i></i><span></span>`; panel.prepend(grab);
+  const count = () => { const n = feed.children.length; grab.lastChild.textContent = n ? `${n} bet${n === 1 ? "" : "s"}` : ""; };
+  new MutationObserver(count).observe(feed, { childList: true }); count();
+  const set = up => { right.classList.toggle("up", up); grab.setAttribute("aria-expanded", String(up)); grab.setAttribute("aria-label", up ? "Hide bets" : "Show bets"); };
+  set(false);
+  grab.addEventListener("click", () => set(!right.classList.contains("up")));
+  panel.querySelector(".bets-t")?.addEventListener("click", () => { if (mobile()) set(!right.classList.contains("up")); });
+  let y0 = null;
+  [grab, panel.querySelector(".bets-hd")].filter(Boolean).forEach(el => {
+    el.addEventListener("touchstart", e => { y0 = e.touches[0].clientY; }, { passive: true });
+    el.addEventListener("touchend", e => { if (y0 === null) return; const dy = e.changedTouches[0].clientY - y0; y0 = null;
+      if (dy < -30) set(true); else if (dy > 30) set(false); }, { passive: true });
+  });
+})();
+
 // ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar (main tabs + More), score bar on Replay only,
 // swipe left / right on the board to change games. Desktop: nothing changes.
 (() => {
@@ -2387,7 +2430,7 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
   const tb = document.createElement("div"); tb.className = "gtoast"; document.body.appendChild(tb);
   const toast = t => { tb.textContent = t; tb.classList.add("on"); clearTimeout(tb._t); tb._t = setTimeout(() => tb.classList.remove("on"), 900); };
   const own = el => { for (let e = el; e && e !== document.body; e = e.parentElement) {   // a touch on something that scrolls sideways itself (or a control) is its own
-    if (e.matches?.("input, select, textarea, button.lrung, .msheet")) return true;
+    if (e.matches?.("input, select, textarea, button.lrung, .msheet, .bets")) return true;
     const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowX) && e.scrollWidth > e.clientWidth + 1) return true; } return false; };
   let x0 = null, y0 = 0;
   $("views").addEventListener("touchstart", e => { x0 = null; if (!mobile() || e.touches.length !== 1 || own(e.target)) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
