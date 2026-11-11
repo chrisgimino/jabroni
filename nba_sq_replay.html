@@ -570,8 +570,6 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 @media (max-width: 760px) and (pointer: fine) {
   .tabs { flex-wrap: wrap; overflow: visible }
   .tabs button { padding: 5px 8px; font-size: 13px }
-  .view[data-v="replay"] .courtbox { width: min(100%, calc(38vh * 105 / 58)); margin-inline: auto }   /* the court leaves room for the bets under it */
-  .view[data-v="replay"] .rp { overflow-y: auto } .view[data-v="replay"] .rp-right { min-height: 300px }   /* short frame: scroll down to the bets */
 }
 @media (max-width: 760px) and (pointer: coarse) {
   .app { gap: 6px; padding-bottom: 0 }
@@ -599,22 +597,23 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .views .seg button { font-size: 12px }
 }
 
-/* ------------------------------------------------------------------ phone (Chris 2026-11-11): Replay bets sheet, stacked results */
+/* ------------------------------------------------------------------ narrow screens (Chris 2026-11-11): Replay bets open under the court
+   (any narrow screen, full screen or inside a frame); the handle / "Bets" title expands them over the court and back. Stacked results. */
 .bs-grab { display: none }
-@media (max-width: 760px) and (pointer: coarse) {   /* phones only: a narrow desktop window / embed keeps the bets under the court, open */
-  .view[data-v="replay"] .rp { display: block; height: 100%; overflow-y: auto; padding-bottom: 76px; box-sizing: border-box }
-  .view[data-v="replay"] .rp-right { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 70px; transition: height .25s ease }
-  .view[data-v="replay"] .rp-right.up { height: 82% }
-  .view[data-v="replay"] .rp-right .bets { height: 100%; box-sizing: border-box; border-radius: 14px 14px 0 0; box-shadow: 0 -8px 24px rgba(0, 0, 0, .35); padding-top: 4px }
-  .view[data-v="replay"] .rp-right:not(.up) .bets-sub, .view[data-v="replay"] .rp-right:not(.up) .bets-fill { display: none }
+@media (max-width: 760px) {
+  .view[data-v="replay"] .rp { display: flex; flex-direction: column; gap: 8px; height: 100%; overflow-y: auto; box-sizing: border-box }
+  .view[data-v="replay"] .rp-left { flex: 0 0 auto }
+  .view[data-v="replay"] .courtbox { width: min(100%, calc(38vh * 105 / 58)); margin-inline: auto }   /* the court leaves room for the bets */
+  .view[data-v="replay"] .rp-right { flex: 1 0 300px; min-height: 300px }
+  .view[data-v="replay"] .rp-right .bets { flex: 1; min-height: 0; padding-top: 4px }
+  .view[data-v="replay"] .rp-right.up { position: absolute; inset: 0; z-index: 20; min-height: 0 }
+  .view[data-v="replay"] .rp-right.up .bets { box-shadow: 0 -8px 24px rgba(0, 0, 0, .35) }
   .bs-grab { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 22px; padding: 2px 0 0; border: 0; background: none;
              color: var(--muted); font: 700 12px/1 var(--text); cursor: pointer; touch-action: none }
   .bs-grab i { width: 40px; height: 5px; border-radius: 3px; background: var(--rule-strong) }
   .view[data-v="replay"] .bets-t { cursor: pointer }
   .view[data-v="replay"] .bets-t::after { content: " \25B4"; color: var(--muted); font-size: .8em }
   .view[data-v="replay"] .rp-right.up .bets-t::after { content: " \25BE" }
-}
-@media (max-width: 760px) {
   .rtab, .rtab tbody { display: block }
   .rtab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; column-gap: 12px; row-gap: 3px; padding: 9px 2px; border-top: 1px solid var(--rule) }
   .rtab td { display: block; padding: 0; border: 0; white-space: nowrap; font-size: 13px }
@@ -2412,12 +2411,13 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
   if (!right || !panel || !feed) return;
   const grab = document.createElement("button"); grab.type = "button"; grab.className = "bs-grab"; grab.setAttribute("aria-expanded", "false");
   grab.innerHTML = `<i></i><span></span>`; panel.prepend(grab);
-  const count = () => { const n = feed.children.length; grab.lastChild.textContent = n ? `${n} bet${n === 1 ? "" : "s"}` : ""; };
+  const count = () => { const n = feed.children.length, up = right.classList.contains("up");
+    grab.lastChild.textContent = `${n ? `${n} bet${n === 1 ? "" : "s"} · ` : ""}${up ? "shrink ▾" : "expand ▴"}`; };
   new MutationObserver(count).observe(feed, { childList: true }); count();
-  const set = up => { right.classList.toggle("up", up); grab.setAttribute("aria-expanded", String(up)); grab.setAttribute("aria-label", up ? "Hide bets" : "Show bets"); };
+  const set = up => { right.classList.toggle("up", up); grab.setAttribute("aria-expanded", String(up)); grab.setAttribute("aria-label", up ? "Shrink bets" : "Expand bets"); count(); };
   set(false);
   grab.addEventListener("click", () => set(!right.classList.contains("up")));
-  panel.querySelector(".bets-t")?.addEventListener("click", () => { if (matchMedia("(max-width: 760px) and (pointer: coarse)").matches) set(!right.classList.contains("up")); });
+  panel.querySelector(".bets-t")?.addEventListener("click", () => { if (mobile()) set(!right.classList.contains("up")); });
   let y0 = null;
   [grab, panel.querySelector(".bets-hd")].filter(Boolean).forEach(el => {
     el.addEventListener("touchstart", e => { y0 = e.touches[0].clientY; }, { passive: true });
