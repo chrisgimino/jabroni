@@ -584,6 +584,43 @@ body { background: radial-gradient(1200px 600px at 85% -10%, rgba(146, 98, 244, 
 .top #bookPick { width: auto; max-width: 210px; flex: 0 0 auto; font-weight: 600 }
 .top #bookPick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
 @media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .top #bookPick { order: 9; flex: 1 1 100%; max-width: none; min-height: 30px; font-size: 13px; padding: 3px 8px } }
+
+/* ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar, one-row header, finger-size controls */
+.more-btn, .msheet, .gtoast { display: none }
+@media (max-width: 760px) {
+  .app { gap: 6px; padding-bottom: 0 }
+  .top { flex-wrap: nowrap; gap: 6px }
+  .top .filebtn, .top .upd { display: none }
+  .brand { font-size: 15px } .brand .an { height: 18px } .brand span { display: none }
+  .top select, .top #bookPick { height: 44px; min-height: 44px; font-size: 15px; padding: 6px 8px }
+  .top #bookPick { width: 108px; max-width: 108px; flex: 0 0 108px; text-overflow: ellipsis }
+  .app:not([data-view="replay"]) .board { display: none }
+  .views { order: 50 }
+  .tabs { order: 99; overflow: hidden; gap: 0; border-bottom: 0; border-top: 1px solid var(--rule-strong); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+          padding: 0 8px env(safe-area-inset-bottom, 0px); background: var(--ground) }
+  .tabs button { display: none; flex: 1 1 0; min-width: 0; min-height: 54px; padding: 6px 2px; margin: -1px 0 0; font-size: 13px; line-height: 1.1;
+                 border-bottom: 0; border-top: 3px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .tabs button.pri, .tabs .more-btn { display: block }
+  .tabs button[aria-selected="true"], .tabs .more-btn.on { color: var(--ink); border-top-color: var(--accent) }
+  .more-btn { background: none; border: 0; font-weight: 700; color: var(--muted); cursor: pointer }
+  .msheet { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .5); align-items: flex-end }
+  .msheet.open { display: flex }
+  .msheet .ms-in { width: 100%; box-sizing: border-box; background: var(--surface); border-radius: 14px 14px 0 0; padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+                   display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+  .msheet button { min-height: 54px; border-radius: 10px; border: 1px solid var(--rule-strong); background: var(--ground); color: var(--ink); font: 700 15px/1.1 var(--text) }
+  .msheet button[aria-current="true"] { border-color: var(--accent); color: var(--accent) }
+  .gtoast { position: fixed; left: 50%; top: 64px; z-index: 91; transform: translateX(-50%); padding: 8px 14px; border-radius: 20px; background: var(--ink); color: var(--ground);
+            font: 800 15px/1 var(--text); pointer-events: none; opacity: 0; transition: opacity .2s; display: block }
+  .gtoast.on { opacity: .92 }
+  .seg button, .pager button, .ctl .btn { min-height: 44px }
+  #scrub { height: 36px }
+  .chipbet, .rg, .lgo { padding-top: 12px; padding-bottom: 12px; margin-top: -12px; margin-bottom: -12px }   /* bigger tap area, same layout */
+  .views .seg button { font-size: 12px }
+  .lrungs { flex-wrap: wrap; overflow-x: visible }
+  .lrungs .lrung { margin-top: 0 !important }
+  .views small, .views em, .cap span, .tag, .q, .sig, .conf, .bc-k, .lr-b, .lr-n, .lr-p, .lr-go, .lrung strong, .chipbet, .rg, .was, .mu-h,
+  .view[data-v="matchup"] .who, .view[data-v="players"] th { font-size: 12px }
+}
 </style>
 </head>
 <body>
@@ -862,7 +899,7 @@ function fillBooks() {   // every book in this page's prices, slate-wide
 function fillPicker() {
   $("gamePick").innerHTML = S.games.map(g => { const tn = g.team_names || g.teams || [];
     const h = S.local[g.schedule_id]?.rp?.teams?.findIndex(t => t.home === true), a = h === 0 ? 1 : 0, hh = 1 - a;
-    return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))} at ${esc(short(tn[hh], g.teams?.[hh]))}${g.date ? " · " + esc(g.date) : ""}</option>`; }).join("");
+    return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))}${mobile() ? " @ " : " at "}${esc(short(tn[hh], g.teams?.[hh]))}${g.date && !mobile() ? " · " + esc(g.date) : ""}</option>`; }).join("");   // phone: "MIA @ WAS"
   fillBooks();
 }
 async function openFiles(files) {
@@ -1832,7 +1869,7 @@ const SV = { Points: b => b.pts, Rebounds: b => b.reb, Assists: b => b.ast, "3PM
 const SVU = { Points: "pts", Rebounds: "reb", Assists: "ast", "3PM": "threes", "Pts+Reb+Ast": "PRA", "Pts+Reb": "pts+reb", "Pts+Ast": "pts+ast",
   "Reb+Ast": "reb+ast", Steals: "stl", Blocks: "blk", "Stl+Blk": "stl+blk", Turnovers: "TO" };
 const Z0 = { pts: 0, reb: 0, ast: 0, m3: 0, stl: 0, blk: 0, tov: 0 };
-const BET_CATS = [["fb", "First basket"], ["ml", "Moneyline"], ["spread", "Spread"], ["total", "Total"], ["pts", "Points"], ["reb", "Rebounds"],
+const BET_CATS = [["ml", "Moneyline"], ["spread", "Spread"], ["total", "Total"], ["pts", "Points"], ["reb", "Rebounds"],
   ["ast", "Assists"], ["prop", "Other props"], ["ladder", "Ladder"], ["mostpts", "Most points"], ["mostreb", "Most rebounds"], ["special", "Specials"]];
 const CAT_OF = { Points: "pts", Rebounds: "reb", Assists: "ast" };
 const ATS = at => at ? `${at.q > 4 ? (at.q === 5 ? "OT" : "OT" + (at.q - 4)) : "Q" + at.q} ${at.clock || ""}`.trim() : "";
@@ -1908,7 +1945,6 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
     sim: r.sim, ev: r.ev_blend ?? r.ev, str: r.strength, unc: !!m.uncertain, res: { won: won(r), at: at(r), txt: txt(r) }, pv: pv ? () => pv(r) : null, dd: dd ? () => dd(r) : null }); };
   const firstDead = f => r => !!f && S.t >= f.t && String(f.id) !== String(r.core_id);
   const fbTxt = f => f ? `${esc(nm(f.id))} scored first` : "no basket";
-  one(F.first_basket, "fb", "first basket", r => !!tr.first && String(tr.first.id) === String(r.core_id), () => tr.first, () => fbTxt(tr.first), null, firstDead(tr.first));
   const most = (stat, cat, m, label) => { const vals = Object.entries(tr.P).map(([id, b]) => [id, SV[stat](b)]), top = Math.max(0, ...vals.map(x => x[1])),
       leaders = vals.filter(x => x[1] === top).map(x => x[0]), u = SVU[stat];
     const lead = r => { const me = SV[stat](liveBox(r.core_id)); let o = 0; for (const p of S.rp.players) { const id = String(p.core_id || p.rg_id); if (id !== String(r.core_id)) o = Math.max(o, SV[stat](liveBox(id))); } return me - o; };
@@ -1918,7 +1954,7 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
   one(F.first_fg, "special", "first field goal", r => !!tr.ffg && String(tr.ffg.id) === String(r.core_id), () => tr.ffg, () => tr.ffg ? `${esc(nm(tr.ffg.id))} hit the first field goal` : "", null, firstDead(tr.ffg));
   one(F.first_3, "special", "first 3-pointer", r => !!tr.f3 && String(tr.f3.id) === String(r.core_id), () => tr.f3, () => tr.f3 ? `${esc(nm(tr.f3.id))} hit the first 3` : "none made", null, firstDead(tr.f3));
   const HOW = { "Free Throw": 0, "Two Point Field Goal": 1, "Three Point Field Goal": 2 }, HOWS = ["free throw", "2-pointer", "3-pointer"];
-  for (const r of F.first_basket_method || []) { const won = !!tr.first && String(tr.first.id) === String(r.core_id) && tr.first.how === HOW[r.method];
+  for (const r of []) { const won = !!tr.first && String(tr.first.id) === String(r.core_id) && tr.first.how === HOW[r.method];   // no first basket on the exchanges
     add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
       str: r.strength, res: { won, at: tr.first, txt: tr.first ? `${esc(nm(tr.first.id))} · ${HOWS[tr.first.how]}` : "" }, dd: () => !!tr.first && S.t >= tr.first.t && !won }); }
   for (const r of F.specials || []) { let won = false, at = fin, txt = "";
@@ -2315,6 +2351,33 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
+
+// ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar (main tabs + More), score bar on Replay only,
+// swipe left / right on the board to change games. Desktop: nothing changes.
+(() => {
+  const PRI = ["best", "parlay", "props", "ladders"], nav = $("tabs"), app = document.querySelector(".app");
+  nav.querySelectorAll("button[data-view]").forEach(b => b.classList.toggle("pri", PRI.includes(b.dataset.view)));
+  const more = document.createElement("button"); more.type = "button"; more.className = "more-btn"; more.setAttribute("aria-haspopup", "true"); nav.appendChild(more);
+  const sheet = document.createElement("div"); sheet.className = "msheet"; sheet.innerHTML = `<div class="ms-in" role="menu" aria-label="More tabs"></div>`; document.body.appendChild(sheet);
+  more.addEventListener("click", () => {
+    sheet.firstChild.innerHTML = [...nav.querySelectorAll("button[data-view]:not(.pri)")].map(b => `<button type="button" role="menuitem" data-go="${b.dataset.view}"${b.dataset.view === S.view ? ' aria-current="true"' : ""}${b.disabled ? " disabled" : ""}>${esc(b.textContent)}</button>`).join("");
+    sheet.classList.add("open"); });
+  sheet.addEventListener("click", e => { const b = e.target.closest("button[data-go]"); sheet.classList.remove("open"); if (b) nav.querySelector(`button[data-view="${b.dataset.go}"]`)?.click(); });
+  const sync = () => { app.dataset.view = S.view; const off = !PRI.includes(S.view);
+    more.classList.toggle("on", off); more.textContent = off ? `${nav.querySelector(`button[data-view="${S.view}"]`)?.textContent || "More"} ▴` : "More ▴"; };
+  const sv = showView; showView = function () { const r = sv.apply(this, arguments); sync(); return r; }; sync();
+  const tb = document.createElement("div"); tb.className = "gtoast"; document.body.appendChild(tb);
+  const toast = t => { tb.textContent = t; tb.classList.add("on"); clearTimeout(tb._t); tb._t = setTimeout(() => tb.classList.remove("on"), 900); };
+  const own = el => { for (let e = el; e && e !== document.body; e = e.parentElement) {   // a touch on something that scrolls sideways itself (or a control) is its own
+    if (e.matches?.("input, select, textarea, button.lrung, .msheet")) return true;
+    const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowX) && e.scrollWidth > e.clientWidth + 1) return true; } return false; };
+  let x0 = null, y0 = 0;
+  $("views").addEventListener("touchstart", e => { x0 = null; if (!mobile() || e.touches.length !== 1 || own(e.target)) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  $("views").addEventListener("touchend", e => { if (x0 === null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+    const el = $("gamePick"), i = el.selectedIndex + (dx < 0 ? 1 : -1); if (i < 0 || i >= el.options.length) return;
+    el.selectedIndex = i; el.dispatchEvent(new Event("change")); toast(el.options[i].textContent); }, { passive: true });
+})();
 $("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBookPP", S.book || ""); } catch (er) { /* private window */ }
   e.target.classList.toggle("on", !!S.book); renderView(); if (S.view === "replay") renderBets(); });
 $("fileIn").addEventListener("change", e => openFiles(e.target.files));

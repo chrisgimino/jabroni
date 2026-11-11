@@ -550,6 +550,43 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 .top #bookPick { width: auto; max-width: 210px; flex: 0 0 auto; font-weight: 600 }
 .top #bookPick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
 @media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .top #bookPick { order: 9; flex: 1 1 100%; max-width: none; min-height: 30px; font-size: 13px; padding: 3px 8px } }
+
+/* ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar, one-row header, finger-size controls */
+.more-btn, .msheet, .gtoast { display: none }
+@media (max-width: 760px) {
+  .app { gap: 6px; padding-bottom: 0 }
+  .top { flex-wrap: nowrap; gap: 6px }
+  .top .filebtn, .top .upd { display: none }
+  .brand { font-size: 15px } .brand .an { height: 18px } .brand span { display: none }
+  .top select, .top #bookPick { height: 44px; min-height: 44px; font-size: 15px; padding: 6px 8px }
+  .top #bookPick { width: 108px; max-width: 108px; flex: 0 0 108px; text-overflow: ellipsis }
+  .app:not([data-view="replay"]) .board { display: none }
+  .views { order: 50 }
+  .tabs { order: 99; overflow: hidden; gap: 0; border-bottom: 0; border-top: 1px solid var(--rule-strong); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+          padding: 0 8px env(safe-area-inset-bottom, 0px); background: var(--ground) }
+  .tabs button { display: none; flex: 1 1 0; min-width: 0; min-height: 54px; padding: 6px 2px; margin: -1px 0 0; font-size: 13px; line-height: 1.1;
+                 border-bottom: 0; border-top: 3px solid transparent; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+  .tabs button.pri, .tabs .more-btn { display: block }
+  .tabs button[aria-selected="true"], .tabs .more-btn.on { color: var(--ink); border-top-color: var(--accent) }
+  .more-btn { background: none; border: 0; font-weight: 700; color: var(--muted); cursor: pointer }
+  .msheet { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .5); align-items: flex-end }
+  .msheet.open { display: flex }
+  .msheet .ms-in { width: 100%; box-sizing: border-box; background: var(--surface); border-radius: 14px 14px 0 0; padding: 12px 12px calc(14px + env(safe-area-inset-bottom, 0px));
+                   display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+  .msheet button { min-height: 54px; border-radius: 10px; border: 1px solid var(--rule-strong); background: var(--ground); color: var(--ink); font: 700 15px/1.1 var(--text) }
+  .msheet button[aria-current="true"] { border-color: var(--accent); color: var(--accent) }
+  .gtoast { position: fixed; left: 50%; top: 64px; z-index: 91; transform: translateX(-50%); padding: 8px 14px; border-radius: 20px; background: var(--ink); color: var(--ground);
+            font: 800 15px/1 var(--text); pointer-events: none; opacity: 0; transition: opacity .2s; display: block }
+  .gtoast.on { opacity: .92 }
+  .seg button, .pager button, .ctl .btn { min-height: 44px }
+  #scrub { height: 36px }
+  .chipbet, .rg, .lgo { padding-top: 12px; padding-bottom: 12px; margin-top: -12px; margin-bottom: -12px }   /* bigger tap area, same layout */
+  .views .seg button { font-size: 12px }
+  .lrungs { flex-wrap: wrap; overflow-x: visible }
+  .lrungs .lrung { margin-top: 0 !important }
+  .views small, .views em, .cap span, .tag, .q, .sig, .conf, .bc-k, .lr-b, .lr-n, .lr-p, .lr-go, .lrung strong, .chipbet, .rg, .was, .mu-h,
+  .view[data-v="matchup"] .who, .view[data-v="players"] th { font-size: 12px }
+}
 </style>
 </head>
 <body>
@@ -847,7 +884,7 @@ function fillBooks() {   // every book in this page's prices, slate-wide
 function fillPicker() {
   $("gamePick").innerHTML = S.games.map(g => { const tn = g.team_names || g.teams || [];
     const h = S.local[g.schedule_id]?.rp?.teams?.findIndex(t => t.home === true), a = h === 0 ? 1 : 0, hh = 1 - a;
-    return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))} at ${esc(short(tn[hh], g.teams?.[hh]))}${g.date ? " · " + esc(g.date) : ""}</option>`; }).join("");
+    return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))}${mobile() ? " @ " : " at "}${esc(short(tn[hh], g.teams?.[hh]))}${g.date && !mobile() ? " · " + esc(g.date) : ""}</option>`; }).join("");   // phone: "MIA @ WAS"
   fillBooks();
 }
 async function openFiles(files) {
@@ -2332,6 +2369,33 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
+
+// ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar (main tabs + More), score bar on Replay only,
+// swipe left / right on the board to change games. Desktop: nothing changes.
+(() => {
+  const PRI = ["best", "parlay", "props", "ladders"], nav = $("tabs"), app = document.querySelector(".app");
+  nav.querySelectorAll("button[data-view]").forEach(b => b.classList.toggle("pri", PRI.includes(b.dataset.view)));
+  const more = document.createElement("button"); more.type = "button"; more.className = "more-btn"; more.setAttribute("aria-haspopup", "true"); nav.appendChild(more);
+  const sheet = document.createElement("div"); sheet.className = "msheet"; sheet.innerHTML = `<div class="ms-in" role="menu" aria-label="More tabs"></div>`; document.body.appendChild(sheet);
+  more.addEventListener("click", () => {
+    sheet.firstChild.innerHTML = [...nav.querySelectorAll("button[data-view]:not(.pri)")].map(b => `<button type="button" role="menuitem" data-go="${b.dataset.view}"${b.dataset.view === S.view ? ' aria-current="true"' : ""}${b.disabled ? " disabled" : ""}>${esc(b.textContent)}</button>`).join("");
+    sheet.classList.add("open"); });
+  sheet.addEventListener("click", e => { const b = e.target.closest("button[data-go]"); sheet.classList.remove("open"); if (b) nav.querySelector(`button[data-view="${b.dataset.go}"]`)?.click(); });
+  const sync = () => { app.dataset.view = S.view; const off = !PRI.includes(S.view);
+    more.classList.toggle("on", off); more.textContent = off ? `${nav.querySelector(`button[data-view="${S.view}"]`)?.textContent || "More"} ▴` : "More ▴"; };
+  const sv = showView; showView = function () { const r = sv.apply(this, arguments); sync(); return r; }; sync();
+  const tb = document.createElement("div"); tb.className = "gtoast"; document.body.appendChild(tb);
+  const toast = t => { tb.textContent = t; tb.classList.add("on"); clearTimeout(tb._t); tb._t = setTimeout(() => tb.classList.remove("on"), 900); };
+  const own = el => { for (let e = el; e && e !== document.body; e = e.parentElement) {   // a touch on something that scrolls sideways itself (or a control) is its own
+    if (e.matches?.("input, select, textarea, button.lrung, .msheet")) return true;
+    const s = getComputedStyle(e); if (/(auto|scroll)/.test(s.overflowX) && e.scrollWidth > e.clientWidth + 1) return true; } return false; };
+  let x0 = null, y0 = 0;
+  $("views").addEventListener("touchstart", e => { x0 = null; if (!mobile() || e.touches.length !== 1 || own(e.target)) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  $("views").addEventListener("touchend", e => { if (x0 === null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < 2 * Math.abs(dy)) return;
+    const el = $("gamePick"), i = el.selectedIndex + (dx < 0 ? 1 : -1); if (i < 0 || i >= el.options.length) return;
+    el.selectedIndex = i; el.dispatchEvent(new Event("change")); toast(el.options[i].textContent); }, { passive: true });
+})();
 $("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBook", S.book || ""); } catch (er) { /* private window */ }
   e.target.classList.toggle("on", !!S.book); renderView(); if (S.view === "replay") renderBets(); });
 $("fileIn").addEventListener("change", e => openFiles(e.target.files));
