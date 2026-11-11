@@ -550,6 +550,11 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 .mk .made { stroke: #fff; stroke-width: .34 }
 .mk .ring { fill: none; stroke: #1fb062; stroke-width: .3 }
 .mk .miss { stroke: #ff3b2f; stroke-width: .5 } .mk .miss-u { stroke: #fff; stroke-width: .95; stroke-linecap: round; fill: none }
+
+/* 2026-11-10 book picker */
+.top #bookPick { width: auto; max-width: 210px; flex: 0 0 auto; font-weight: 600 }
+.top #bookPick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
+@media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .top #bookPick { order: 9; flex: 1 1 100%; max-width: none; min-height: 30px; font-size: 13px; padding: 3px 8px } }
 </style>
 </head>
 <body>
@@ -559,6 +564,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   <header class="top">
     <div class="brand"><img class="an" src="data:image/png;base64,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" alt="Action Network"><span>Sims</span></div>
     <div class="grow"><select id="gamePick" aria-label="Game"></select></div>
+    <select id="bookPick" aria-label="Book: best price or one book's prices"></select>
     <span class="upd" id="upd"></span>
     <label class="filebtn">Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
   </header>
@@ -720,12 +726,35 @@ $("halfL").innerHTML = HALF; $("halfR").innerHTML = HALF;
 
 // ------------------------------------------------------------------ data
 async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+// the data branch (one commit, no history; Chris 2026-11-11): the slate (replays + matchup files: changes when the sims do) and
+// the prices (insights + best bets: every 10 minutes), laid over the slate. The old slate file next to the page if the data
+// branch can't be read.
+const DATA = "https://raw.githubusercontent.com/chrisgimino/jabroni/data/";
+function useSlate(b) {
+  S.index = b.index || { games: [] }; S.games = S.index.games || S.games || []; S.dataStamp = b.id || b.created_utc;
+  for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
+}
+function usePrices(p) {
+  for (const [k, ins] of Object.entries(p.games || {})) if (ins && S.local[k]?.mu) S.local[k].mu.insights = ins;
+  S.index.best_bets = p.best_bets; S.index.bet_results = p.bet_results; S.priceStamp = p.created_utc;
+}
+async function loadData(first) {   // -> the "Updated" stamp, or null when nothing changed
+  try {
+    const p = await getJSON(DATA + "nba_sq_prices.json");
+    if (!first && p.created_utc === S.priceStamp && p.slate === S.dataStamp) return null;
+    if (first || p.slate !== S.dataStamp) { const b = await getJSON(DATA + "nba_sq_replay_data.json"); if (!b?.index) throw new Error("slate"); useSlate(b); }
+    usePrices(p); S.fromData = true; return p.created_utc;
+  } catch (e) {
+    if (S.fromData) throw e;   // a miss on the data branch: keep what is on screen (the old file is no longer updated)
+    const b = await getJSON("nba_sq_replay_data.json");
+    if (!b?.index || (!first && b.created_utc === S.dataStamp)) return null;
+    useSlate(b); return b.created_utc;
+  }
+}
 async function boot() {
   try {
-    const b = await getJSON("nba_sq_replay_data.json");
-    S.index = b.index || { games: [] }; S.games = S.index.games || []; S.dataStamp = b.created_utc;
-    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
-    if (S.games.length) { $("upd").textContent = `Updated ${stamp(b.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
+    const st = await loadData(true);
+    if (S.games.length) { $("upd").textContent = `Updated ${stamp(st)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
   } catch (e) { /* no slate file */ }
   for (const src of SOURCES) {
     try { const idx = await getJSON(src.idx); S.src = src; S.index = idx; S.games = idx.games || []; break; } catch (e) { /* next */ }
@@ -734,18 +763,15 @@ async function boot() {
   $("upd").textContent = `Updated ${stamp(S.index.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id);
 }
 
-// ------------------------------------------------------------------ live data: re-read the slate file every 5 min and on return to the tab
+// ------------------------------------------------------------------ live data: re-read the prices every 5 min and on return to the tab
 const REFRESH_MS = 5 * 60 * 1000;
 let refreshing = false, lastRefresh = Date.now();
 async function refreshData() {
   if (refreshing || !S.games.length) return; refreshing = true; lastRefresh = Date.now();
   try {
-    const b = await getJSON("nba_sq_replay_data.json");
-    if (!b?.index || b.created_utc === S.dataStamp) return;
-    S.dataStamp = b.created_utc; S.index = b.index; S.games = b.index.games || S.games;
-    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };   // S.rp (playing) stays as it is
+    const st = await loadData(false); if (!st) return;                 // S.rp (playing) stays as it is
     const cur = S.local[S.gid]; if (cur?.mu) S.mu = cur.mu;           // this game's prices / insights; its replay keeps playing
-    $("upd").textContent = `Updated ${stamp(b.created_utc)}`;
+    $("upd").textContent = `Updated ${stamp(st)}`; fillBooks();
     if (S.view !== "replay") renderView();
   } catch (e) { /* keep what is on screen */ } finally { refreshing = false; }
 }
@@ -763,10 +789,55 @@ function showEmpty() {
   $("views").appendChild(d); $("fileIn2").addEventListener("change", e => openFiles(e.target.files));
 }
 function short(full, abbr) { if (abbr && !/^\d+$/.test(abbr)) return abbr; if (!full) return abbr || "?"; const w = String(full).split(" "); return w[w.length - 1]; }
+
+// ------------------------------------------------------------------ book picker: best price (default) or one book's prices only
+S.book = (() => { try { return localStorage.getItem("nbaBook") || null; } catch (e) { return null; } })();
+const bkTag = () => S.book ? `${esc(S.book)} only · ` : "";
+function atBook(x, bk) {   // a lane at one book: its price, link and edge (our chance stays); [] when that book doesn't offer it
+  if (x.ladder) {
+    const rungs = x.rungs.flatMap(r => { const q = r.book === bk ? [r.price, r.dl] : r.bp?.[bk]; if (!q) return [];
+      const d = dec1(q[0]), ev = r.p * d - 1; return ev >= .10 && ev <= .80 && q[0] >= -200 && q[0] <= 300 ? [{ ...r, price: q[0], book: bk, dl: q[1], ev, be: 1 / d }] : []; });
+    return rungs.length ? [{ ...x, rungs, price: rungs[0].price, ev: Math.max(...rungs.map(r => r.ev)) }] : [];
+  }
+  if (x.book === bk) return [x];
+  const q = x.bp?.[bk]; if (!q) return [];
+  const d = dec1(q[0]); return [{ ...x, price: q[0], book: bk, dl: q[1], ev: x.p * d - 1, be: 1 / d }];
+}
+function candAt(x, bk) {   // a Replay bet at one book (our chance stays); [] when that book doesn't offer it
+  if (x.rungs) {
+    const rungs = x.rungs.flatMap(r => { const q = r.book === bk ? [r.price, r.dl] : r.bp?.[bk]; if (!q || r.price === null || r.price === undefined) return [];
+      const pe = (1 + r.ev) / dec1(r.price); return [{ ...r, price: q[0], book: bk, dl: q[1], ev: pe * dec1(q[0]) - 1 }]; });
+    if (!rungs.length) return [];
+    const hits = rungs.filter(r => r.hit), units = hits.reduce((a, r) => a + dec1(r.price) - 1, 0) - (rungs.length - hits.length);
+    return [{ ...x, rungs, units, trialRank: units, ev: rungs.reduce((a, r) => a + r.ev, 0) / rungs.length,
+              res: { ...x.res, won: hits.length > 0, at: hits.length ? hits[0].at : S.tr.fin,
+                     txt: String(x.res?.txt || "").replace(/^\d+ of \d+ rungs · \S+ units/, `${hits.length} of ${rungs.length} rungs · ${sgn(units, 1)} units`) } }];
+  }
+  if (x.book === bk) return [x];
+  const q = x.bp?.[bk]; if (!q || x.price === null || x.price === undefined || x.ev === null || x.ev === undefined) return [];
+  const pe = (1 + x.ev) / dec1(x.price); return [{ ...x, price: q[0], book: bk, dl: q[1], ev: pe * dec1(q[0]) - 1, was: [x.price, x.book] }];
+}
+function fillBooks() {   // every book in this page's prices, slate-wide
+  const el = $("bookPick"); if (!el) return;
+  const set = new Set();
+  const walk = (o, dp) => { if (!o || dp > 8 || typeof o !== "object") return;
+    if (Array.isArray(o)) { for (const v of o) walk(v, dp + 1); return; }
+    for (const [k, v] of Object.entries(o)) {
+      if ((k === "bp" || k === "sgp_books") && v && typeof v === "object") Object.keys(v).forEach(b => set.add(b));
+      else if ((k === "best_book" || k === "book") && typeof v === "string") set.add(v);
+      else if (v && typeof v === "object") walk(v, dp + 1); } };
+  for (const g of S.games || []) walk(INS(g.schedule_id)?.[SIMKEY], 0);
+  for (const s of S.index?.best_bets?.slots || []) Object.keys(s.sims?.[SIMKEY]?.by_book || {}).forEach(b => set.add(b));
+  const list = [...set].filter(b => b && b !== "null" && b !== "undefined").sort((a, b) => a.localeCompare(b));
+  if (S.book && !list.includes(S.book)) list.push(S.book);
+  el.innerHTML = `<option value="">Best price · any book</option>` + list.map(b => `<option value="${esc(b)}"${b === S.book ? " selected" : ""}>${esc(b)} only</option>`).join("");
+  el.classList.toggle("on", !!S.book);
+}
 function fillPicker() {
   $("gamePick").innerHTML = S.games.map(g => { const tn = g.team_names || g.teams || [];
     const h = S.local[g.schedule_id]?.rp?.teams?.findIndex(t => t.home === true), a = h === 0 ? 1 : 0, hh = 1 - a;
     return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))} at ${esc(short(tn[hh], g.teams?.[hh]))}${g.date ? " · " + esc(g.date) : ""}</option>`; }).join("");
+  fillBooks();
 }
 async function openFiles(files) {
   for (const f of files) {
@@ -1773,30 +1844,30 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
   const ti = ab => teamIdx(ab);
   // game lines
   for (const r of g.moneyline?.teams || []) { const t = ti(r.team), w = sc[0] === sc[1] ? null : (sc[t] > sc[1 - t]);
-    add({ cat: "ml", team: r.team, text: `${esc(r.team)} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.moneyline.uncertain,
+    add({ cat: "ml", team: r.team, text: `${esc(r.team)} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, unc: !!g.moneyline.uncertain,
       res: { won: w, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` }, live: () => { const s = liveScore(); return `${esc(tShort(0))} ${s[0]}-${s[1]} ${esc(tShort(1))}`; },
       pv: () => { const s = liveScore(); return s[t] - s[1 - t]; } }); }
   for (const r of g.spread?.teams || []) { const t = ti(r.team), m = sc[t] - sc[1 - t] + r.line;
-    add({ cat: "spread", team: r.team, text: `${esc(r.team)} ${sgn(r.line)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.spread.uncertain,
+    add({ cat: "spread", team: r.team, text: `${esc(r.team)} ${sgn(r.line)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, unc: !!g.spread.uncertain,
       res: { won: m === 0 ? null : m > 0, at: fin, txt: `${esc(r.team)} ${sc[t] >= sc[1 - t] ? "by" : "loses by"} ${Math.abs(sc[t] - sc[1 - t])}` },
       live: () => { const s = liveScore(); return `${esc(r.team)} ${sgn(s[t] - s[1 - t], 0)} now`; }, pv: () => { const s = liveScore(); return s[t] - s[1 - t]; } }); }
   if (g.total) { const L = g.total.line, T = sc[0] + sc[1];
     for (const sd of ["over", "under"]) { const o = g.total[sd]; if (!o) continue; const p = g.total.sim_over === null ? null : (sd === "over" ? g.total.sim_over : 1 - g.total.sim_over);
       const won = T === L ? null : (sd === "over" ? T > L : T < L), at = sd === "over" && won ? tr.tot.find(x => x.s[0] + x.s[1] > L) : fin;
-      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${fmt(L)}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: p, ev: o.ev, unc: !!g.total.uncertain,
+      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${fmt(L)}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: p, ev: o.ev, unc: !!g.total.uncertain,
         res: { won, at, txt: `${T} total` }, live: () => { const s = liveScore(); return `${s[0] + s[1]} of ${fmt(L)} so far`; },
         pv: () => { const s = liveScore(); return (sd === "over" ? 1 : -1) * (s[0] + s[1]); }, dd: () => { const s = liveScore(); return sd === "under" && s[0] + s[1] > L; } }); } }
   // player props: main lines and the alt lines / milestones worth a look
   for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (!o) continue;
     const v = fval(tr, r.core_id, r.stat), L = r.line, won = v === null || v === L ? null : (sd === "over" ? v > L : v < L);
     const at = sd === "over" && won ? cross(tr, r.core_id, r.stat, Math.floor(L) + 1) : fin, u = SVU[r.stat] || "";
-    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${sd === "over" ? "Over" : "Under"} ${fmt(L)} ${esc(r.stat)}`, price: o.price, book: o.book, dl: o.dl,
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${sd === "over" ? "Over" : "Under"} ${fmt(L)} ${esc(r.stat)}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp,
       sim: r.sim_over === null ? null : (sd === "over" ? r.sim_over : 1 - r.sim_over), ev: o.ev, str: r.pick === sd ? r.strength : "", unc: !!r.uncertain,
       res: { won, at, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${sd === "over" ? `of ${fmt(L)} ` : ""}${u}${sd === "over" ? "" : " so far"}`,
       now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far`,
       pv: () => SV[r.stat] ? (sd === "over" ? 1 : -1) * SV[r.stat](liveBox(r.core_id)) : null, dd: () => sd === "under" && !!SV[r.stat] && SV[r.stat](liveBox(r.core_id)) > L }); }
   for (const r of sec.alts || []) { const v = fval(tr, r.core_id, r.stat), won = v === null ? null : v >= r.k, u = SVU[r.stat] || "";
-    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${r.k}+ ${esc(r.stat)}`, price: r.price, book: r.book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength,
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${r.k}+ ${esc(r.stat)}`, price: r.price, book: r.book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, str: r.strength,
       unc: !!r.uncertain, res: { won, at: won ? cross(tr, r.core_id, r.stat, r.k) : fin, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} of ${r.k} ${u}`,
       now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far`, pv: () => SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : null }); }
   // ladders: one card; each rung is its own bet (own link)
@@ -1807,7 +1878,7 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
       rungs, units, trialRank: units, res: { won: hits.length > 0, at: hits.length ? hits[0].at : fin, txt: `${hits.length} of ${rungs.length} rungs · ${sgn(units, 1)} units · ${v} ${u}` },
       live: () => `${SV[l.stat] ? SV[l.stat](liveBox(l.core_id)) : "–"} ${u} so far`, pv: () => SV[l.stat] ? SV[l.stat](liveBox(l.core_id)) : null }); }
   // first basket, most points, top rebounder (one list per market; EV = sim and books together, as the First basket tab)
-  const one = (m, cat, label, won, at, txt, pv, dd) => { for (const r of m?.players || []) add({ cat, team: r.team, text: `${nmOf(r)} ${label}`, price: r.best_price, book: r.best_book, dl: r.dl,
+  const one = (m, cat, label, won, at, txt, pv, dd) => { for (const r of m?.players || []) add({ cat, team: r.team, text: `${nmOf(r)} ${label}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp,
     sim: r.sim, ev: r.ev_blend ?? r.ev, str: r.strength, unc: !!m.uncertain, res: { won: won(r), at: at(r), txt: txt(r) }, pv: pv ? () => pv(r) : null, dd: dd ? () => dd(r) : null }); };
   const firstDead = f => r => !!f && S.t >= f.t && String(f.id) !== String(r.core_id);
   const fbTxt = f => f ? `${esc(nm(f.id))} scored first` : "no basket";
@@ -1822,7 +1893,7 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
   one(F.first_3, "special", "first 3-pointer", r => !!tr.f3 && String(tr.f3.id) === String(r.core_id), () => tr.f3, () => tr.f3 ? `${esc(nm(tr.f3.id))} hit the first 3` : "none made", null, firstDead(tr.f3));
   const HOW = { "Free Throw": 0, "Two Point Field Goal": 1, "Three Point Field Goal": 2 }, HOWS = ["free throw", "2-pointer", "3-pointer"];
   for (const r of F.first_basket_method || []) { const won = !!tr.first && String(tr.first.id) === String(r.core_id) && tr.first.how === HOW[r.method];
-    add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev,
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
       str: r.strength, res: { won, at: tr.first, txt: tr.first ? `${esc(nm(tr.first.id))} · ${HOWS[tr.first.how]}` : "" }, dd: () => !!tr.first && S.t >= tr.first.t && !won }); }
   for (const r of F.specials || []) { let won = false, at = fin, txt = "";
     const b = tr.P[r.core_id] || Z0, m = /^(\d+)\+ pts first 3 min/.exec(r.market || "");
@@ -1831,25 +1902,25 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
       const now = () => { let v = 0; for (const h of x?.hist || []) if (h.t <= S.t) v = h.v; return v; }; pv = now; dd = () => gameAt(S.t) > 180 && now() < k; }
     else { const n = r.market === "Triple-double" ? 3 : 2, c = ddCross(tr, r.core_id, n); won = tr.played.has(String(r.core_id)) ? !!c : null; at = c || fin; txt = `${b.pts} pts · ${b.reb} reb · ${b.ast} ast`;
       pv = () => { const q = liveBox(r.core_id); return [q.pts, q.reb, q.ast, q.stl, q.blk].map(v => Math.min(10, v)).sort((a, z) => z - a).slice(0, n).reduce((a, v) => a + v, 0); }; }
-    add({ cat: "special", team: r.team, text: `${nmOf(r)} ${esc(r.market)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength, unc: !!r.uncertain,
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} ${esc(r.market)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, str: r.strength, unc: !!r.uncertain,
       res: { won, at, txt }, pv, dd }); }
   for (const a of g.alt_team_totals || []) { const t = ti(a.team), v = sc[t], won = v === a.line ? null : (a.side === "Over" ? v > a.line : v < a.line);
-    add({ cat: "special", team: a.team, text: `${esc(a.team)} ${esc(a.side)} ${fmt(a.line)} team points`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} ${esc(a.side)} ${fmt(a.line)} team points`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, sim: a.sim, ev: a.ev, str: a.strength,
       res: { won, at: a.side === "Over" && won ? tr.tot.find(x => x.s[t] > a.line) : fin, txt: `${esc(a.team)} ${v}` }, live: () => `${esc(a.team)} ${liveScore()[t]} so far`,
       pv: () => (a.side === "Over" ? 1 : -1) * liveScore()[t], dd: () => a.side !== "Over" && liveScore()[t] > a.line }); }
   for (const a of g.winning_margin || []) { const t = ti(a.team), m = sc[t] - sc[1 - t], mm = /^(\d+)(?:-(\d+)|\+)$/.exec(String(a.band).trim());
     const won = !!mm && m >= +mm[1] && (mm[2] === undefined || m <= +mm[2]);
-    add({ cat: "special", team: a.team, text: `${esc(a.team)} wins by ${esc(a.band)}`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} wins by ${esc(a.band)}`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, sim: a.sim, ev: a.ev, str: a.strength,
       res: { won, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` } }); }
   if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (!o) continue;
-    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim, ev: o.ev,
+    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim, ev: o.ev,
       res: { won: sd === "yes" ? tr.ot : !tr.ot, at: fin, txt: tr.ot ? "went to overtime" : "decided in regulation" } }); }
   return out;
 }
 
 function betCard(label, x, n, mode) {
   if (!x) return `<li class="bc none"><div class="bc-m"><div class="bc-k">${esc(label)}</div><div class="bc-b">${
-    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : "Not on the board for this game yet"}</div></div></li>`;
+    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : S.book ? `Nothing +EV at ${esc(S.book)} here` : "Not on the board for this game yet"}</div></div></li>`;
   let status = "", cls = "";
   const fin = S.t >= S.endT, nowTxt = () => fin || !(x.now || x.live) ? x.res.txt : (x.now || x.live)();
   if (x.res && mode !== "board") {
@@ -1867,7 +1938,7 @@ function betCard(label, x, n, mode) {
       const inner = `${r.k}+ <b>${odds(r.price)}</b>`;
       return r.dl ? `<a class="rg${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" title="${esc(r.book)} · EV ${evf(r.ev)}">${inner}</a>` : `<span class="rg${st}">${inner}</span>`; }).join("")}</div>` : "";
   const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs${x.unc ? " · ⚠ questionable player" : ""}`
-    : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.unc ? " · ⚠ questionable player" : ""}`;
+    : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.was ? ` at ${esc(x.book)} (best ${odds(x.was[0])} at ${esc(x.was[1])})` : ""}${x.unc ? " · ⚠ questionable player" : ""}`;
   const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
     : x.dl ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>Bet now ›</span></a>`
     : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
@@ -1881,10 +1952,11 @@ function renderBets() {
   el.className = "betlist";
   if (!sec || !S.tr) { sub.textContent = ""; el.innerHTML = `<li class="pe">No market read for this game yet: the bets come with the hourly matchups run (books post player props about 14 hours before tip).</li>`; return; }
   if (!S.betC || S.betC.sec !== sec || S.betC.tr !== S.tr) S.betC = { sec, tr: S.tr, list: betCands(sec, S.tr) };
-  const C = S.betC.list, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
+  if (S.betC.bk !== S.book) { S.betC.bk = S.book; S.betC.at = S.book ? S.betC.list.flatMap(x => candAt(x, S.book)) : S.betC.list; }
+  const C = S.betC.at, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
   sub.innerHTML = mode === "trial"
     ? `This sim: <b>${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}</b>${S.tr.ot ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all ${N} sims. Watch them cash as it plays.`
-    : `The best edge in each market over all ${N} sims, at the best price across the books. Tap a price to bet it.`;
+    : `The best edge in each market over all ${N} sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the books"}. Tap a price to bet it.`;
   const rows = BET_CATS.map(([key, label]) => {
     const xs = C.filter(x => x.cat === key);
     const pick = mode === "trial"
@@ -1981,21 +2053,31 @@ function parlaySub(p) {
   return base + `<span class="chk bad">Checked ${tET(n.t)}: a leg is past our number at ${esc(p.book)}. Pass this one.</span>`;
 }
 function renderParlay() {
-  const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sg = SEC()?.sgp;
-  const pars = slots.map(s => [s.slot, s.sims?.[SIMKEY]?.parlay]).filter(([, p]) => p);
-  let h = `<div class="lcol pcol"><h3>Parlay of the day<small>4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
+  const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sec0 = SEC();
+  const sg = S.book ? (sec0?.sgp_books?.[S.book] || (sec0?.sgp?.book === S.book ? sec0.sgp : null)) : sec0?.sgp;   // book picker: that book's own
+  const parOf = s => { const sm = s.sims?.[SIMKEY]; return !S.book ? sm?.parlay : sm?.by_book ? sm.by_book[S.book]?.parlay : (sm?.parlay?.book === S.book ? sm.parlay : null); };
+  const pars = slots.map(s => [s.slot, parOf(s)]).filter(([, p]) => p);
+  let h = `<div class="lcol pcol"><h3>Parlay of the day<small>${bkTag()}4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
   h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`, parlaySub(p), p.legs, p.book,
       odds(p.now?.odds ?? p.odds), false, p.now)).join("")
-    : `<div class="lnote">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
+    : `<div class="lnote">${slots.length ? (S.book ? `No parlay at ${esc(S.book)} today: it needs 4 games with a +EV leg there.` : "No parlay today: it needs 4 games with a +EV leg at the same book.") : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
   h += `<h3 class="h3b">Same-game parlay<small>${esc(gameLbl(S.gid))}</small></h3>`;
   h += sg ? parlayCard(`${sg.legs.length} legs · ${esc(gameLbl(S.gid))}`, `Each leg +EV at ${esc(sg.book)}. Legs in one game move together, so ${esc(sg.book)} prices the parlay itself; we can't estimate it (the legs' prices multiplied would be ${odds(sg.odds_if_separate)}).`,
-      sg.legs, sg.book, "SGP", true) : `<div class="lnote">No same-game parlay for this game: it needs 2+ legs that are +EV at one book.</div>`;
+      sg.legs, sg.book, "SGP", true) : `<div class="lnote">No same-game parlay for this game${S.book ? " at " + esc(S.book) : ""}: it needs 2+ legs that are +EV at ${S.book ? "that" : "one"} book.</div>`;
   el.innerHTML = h + `</div></div>`;
 }
 
 // ------------------------------------------------------------------ line moves (the nightly re-prices picks + parlays every matchups run)
 const tET = iso => { const m = String(iso || "").match(/T(\d{2}):(\d{2})/); if (!m) return ""; const h = +m[1]; return `${h % 12 || 12}:${m[2]} ${h < 12 ? "AM" : "PM"}`; };
 function pickLane(p) {   // a best bet as a lane: as it stands at the books now (p.now), with the posted one noted
+  if (S.book && p.book !== S.book) {   // book picker, a slot made before per-book picks: the pick at that book's price when posted
+    const q = p.bp?.[S.book], dp = dec1(p.price), pe = (1 + p.ev) / dp;
+    if (!q) return { gid: p.gid, team: p.team, who: p.text, what: "", price: p.price, book: p.book, dl: null, ev: p.ev, be: 1 / dp, p: Math.min(.995, pe),
+                     note: `Not offered at <b>${esc(S.book)}</b> · best price ${odds(p.price)} at ${esc(p.book)}`, noteCls: "bad", pass: true };
+    const d = dec1(q[0]);
+    return { gid: p.gid, team: p.team, who: p.text, what: "", price: q[0], book: S.book, dl: q[1], ev: pe * d - 1, be: 1 / d, p: Math.min(.995, pe),
+             note: `At <b>${esc(S.book)}</b> when posted · best price was ${odds(p.price)} at ${esc(p.book)}`, noteCls: "mv" };
+  }
   const n = p.now, cur = n && n.price != null && n.status !== "past" ? n : null, pass = n?.status === "past";
   const b = cur || (pass && n.price != null ? n : p), d = dec1(b.price);
   let note = "", cls = "";
@@ -2077,15 +2159,15 @@ function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kin
   const add = (k, x) => { if (x.price === null || x.price === undefined || x.ev === null || x.ev === undefined) return; out.push({ gid, k, books: 2, unc: false, ...x }); };
   const nmr = r => r.name || nm(r.core_id);
   if (kind === "bet") {
-    for (const r of g.moneyline?.teams || []) add("game", { ml: true, team: r.team, who: r.team, what: "to win", price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.moneyline.books ?? 2, unc: !!g.moneyline.uncertain });
-    for (const r of g.spread?.teams || []) add("game", { team: r.team, who: r.team, what: sgn(r.line), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.spread.books ?? 2, unc: !!g.spread.uncertain });
-    if (g.total) for (const sd of ["over", "under"]) { const o = g.total[sd]; if (o) add("game", { team: null, who: sd === "over" ? "Over" : "Under", what: `${fmt(g.total.line)} total points`, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: g.total.books ?? 2, unc: !!g.total.uncertain }); }
-    for (const a of g.alt_team_totals || []) add("game", { team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${fmt(a.line)} points`, price: a.best_price, book: a.best_book, dl: a.dl, ev: a.ev, books: a.books ?? 2, unc: a.strength === "uncertain" });
-    if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (o) add("special", { team: null, who: "Overtime", what: sd, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: o.books ?? 2 }); }
+    for (const r of g.moneyline?.teams || []) add("game", { ml: true, team: r.team, who: r.team, what: "to win", price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: g.moneyline.books ?? 2, unc: !!g.moneyline.uncertain });
+    for (const r of g.spread?.teams || []) add("game", { team: r.team, who: r.team, what: sgn(r.line), price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: g.spread.books ?? 2, unc: !!g.spread.uncertain });
+    if (g.total) for (const sd of ["over", "under"]) { const o = g.total[sd]; if (o) add("game", { team: null, who: sd === "over" ? "Over" : "Under", what: `${fmt(g.total.line)} total points`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, ev: o.ev, books: g.total.books ?? 2, unc: !!g.total.uncertain }); }
+    for (const a of g.alt_team_totals || []) add("game", { team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${fmt(a.line)} points`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, ev: a.ev, books: a.books ?? 2, unc: a.strength === "uncertain" });
+    if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (o) add("special", { team: null, who: "Overtime", what: sd, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, ev: o.ev, books: o.books ?? 2 }); }
   }
   if (kind === "props") {
-    for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (o) add("prop", { team: r.team, who: nmr(r), what: `${sd} ${fmt(r.line)} ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: o.price, book: o.book, dl: o.dl, ev: o.ev, books: r.books ?? 2, unc: !!r.uncertain }); }
-    for (const r of sec.alts || []) add("alt", { team: r.team, who: nmr(r), what: `${r.k}+ ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: r.price, book: r.book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: !!r.uncertain });
+    for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (o) add("prop", { team: r.team, who: nmr(r), what: `${sd} ${fmt(r.line)} ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp, ev: o.ev, books: r.books ?? 2, unc: !!r.uncertain }); }
+    for (const r of sec.alts || []) add("alt", { team: r.team, who: nmr(r), what: `${r.k}+ ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: r.price, book: r.book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: !!r.uncertain });
   }
   if (kind === "ladders") for (const l of sec.ladders || []) {   // one lane per ladder: every rung on the same line, each its own bet
     const rungs = (l.rungs || []).filter(r => r.price !== null && r.price !== undefined && r.ev !== null && r.ev >= .10 && r.ev <= .80 && r.price >= -200 && r.price <= 300)
@@ -2095,13 +2177,13 @@ function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kin
   }
   if (kind === "fb") {
     for (const [key, lab] of [["first_basket", "first basket"], ["first_fg", "first field goal"], ["first_3", "first 3-pointer"], ["most_points", "most points"], ["leading_rebounder", "most rebounds"]]) {
-      const m = F[key]; for (const r of m?.players || []) add("special", { team: r.team, who: nmr(r), what: lab, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev_blend ?? r.ev, books: r.books ?? 2, unc: !!m.uncertain }); }
+      const m = F[key]; for (const r of m?.players || []) add("special", { team: r.team, who: nmr(r), what: lab, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev_blend ?? r.ev, books: r.books ?? 2, unc: !!m.uncertain }); }
     const HOWS = { "Free Throw": "free throw", "Two Point Field Goal": "2-pointer", "Three Point Field Goal": "3-pointer" };
-    for (const r of F.first_basket_method || []) add("special", { team: r.team, who: nmr(r), what: `first basket on a ${HOWS[r.method] || r.method}`, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
-    for (const r of F.specials || []) add("special", { team: r.team, who: nmr(r), what: String(r.market).replace(/^Double-double$/, "double-double").replace(/^Triple-double$/, "triple-double"), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+    for (const r of F.first_basket_method || []) add("special", { team: r.team, who: nmr(r), what: `first basket on a ${HOWS[r.method] || r.method}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+    for (const r of F.specials || []) add("special", { team: r.team, who: nmr(r), what: String(r.market).replace(/^Double-double$/, "double-double").replace(/^Triple-double$/, "triple-double"), price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
   }
   for (const x of out) if (!x.ladder) { const d = dec1(x.price); x.be = 1 / d; x.p = Math.min(.995, (1 + x.ev) / d); }
-  return out;
+  return S.book ? out.flatMap(x => atBook(x, S.book)) : out;
 }
 const MAXP = 300;   // nothing longer than +300 is recommended (Chris 2026-11-10)
 const laneOK = x => { if (x.ml && (x.ev > .20 || x.price >= 200)) return false; if (x.ladder) return x.rungs.some(r => r.ev >= LRULE.alt[0]) && x.rungs.some(r => r.p >= LMIN.alt); const R = LRULE[x.k]; return x.ev >= R[0] && x.ev <= R[1] && x.price >= -200 && x.price <= MAXP && (x.books ?? 2) >= 2 && x.p >= (LMIN[x.k] || 0); };
@@ -2141,15 +2223,15 @@ function renderLanes(kind) {
   const slate = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, LANE_N.slate);
   const warnNames = [...new Set((INS()?.warnings || []).flatMap(w => (w.players || []).map(p => p.name)))];
   const wait = held.length ? `<div class="lnote wait">${held.length} more ${held.length > 1 ? "bets wait" : "bet waits"} on ${esc(andList(warnNames))}'s status.</div>` : "";
-  const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${clean.length ? `${clean.length} worth betting` : ""}</small></h3>` +
-    (clean.length ? `<ol>${clean.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
-  const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${slate.length ? `top ${slate.length}` : ""}</small></h3>` +
+  const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${[S.book ? esc(S.book) + " only" : "", clean.length ? `${clean.length} worth betting` : ""].filter(Boolean).join(" · ")}</small></h3>` +
+    (clean.length ? `<ol>${clean.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${S.book ? `None of this game's ${POOL_TXT[kind]} is a bet at ${esc(S.book)} right now.` : mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
+  const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${[S.book ? esc(S.book) + " only" : "", slate.length ? `top ${slate.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
     (slate.length ? `<ol>${slate.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">Nothing on the slate beats its price right now.</div>`) + `</div>`;
   if (kind === "ladders") {   // ladders: whole slate only (Chris 2026-11-10: game by game isn't useful)
     const all = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, 15);
     el.dataset.scope = "slate"; el.classList.add("single");
-    el.innerHTML = `<div class="lcol" data-scope="slate"><h3>Best ladders on the slate<small>${all.length ? `top ${all.length}` : ""}</small></h3>` +
-      (all.length ? `<ol>${all.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">No ladder on the slate beats its prices right now.</div>`) + `</div>`;
+    el.innerHTML = `<div class="lcol" data-scope="slate"><h3>Best ladders on the slate<small>${[S.book ? esc(S.book) + " only" : "", all.length ? `top ${all.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
+      (all.length ? `<ol>${all.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">No ladder on the slate beats its prices${S.book ? " at " + esc(S.book) : ""} right now.</div>`) + `</div>`;
     return;
   }
   el.innerHTML = gameCol + slateCol;
@@ -2178,9 +2260,10 @@ setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { if (e
 function renderBest() {
   const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
   if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3>${cdHTML("best bets")}<div class="lnote">3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate.</div></div>`; return; }
-  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
-    const ps = (s.sims?.[SIMKEY]?.picks || []).map(pickLane);
-    return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor.</li>`); }).join("") + `</ol></div>`;
+  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>${bkTag()}3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
+    const sm = s.sims?.[SIMKEY], bw = S.book && sm?.by_book ? sm.by_book[S.book] || {} : null;   // book picker: that book's own picks
+    const ps = ((bw ? bw.picks : sm?.picks) || []).map(pickLane);
+    return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor${S.book ? " at " + esc(S.book) : ""}.</li>`); }).join("") + `</ol></div>`;
 }
 
 // ------------------------------------------------------------------ views
@@ -2198,6 +2281,8 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
+$("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBook", S.book || ""); } catch (er) { /* private window */ }
+  e.target.classList.toggle("on", !!S.book); renderView(); if (S.view === "replay") renderBets(); });
 $("fileIn").addEventListener("change", e => openFiles(e.target.files));
 $("play").addEventListener("click", () => S.playing ? stop() : play());
 $("prevShot").addEventListener("click", () => jumpShot(-1));

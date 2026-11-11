@@ -545,6 +545,11 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 .mk .made { stroke: #fff; stroke-width: .34 }
 .mk .ring { fill: none; stroke: #1fb062; stroke-width: .3 }
 .mk .miss { stroke: #ff3b2f; stroke-width: .5 } .mk .miss-u { stroke: #fff; stroke-width: .95; stroke-linecap: round; fill: none }
+
+/* 2026-11-10 book picker */
+.top #bookPick { width: auto; max-width: 210px; flex: 0 0 auto; font-weight: 600 }
+.top #bookPick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
+@media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .top #bookPick { order: 9; flex: 1 1 100%; max-width: none; min-height: 30px; font-size: 13px; padding: 3px 8px } }
 </style>
 </head>
 <body>
@@ -554,6 +559,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   <header class="top">
     <div class="brand">SQ <span>Sims</span></div>
     <div class="grow"><select id="gamePick" aria-label="Game"></select></div>
+    <select id="bookPick" aria-label="Book: best price or one book's prices"></select>
     <span class="upd" id="upd"></span>
     <label class="filebtn">Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
   </header>
@@ -731,12 +737,35 @@ $("halfL").innerHTML = HALF; $("halfR").innerHTML = HALF;
 
 // ------------------------------------------------------------------ data
 async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+// the data branch (one commit, no history; Chris 2026-11-11): the slate (replays + matchup files: changes when the sims do) and
+// the prices (insights + best bets: every 10 minutes), laid over the slate. The old slate file next to the page if the data
+// branch can't be read.
+const DATA = "https://raw.githubusercontent.com/chrisgimino/jabroni/data/";
+function useSlate(b) {
+  S.index = b.index || { games: [] }; S.games = S.index.games || S.games || []; S.dataStamp = b.id || b.created_utc;
+  for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
+}
+function usePrices(p) {
+  for (const [k, ins] of Object.entries(p.games || {})) if (ins && S.local[k]?.mu) S.local[k].mu.insights = ins;
+  S.index.best_bets = p.best_bets; S.index.bet_results = p.bet_results; S.priceStamp = p.created_utc;
+}
+async function loadData(first) {   // -> the "Updated" stamp, or null when nothing changed
+  try {
+    const p = await getJSON(DATA + "nba_sq_prices.json");
+    if (!first && p.created_utc === S.priceStamp && p.slate === S.dataStamp) return null;
+    if (first || p.slate !== S.dataStamp) { const b = await getJSON(DATA + "nba_sq_replay_data.json"); if (!b?.index) throw new Error("slate"); useSlate(b); }
+    usePrices(p); S.fromData = true; return p.created_utc;
+  } catch (e) {
+    if (S.fromData) throw e;   // a miss on the data branch: keep what is on screen (the old file is no longer updated)
+    const b = await getJSON("nba_sq_replay_data.json");
+    if (!b?.index || (!first && b.created_utc === S.dataStamp)) return null;
+    useSlate(b); return b.created_utc;
+  }
+}
 async function boot() {
   try {
-    const b = await getJSON("nba_sq_replay_data.json");
-    S.index = b.index || { games: [] }; S.games = S.index.games || []; S.dataStamp = b.created_utc;
-    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };
-    if (S.games.length) { $("upd").textContent = `Updated ${stamp(b.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
+    const st = await loadData(true);
+    if (S.games.length) { $("upd").textContent = `Updated ${stamp(st)}`; fillPicker(); await pick(S.games[0].schedule_id); return; }
   } catch (e) { /* no slate file */ }
   for (const src of SOURCES) {
     try { const idx = await getJSON(src.idx); S.src = src; S.index = idx; S.games = idx.games || []; break; } catch (e) { /* next */ }
@@ -745,18 +774,15 @@ async function boot() {
   $("upd").textContent = `Updated ${stamp(S.index.created_utc)}`; fillPicker(); await pick(S.games[0].schedule_id);
 }
 
-// ------------------------------------------------------------------ live data: re-read the slate file every 5 min and on return to the tab
+// ------------------------------------------------------------------ live data: re-read the prices every 5 min and on return to the tab
 const REFRESH_MS = 5 * 60 * 1000;
 let refreshing = false, lastRefresh = Date.now();
 async function refreshData() {
   if (refreshing || !S.games.length) return; refreshing = true; lastRefresh = Date.now();
   try {
-    const b = await getJSON("nba_sq_replay_data.json");
-    if (!b?.index || b.created_utc === S.dataStamp) return;
-    S.dataStamp = b.created_utc; S.index = b.index; S.games = b.index.games || S.games;
-    for (const [k, g] of Object.entries(b.games || {})) S.local[k] = { rp: g.replay, mu: g.matchup };   // S.rp (playing) stays as it is
+    const st = await loadData(false); if (!st) return;                 // S.rp (playing) stays as it is
     const cur = S.local[S.gid]; if (cur?.mu) S.mu = cur.mu;           // this game's prices / insights; its replay keeps playing
-    $("upd").textContent = `Updated ${stamp(b.created_utc)}`;
+    $("upd").textContent = `Updated ${stamp(st)}`; fillBooks();
     if (S.view !== "replay") renderView();
   } catch (e) { /* keep what is on screen */ } finally { refreshing = false; }
 }
@@ -774,10 +800,55 @@ function showEmpty() {
   $("views").appendChild(d); $("fileIn2").addEventListener("change", e => openFiles(e.target.files));
 }
 function short(full, abbr) { if (abbr && !/^\d+$/.test(abbr)) return abbr; if (!full) return abbr || "?"; const w = String(full).split(" "); return w[w.length - 1]; }
+
+// ------------------------------------------------------------------ book picker: best price (default) or one book's prices only
+S.book = (() => { try { return localStorage.getItem("nbaBook") || null; } catch (e) { return null; } })();
+const bkTag = () => S.book ? `${esc(S.book)} only · ` : "";
+function atBook(x, bk) {   // a lane at one book: its price, link and edge (our chance stays); [] when that book doesn't offer it
+  if (x.ladder) {
+    const rungs = x.rungs.flatMap(r => { const q = r.book === bk ? [r.price, r.dl] : r.bp?.[bk]; if (!q) return [];
+      const d = dec1(q[0]), ev = r.p * d - 1; return ev >= .10 && ev <= .80 && q[0] >= -200 && q[0] <= 300 ? [{ ...r, price: q[0], book: bk, dl: q[1], ev, be: 1 / d }] : []; });
+    return rungs.length ? [{ ...x, rungs, price: rungs[0].price, ev: Math.max(...rungs.map(r => r.ev)) }] : [];
+  }
+  if (x.book === bk) return [x];
+  const q = x.bp?.[bk]; if (!q) return [];
+  const d = dec1(q[0]); return [{ ...x, price: q[0], book: bk, dl: q[1], ev: x.p * d - 1, be: 1 / d }];
+}
+function candAt(x, bk) {   // a Replay bet at one book (our chance stays); [] when that book doesn't offer it
+  if (x.rungs) {
+    const rungs = x.rungs.flatMap(r => { const q = r.book === bk ? [r.price, r.dl] : r.bp?.[bk]; if (!q || r.price === null || r.price === undefined) return [];
+      const pe = (1 + r.ev) / dec1(r.price); return [{ ...r, price: q[0], book: bk, dl: q[1], ev: pe * dec1(q[0]) - 1 }]; });
+    if (!rungs.length) return [];
+    const hits = rungs.filter(r => r.hit), units = hits.reduce((a, r) => a + dec1(r.price) - 1, 0) - (rungs.length - hits.length);
+    return [{ ...x, rungs, units, trialRank: units, ev: rungs.reduce((a, r) => a + r.ev, 0) / rungs.length,
+              res: { ...x.res, won: hits.length > 0, at: hits.length ? hits[0].at : S.tr.fin,
+                     txt: String(x.res?.txt || "").replace(/^\d+ of \d+ rungs · \S+ units/, `${hits.length} of ${rungs.length} rungs · ${sgn(units, 1)} units`) } }];
+  }
+  if (x.book === bk) return [x];
+  const q = x.bp?.[bk]; if (!q || x.price === null || x.price === undefined || x.ev === null || x.ev === undefined) return [];
+  const pe = (1 + x.ev) / dec1(x.price); return [{ ...x, price: q[0], book: bk, dl: q[1], ev: pe * dec1(q[0]) - 1, was: [x.price, x.book] }];
+}
+function fillBooks() {   // every book in this page's prices, slate-wide
+  const el = $("bookPick"); if (!el) return;
+  const set = new Set();
+  const walk = (o, dp) => { if (!o || dp > 8 || typeof o !== "object") return;
+    if (Array.isArray(o)) { for (const v of o) walk(v, dp + 1); return; }
+    for (const [k, v] of Object.entries(o)) {
+      if ((k === "bp" || k === "sgp_books") && v && typeof v === "object") Object.keys(v).forEach(b => set.add(b));
+      else if ((k === "best_book" || k === "book") && typeof v === "string") set.add(v);
+      else if (v && typeof v === "object") walk(v, dp + 1); } };
+  for (const g of S.games || []) walk(INS(g.schedule_id)?.[SIMKEY], 0);
+  for (const s of S.index?.best_bets?.slots || []) Object.keys(s.sims?.[SIMKEY]?.by_book || {}).forEach(b => set.add(b));
+  const list = [...set].filter(b => b && b !== "null" && b !== "undefined").sort((a, b) => a.localeCompare(b));
+  if (S.book && !list.includes(S.book)) list.push(S.book);
+  el.innerHTML = `<option value="">Best price · any book</option>` + list.map(b => `<option value="${esc(b)}"${b === S.book ? " selected" : ""}>${esc(b)} only</option>`).join("");
+  el.classList.toggle("on", !!S.book);
+}
 function fillPicker() {
   $("gamePick").innerHTML = S.games.map(g => { const tn = g.team_names || g.teams || [];
     const h = S.local[g.schedule_id]?.rp?.teams?.findIndex(t => t.home === true), a = h === 0 ? 1 : 0, hh = 1 - a;
     return `<option value="${esc(g.schedule_id)}">${esc(short(tn[a], g.teams?.[a]))} at ${esc(short(tn[hh], g.teams?.[hh]))}${g.date ? " · " + esc(g.date) : ""}</option>`; }).join("");
+  fillBooks();
 }
 async function openFiles(files) {
   for (const f of files) {
@@ -1768,30 +1839,30 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
   const ti = ab => teamIdx(ab);
   // game lines
   for (const r of g.moneyline?.teams || []) { const t = ti(r.team), w = sc[0] === sc[1] ? null : (sc[t] > sc[1 - t]);
-    add({ cat: "ml", team: r.team, text: `${esc(r.team)} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.moneyline.uncertain,
+    add({ cat: "ml", team: r.team, text: `${esc(r.team)} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, unc: !!g.moneyline.uncertain,
       res: { won: w, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` }, live: () => { const s = liveScore(); return `${esc(tShort(0))} ${s[0]}-${s[1]} ${esc(tShort(1))}`; },
       pv: () => { const s = liveScore(); return s[t] - s[1 - t]; } }); }
   for (const r of g.spread?.teams || []) { const t = ti(r.team), m = sc[t] - sc[1 - t] + r.line;
-    add({ cat: "spread", team: r.team, text: `${esc(r.team)} ${sgn(r.line)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, unc: !!g.spread.uncertain,
+    add({ cat: "spread", team: r.team, text: `${esc(r.team)} ${sgn(r.line)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, unc: !!g.spread.uncertain,
       res: { won: m === 0 ? null : m > 0, at: fin, txt: `${esc(r.team)} ${sc[t] >= sc[1 - t] ? "by" : "loses by"} ${Math.abs(sc[t] - sc[1 - t])}` },
       live: () => { const s = liveScore(); return `${esc(r.team)} ${sgn(s[t] - s[1 - t], 0)} now`; }, pv: () => { const s = liveScore(); return s[t] - s[1 - t]; } }); }
   if (g.total) { const L = g.total.line, T = sc[0] + sc[1];
     for (const sd of ["over", "under"]) { const o = g.total[sd]; if (!o) continue; const p = g.total.sim_over === null ? null : (sd === "over" ? g.total.sim_over : 1 - g.total.sim_over);
       const won = T === L ? null : (sd === "over" ? T > L : T < L), at = sd === "over" && won ? tr.tot.find(x => x.s[0] + x.s[1] > L) : fin;
-      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${fmt(L)}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: p, ev: o.ev, unc: !!g.total.uncertain,
+      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${fmt(L)}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: p, ev: o.ev, unc: !!g.total.uncertain,
         res: { won, at, txt: `${T} total` }, live: () => { const s = liveScore(); return `${s[0] + s[1]} of ${fmt(L)} so far`; },
         pv: () => { const s = liveScore(); return (sd === "over" ? 1 : -1) * (s[0] + s[1]); }, dd: () => { const s = liveScore(); return sd === "under" && s[0] + s[1] > L; } }); } }
   // player props: main lines and the alt lines / milestones worth a look
   for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (!o) continue;
     const v = fval(tr, r.core_id, r.stat), L = r.line, won = v === null || v === L ? null : (sd === "over" ? v > L : v < L);
     const at = sd === "over" && won ? cross(tr, r.core_id, r.stat, Math.floor(L) + 1) : fin, u = SVU[r.stat] || "";
-    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${sd === "over" ? "Over" : "Under"} ${fmt(L)} ${esc(r.stat)}`, price: o.price, book: o.book, dl: o.dl,
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${sd === "over" ? "Over" : "Under"} ${fmt(L)} ${esc(r.stat)}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp,
       sim: r.sim_over === null ? null : (sd === "over" ? r.sim_over : 1 - r.sim_over), ev: o.ev, str: r.pick === sd ? r.strength : "", unc: !!r.uncertain,
       res: { won, at, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${sd === "over" ? `of ${fmt(L)} ` : ""}${u}${sd === "over" ? "" : " so far"}`,
       now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far`,
       pv: () => SV[r.stat] ? (sd === "over" ? 1 : -1) * SV[r.stat](liveBox(r.core_id)) : null, dd: () => sd === "under" && !!SV[r.stat] && SV[r.stat](liveBox(r.core_id)) > L }); }
   for (const r of sec.alts || []) { const v = fval(tr, r.core_id, r.stat), won = v === null ? null : v >= r.k, u = SVU[r.stat] || "";
-    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${r.k}+ ${esc(r.stat)}`, price: r.price, book: r.book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength,
+    add({ cat: CAT_OF[r.stat] || "prop", team: r.team, text: `${nmOf(r)} ${r.k}+ ${esc(r.stat)}`, price: r.price, book: r.book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, str: r.strength,
       unc: !!r.uncertain, res: { won, at: won ? cross(tr, r.core_id, r.stat, r.k) : fin, txt: `${v} ${u}` }, live: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} of ${r.k} ${u}`,
       now: () => `${SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : "–"} ${u} so far`, pv: () => SV[r.stat] ? SV[r.stat](liveBox(r.core_id)) : null }); }
   // ladders: one card; each rung is its own bet (own link)
@@ -1802,7 +1873,7 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
       rungs, units, trialRank: units, res: { won: hits.length > 0, at: hits.length ? hits[0].at : fin, txt: `${hits.length} of ${rungs.length} rungs · ${sgn(units, 1)} units · ${v} ${u}` },
       live: () => `${SV[l.stat] ? SV[l.stat](liveBox(l.core_id)) : "–"} ${u} so far`, pv: () => SV[l.stat] ? SV[l.stat](liveBox(l.core_id)) : null }); }
   // first basket, most points, top rebounder (one list per market; EV = sim and books together, as the First basket tab)
-  const one = (m, cat, label, won, at, txt, pv, dd) => { for (const r of m?.players || []) add({ cat, team: r.team, text: `${nmOf(r)} ${label}`, price: r.best_price, book: r.best_book, dl: r.dl,
+  const one = (m, cat, label, won, at, txt, pv, dd) => { for (const r of m?.players || []) add({ cat, team: r.team, text: `${nmOf(r)} ${label}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp,
     sim: r.sim, ev: r.ev_blend ?? r.ev, str: r.strength, unc: !!m.uncertain, res: { won: won(r), at: at(r), txt: txt(r) }, pv: pv ? () => pv(r) : null, dd: dd ? () => dd(r) : null }); };
   const firstDead = f => r => !!f && S.t >= f.t && String(f.id) !== String(r.core_id);
   const fbTxt = f => f ? `${esc(nm(f.id))} scored first` : "no basket";
@@ -1817,7 +1888,7 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
   one(F.first_3, "special", "first 3-pointer", r => !!tr.f3 && String(tr.f3.id) === String(r.core_id), () => tr.f3, () => tr.f3 ? `${esc(nm(tr.f3.id))} hit the first 3` : "none made", null, firstDead(tr.f3));
   const HOW = { "Free Throw": 0, "Two Point Field Goal": 1, "Three Point Field Goal": 2 }, HOWS = ["free throw", "2-pointer", "3-pointer"];
   for (const r of F.first_basket_method || []) { const won = !!tr.first && String(tr.first.id) === String(r.core_id) && tr.first.how === HOW[r.method];
-    add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev,
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} first basket · ${HOWS[HOW[r.method]] || esc(r.method)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
       str: r.strength, res: { won, at: tr.first, txt: tr.first ? `${esc(nm(tr.first.id))} · ${HOWS[tr.first.how]}` : "" }, dd: () => !!tr.first && S.t >= tr.first.t && !won }); }
   for (const r of F.specials || []) { let won = false, at = fin, txt = "";
     const b = tr.P[r.core_id] || Z0, m = /^(\d+)\+ pts first 3 min/.exec(r.market || "");
@@ -1826,25 +1897,25 @@ function betCands(sec, tr) {   // every priced bet in the insights, with how it 
       const now = () => { let v = 0; for (const h of x?.hist || []) if (h.t <= S.t) v = h.v; return v; }; pv = now; dd = () => gameAt(S.t) > 180 && now() < k; }
     else { const n = r.market === "Triple-double" ? 3 : 2, c = ddCross(tr, r.core_id, n); won = tr.played.has(String(r.core_id)) ? !!c : null; at = c || fin; txt = `${b.pts} pts · ${b.reb} reb · ${b.ast} ast`;
       pv = () => { const q = liveBox(r.core_id); return [q.pts, q.reb, q.ast, q.stl, q.blk].map(v => Math.min(10, v)).sort((a, z) => z - a).slice(0, n).reduce((a, v) => a + v, 0); }; }
-    add({ cat: "special", team: r.team, text: `${nmOf(r)} ${esc(r.market)}`, price: r.best_price, book: r.best_book, dl: r.dl, sim: r.sim, ev: r.ev, str: r.strength, unc: !!r.uncertain,
+    add({ cat: "special", team: r.team, text: `${nmOf(r)} ${esc(r.market)}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, str: r.strength, unc: !!r.uncertain,
       res: { won, at, txt }, pv, dd }); }
   for (const a of g.alt_team_totals || []) { const t = ti(a.team), v = sc[t], won = v === a.line ? null : (a.side === "Over" ? v > a.line : v < a.line);
-    add({ cat: "special", team: a.team, text: `${esc(a.team)} ${esc(a.side)} ${fmt(a.line)} team points`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} ${esc(a.side)} ${fmt(a.line)} team points`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, sim: a.sim, ev: a.ev, str: a.strength,
       res: { won, at: a.side === "Over" && won ? tr.tot.find(x => x.s[t] > a.line) : fin, txt: `${esc(a.team)} ${v}` }, live: () => `${esc(a.team)} ${liveScore()[t]} so far`,
       pv: () => (a.side === "Over" ? 1 : -1) * liveScore()[t], dd: () => a.side !== "Over" && liveScore()[t] > a.line }); }
   for (const a of g.winning_margin || []) { const t = ti(a.team), m = sc[t] - sc[1 - t], mm = /^(\d+)(?:-(\d+)|\+)$/.exec(String(a.band).trim());
     const won = !!mm && m >= +mm[1] && (mm[2] === undefined || m <= +mm[2]);
-    add({ cat: "special", team: a.team, text: `${esc(a.team)} wins by ${esc(a.band)}`, price: a.best_price, book: a.best_book, dl: a.dl, sim: a.sim, ev: a.ev, str: a.strength,
+    add({ cat: "special", team: a.team, text: `${esc(a.team)} wins by ${esc(a.band)}`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, sim: a.sim, ev: a.ev, str: a.strength,
       res: { won, at: fin, txt: `${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}` } }); }
   if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (!o) continue;
-    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, sim: sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim, ev: o.ev,
+    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "yes" ? g.overtime.sim : 1 - g.overtime.sim, ev: o.ev,
       res: { won: sd === "yes" ? tr.ot : !tr.ot, at: fin, txt: tr.ot ? "went to overtime" : "decided in regulation" } }); }
   return out;
 }
 
 function betCard(label, x, n, mode) {
   if (!x) return `<li class="bc none"><div class="bc-m"><div class="bc-k">${esc(label)}</div><div class="bc-b">${
-    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : "Not on the board for this game yet"}</div></div></li>`;
+    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : S.book ? `Nothing +EV at ${esc(S.book)} here` : "Not on the board for this game yet"}</div></div></li>`;
   let status = "", cls = "";
   const fin = S.t >= S.endT, nowTxt = () => fin || !(x.now || x.live) ? x.res.txt : (x.now || x.live)();
   if (x.res && mode !== "board") {
@@ -1862,7 +1933,7 @@ function betCard(label, x, n, mode) {
       const inner = `${r.k}+ <b>${odds(r.price)}</b>`;
       return r.dl ? `<a class="rg${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" title="${esc(r.book)} · EV ${evf(r.ev)}">${inner}</a>` : `<span class="rg${st}">${inner}</span>`; }).join("")}</div>` : "";
   const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs${x.unc ? " · ⚠ questionable player" : ""}`
-    : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.unc ? " · ⚠ questionable player" : ""}`;
+    : `Sim ${pctf(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${x.was ? ` at ${esc(x.book)} (best ${odds(x.was[0])} at ${esc(x.was[1])})` : ""}${x.unc ? " · ⚠ questionable player" : ""}`;
   const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
     : x.dl ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>Bet now ›</span></a>`
     : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
@@ -1876,10 +1947,11 @@ function renderBets() {
   el.className = "betlist";
   if (!sec || !S.tr) { sub.textContent = ""; el.innerHTML = `<li class="pe">No market read for this game yet: the bets come with the hourly matchups run (books post player props about 14 hours before tip).</li>`; return; }
   if (!S.betC || S.betC.sec !== sec || S.betC.tr !== S.tr) S.betC = { sec, tr: S.tr, list: betCands(sec, S.tr) };
-  const C = S.betC.list, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
+  if (S.betC.bk !== S.book) { S.betC.bk = S.book; S.betC.at = S.book ? S.betC.list.flatMap(x => candAt(x, S.book)) : S.betC.list; }
+  const C = S.betC.at, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
   sub.innerHTML = mode === "trial"
     ? `This sim: <b>${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}</b>${S.tr.ot ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all ${N} sims. Watch them cash as it plays.`
-    : `The best edge in each market over all ${N} sims, at the best price across the books. Tap a price to bet it.`;
+    : `The best edge in each market over all ${N} sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the books"}. Tap a price to bet it.`;
   const rows = BET_CATS.map(([key, label]) => {
     const xs = C.filter(x => x.cat === key);
     const pick = mode === "trial"
@@ -1976,21 +2048,31 @@ function parlaySub(p) {
   return base + `<span class="chk bad">Checked ${tET(n.t)}: a leg is past our number at ${esc(p.book)}. Pass this one.</span>`;
 }
 function renderParlay() {
-  const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sg = SEC()?.sgp;
-  const pars = slots.map(s => [s.slot, s.sims?.[SIMKEY]?.parlay]).filter(([, p]) => p);
-  let h = `<div class="lcol pcol"><h3>Parlay of the day<small>4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
+  const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sec0 = SEC();
+  const sg = S.book ? (sec0?.sgp_books?.[S.book] || (sec0?.sgp?.book === S.book ? sec0.sgp : null)) : sec0?.sgp;   // book picker: that book's own
+  const parOf = s => { const sm = s.sims?.[SIMKEY]; return !S.book ? sm?.parlay : sm?.by_book ? sm.by_book[S.book]?.parlay : (sm?.parlay?.book === S.book ? sm.parlay : null); };
+  const pars = slots.map(s => [s.slot, parOf(s)]).filter(([, p]) => p);
+  let h = `<div class="lcol pcol"><h3>Parlay of the day<small>${bkTag()}4 legs, 4 games, one book · 11:30 AM, 3:30 and 5:30 PM ET · lines re-checked every hour</small></h3>${cdHTML("parlay")}<div class="pscroll">`;
   h += pars.length ? pars.map(([slot, p]) => parlayCard(`${p.legs.length} legs · ${esc(SLOT_LBL[slot] || slot)} ET`, parlaySub(p), p.legs, p.book,
       odds(p.now?.odds ?? p.odds), false, p.now)).join("")
-    : `<div class="lnote">${slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
+    : `<div class="lnote">${slots.length ? (S.book ? `No parlay at ${esc(S.book)} today: it needs 4 games with a +EV leg there.` : "No parlay today: it needs 4 games with a +EV leg at the same book.") : "The first parlay of the day comes at 11:30 AM ET."}</div>`;
   h += `<h3 class="h3b">Same-game parlay<small>${esc(gameLbl(S.gid))}</small></h3>`;
   h += sg ? parlayCard(`${sg.legs.length} legs · ${esc(gameLbl(S.gid))}`, `Each leg +EV at ${esc(sg.book)}. Legs in one game move together, so ${esc(sg.book)} prices the parlay itself; we can't estimate it (the legs' prices multiplied would be ${odds(sg.odds_if_separate)}).`,
-      sg.legs, sg.book, "SGP", true) : `<div class="lnote">No same-game parlay for this game: it needs 2+ legs that are +EV at one book.</div>`;
+      sg.legs, sg.book, "SGP", true) : `<div class="lnote">No same-game parlay for this game${S.book ? " at " + esc(S.book) : ""}: it needs 2+ legs that are +EV at ${S.book ? "that" : "one"} book.</div>`;
   el.innerHTML = h + `</div></div>`;
 }
 
 // ------------------------------------------------------------------ line moves (the nightly re-prices picks + parlays every matchups run)
 const tET = iso => { const m = String(iso || "").match(/T(\d{2}):(\d{2})/); if (!m) return ""; const h = +m[1]; return `${h % 12 || 12}:${m[2]} ${h < 12 ? "AM" : "PM"}`; };
 function pickLane(p) {   // a best bet as a lane: as it stands at the books now (p.now), with the posted one noted
+  if (S.book && p.book !== S.book) {   // book picker, a slot made before per-book picks: the pick at that book's price when posted
+    const q = p.bp?.[S.book], dp = dec1(p.price), pe = (1 + p.ev) / dp;
+    if (!q) return { gid: p.gid, team: p.team, who: p.text, what: "", price: p.price, book: p.book, dl: null, ev: p.ev, be: 1 / dp, p: Math.min(.995, pe),
+                     note: `Not offered at <b>${esc(S.book)}</b> · best price ${odds(p.price)} at ${esc(p.book)}`, noteCls: "bad", pass: true };
+    const d = dec1(q[0]);
+    return { gid: p.gid, team: p.team, who: p.text, what: "", price: q[0], book: S.book, dl: q[1], ev: pe * d - 1, be: 1 / d, p: Math.min(.995, pe),
+             note: `At <b>${esc(S.book)}</b> when posted · best price was ${odds(p.price)} at ${esc(p.book)}`, noteCls: "mv" };
+  }
   const n = p.now, cur = n && n.price != null && n.status !== "past" ? n : null, pass = n?.status === "past";
   const b = cur || (pass && n.price != null ? n : p), d = dec1(b.price);
   let note = "", cls = "";
@@ -2127,15 +2209,15 @@ function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kin
   const add = (k, x) => { if (x.price === null || x.price === undefined || x.ev === null || x.ev === undefined) return; out.push({ gid, k, books: 2, unc: false, ...x }); };
   const nmr = r => r.name || nm(r.core_id);
   if (kind === "bet") {
-    for (const r of g.moneyline?.teams || []) add("game", { ml: true, team: r.team, who: r.team, what: "to win", price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.moneyline.books ?? 2, unc: !!g.moneyline.uncertain });
-    for (const r of g.spread?.teams || []) add("game", { team: r.team, who: r.team, what: sgn(r.line), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: g.spread.books ?? 2, unc: !!g.spread.uncertain });
-    if (g.total) for (const sd of ["over", "under"]) { const o = g.total[sd]; if (o) add("game", { team: null, who: sd === "over" ? "Over" : "Under", what: `${fmt(g.total.line)} total points`, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: g.total.books ?? 2, unc: !!g.total.uncertain }); }
-    for (const a of g.alt_team_totals || []) add("game", { team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${fmt(a.line)} points`, price: a.best_price, book: a.best_book, dl: a.dl, ev: a.ev, books: a.books ?? 2, unc: a.strength === "uncertain" });
-    if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (o) add("special", { team: null, who: "Overtime", what: sd, price: o.best_price, book: o.best_book, dl: o.dl, ev: o.ev, books: o.books ?? 2 }); }
+    for (const r of g.moneyline?.teams || []) add("game", { ml: true, team: r.team, who: r.team, what: "to win", price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: g.moneyline.books ?? 2, unc: !!g.moneyline.uncertain });
+    for (const r of g.spread?.teams || []) add("game", { team: r.team, who: r.team, what: sgn(r.line), price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: g.spread.books ?? 2, unc: !!g.spread.uncertain });
+    if (g.total) for (const sd of ["over", "under"]) { const o = g.total[sd]; if (o) add("game", { team: null, who: sd === "over" ? "Over" : "Under", what: `${fmt(g.total.line)} total points`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, ev: o.ev, books: g.total.books ?? 2, unc: !!g.total.uncertain }); }
+    for (const a of g.alt_team_totals || []) add("game", { team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${fmt(a.line)} points`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, ev: a.ev, books: a.books ?? 2, unc: a.strength === "uncertain" });
+    if (g.overtime) for (const sd of ["yes", "no"]) { const o = g.overtime[sd]; if (o) add("special", { team: null, who: "Overtime", what: sd, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, ev: o.ev, books: o.books ?? 2 }); }
   }
   if (kind === "props") {
-    for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (o) add("prop", { team: r.team, who: nmr(r), what: `${sd} ${fmt(r.line)} ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: o.price, book: o.book, dl: o.dl, ev: o.ev, books: r.books ?? 2, unc: !!r.uncertain }); }
-    for (const r of sec.alts || []) add("alt", { team: r.team, who: nmr(r), what: `${r.k}+ ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: r.price, book: r.book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: !!r.uncertain });
+    for (const r of sec.props || []) for (const sd of ["over", "under"]) { const o = r[sd]; if (o) add("prop", { team: r.team, who: nmr(r), what: `${sd} ${fmt(r.line)} ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp, ev: o.ev, books: r.books ?? 2, unc: !!r.uncertain }); }
+    for (const r of sec.alts || []) add("alt", { team: r.team, who: nmr(r), what: `${r.k}+ ${STATW[String(r.stat).toLowerCase()] || r.stat}`, price: r.price, book: r.book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: !!r.uncertain });
   }
   if (kind === "ladders") for (const l of sec.ladders || []) {   // one lane per ladder: every rung on the same line, each its own bet
     const rungs = (l.rungs || []).filter(r => r.price !== null && r.price !== undefined && r.ev !== null && r.ev >= .10 && r.ev <= .80 && r.price >= -200 && r.price <= 300)
@@ -2145,13 +2227,13 @@ function poolOf(kind, gid) {   // kind: bet | props | fb | ladders -> [{gid, kin
   }
   if (kind === "fb") {
     for (const [key, lab] of [["first_basket", "first basket"], ["first_fg", "first field goal"], ["first_3", "first 3-pointer"], ["most_points", "most points"], ["leading_rebounder", "most rebounds"]]) {
-      const m = F[key]; for (const r of m?.players || []) add("special", { team: r.team, who: nmr(r), what: lab, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev_blend ?? r.ev, books: r.books ?? 2, unc: !!m.uncertain }); }
+      const m = F[key]; for (const r of m?.players || []) add("special", { team: r.team, who: nmr(r), what: lab, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev_blend ?? r.ev, books: r.books ?? 2, unc: !!m.uncertain }); }
     const HOWS = { "Free Throw": "free throw", "Two Point Field Goal": "2-pointer", "Three Point Field Goal": "3-pointer" };
-    for (const r of F.first_basket_method || []) add("special", { team: r.team, who: nmr(r), what: `first basket on a ${HOWS[r.method] || r.method}`, price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
-    for (const r of F.specials || []) add("special", { team: r.team, who: nmr(r), what: String(r.market).replace(/^Double-double$/, "double-double").replace(/^Triple-double$/, "triple-double"), price: r.best_price, book: r.best_book, dl: r.dl, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+    for (const r of F.first_basket_method || []) add("special", { team: r.team, who: nmr(r), what: `first basket on a ${HOWS[r.method] || r.method}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
+    for (const r of F.specials || []) add("special", { team: r.team, who: nmr(r), what: String(r.market).replace(/^Double-double$/, "double-double").replace(/^Triple-double$/, "triple-double"), price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, ev: r.ev, books: r.books ?? 2, unc: r.strength === "uncertain" });
   }
   for (const x of out) if (!x.ladder) { const d = dec1(x.price); x.be = 1 / d; x.p = Math.min(.995, (1 + x.ev) / d); }
-  return out;
+  return S.book ? out.flatMap(x => atBook(x, S.book)) : out;
 }
 const MAXP = 300;   // nothing longer than +300 is recommended (Chris 2026-11-10)
 const laneOK = x => { if (x.ml && (x.ev > .20 || x.price >= 200)) return false; if (x.ladder) return x.rungs.some(r => r.ev >= LRULE.alt[0]) && x.rungs.some(r => r.p >= LMIN.alt); const R = LRULE[x.k]; return x.ev >= R[0] && x.ev <= R[1] && x.price >= -200 && x.price <= MAXP && (x.books ?? 2) >= 2 && x.p >= (LMIN[x.k] || 0); };
@@ -2191,15 +2273,15 @@ function renderLanes(kind) {
   const slate = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, LANE_N.slate);
   const warnNames = [...new Set((INS()?.warnings || []).flatMap(w => (w.players || []).map(p => p.name)))];
   const wait = held.length ? `<div class="lnote wait">${held.length} more ${held.length > 1 ? "bets wait" : "bet waits"} on ${esc(andList(warnNames))}'s status.</div>` : "";
-  const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${clean.length ? `${clean.length} worth betting` : ""}</small></h3>` +
-    (clean.length ? `<ol>${clean.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
-  const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${slate.length ? `top ${slate.length}` : ""}</small></h3>` +
+  const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${[S.book ? esc(S.book) + " only" : "", clean.length ? `${clean.length} worth betting` : ""].filter(Boolean).join(" · ")}</small></h3>` +
+    (clean.length ? `<ol>${clean.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${S.book ? `None of this game's ${POOL_TXT[kind]} is a bet at ${esc(S.book)} right now.` : mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
+  const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${[S.book ? esc(S.book) + " only" : "", slate.length ? `top ${slate.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
     (slate.length ? `<ol>${slate.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">Nothing on the slate beats its price right now.</div>`) + `</div>`;
   if (kind === "ladders") {   // ladders: whole slate only (Chris 2026-11-10: game by game isn't useful)
     const all = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, 15);
     el.dataset.scope = "slate"; el.classList.add("single");
-    el.innerHTML = `<div class="lcol" data-scope="slate"><h3>Best ladders on the slate<small>${all.length ? `top ${all.length}` : ""}</small></h3>` +
-      (all.length ? `<ol>${all.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">No ladder on the slate beats its prices right now.</div>`) + `</div>`;
+    el.innerHTML = `<div class="lcol" data-scope="slate"><h3>Best ladders on the slate<small>${[S.book ? esc(S.book) + " only" : "", all.length ? `top ${all.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
+      (all.length ? `<ol>${all.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">No ladder on the slate beats its prices${S.book ? " at " + esc(S.book) : ""} right now.</div>`) + `</div>`;
     return;
   }
   el.innerHTML = gameCol + slateCol;
@@ -2228,9 +2310,10 @@ setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { if (e
 function renderBest() {
   const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
   if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3>${cdHTML("best bets")}<div class="lnote">3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate.</div></div>`; return; }
-  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
-    const ps = (s.sims?.[SIMKEY]?.picks || []).map(pickLane);
-    return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor.</li>`); }).join("") + `</ol></div>`;
+  el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>${bkTag()}3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
+    const sm = s.sims?.[SIMKEY], bw = S.book && sm?.by_book ? sm.by_book[S.book] || {} : null;   // book picker: that book's own picks
+    const ps = ((bw ? bw.picks : sm?.picks) || []).map(pickLane);
+    return `<li class="lnote" style="font:800 19px/1 var(--disp);padding:12px 16px 4px">${esc(SLOT_LBL[s.slot] || s.slot)}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the floor${S.book ? " at " + esc(S.book) : ""}.</li>`); }).join("") + `</ol></div>`;
 }
 
 // ------------------------------------------------------------------ views
@@ -2249,6 +2332,8 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
+$("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { localStorage.setItem("nbaBook", S.book || ""); } catch (er) { /* private window */ }
+  e.target.classList.toggle("on", !!S.book); renderView(); if (S.view === "replay") renderBets(); });
 $("fileIn").addEventListener("change", e => openFiles(e.target.files));
 $("play").addEventListener("click", () => S.playing ? stop() : play());
 $("prevShot").addEventListener("click", () => jumpShot(-1));
