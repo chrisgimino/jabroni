@@ -551,16 +551,31 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 .top #bookPick.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset }
 @media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .top #bookPick { order: 9; flex: 1 1 100%; max-width: none; min-height: 30px; font-size: 13px; padding: 3px 8px } }
 
-/* ------------------------------------------------------------------ phone (Chris 2026-11-11): bottom tab bar, one-row header, finger-size controls */
+/* ------------------------------------------------------------------ narrow screens (Chris 2026-11-11). Any narrow screen: one-row header,
+   score bar on Replay only, ladders wrap, 12px text. Narrow with a mouse (a desktop window or an embed in an article): tabs stay
+   on top, wrapping so every tab shows. Phones (touch): tab bar at the bottom in thumb reach, finger-size controls. */
 .more-btn, .msheet, .gtoast { display: none }
 @media (max-width: 760px) {
-  .app { gap: 6px; padding-bottom: 0 }
   .top { flex-wrap: nowrap; gap: 6px }
   .top .filebtn, .top .upd { display: none }
-  .brand { font-size: 15px } .brand .an { height: 18px } .brand span { display: none }
-  .top select, .top #bookPick { height: 44px; min-height: 44px; font-size: 15px; padding: 6px 8px }
+  .brand { font-size: 15px } .brand .an { height: 18px } .brand img + span { display: none }
+  .top select, .top #bookPick { height: 40px; min-height: 40px; font-size: 15px; padding: 6px 8px }
   .top #bookPick { width: 108px; max-width: 108px; flex: 0 0 108px; text-overflow: ellipsis }
   .app:not([data-view="replay"]) .board { display: none }
+  .lrungs { flex-wrap: wrap; overflow-x: visible }
+  .lrungs .lrung { margin-top: 0 !important }
+  .views small, .views em, .cap span, .tag, .q, .sig, .conf, .bc-k, .lr-b, .lr-n, .lr-p, .lr-go, .lrung strong, .chipbet, .rg, .was, .mu-h,
+  .view[data-v="matchup"] .who, .view[data-v="players"] th { font-size: 12px }
+}
+@media (max-width: 760px) and (pointer: fine) {
+  .tabs { flex-wrap: wrap; overflow: visible }
+  .tabs button { padding: 5px 8px; font-size: 13px }
+  .view[data-v="replay"] .courtbox { width: min(100%, calc(38vh * 105 / 58)); margin-inline: auto }   /* the court leaves room for the bets under it */
+  .view[data-v="replay"] .rp { overflow-y: auto } .view[data-v="replay"] .rp-right { min-height: 300px }   /* short frame: scroll down to the bets */
+}
+@media (max-width: 760px) and (pointer: coarse) {
+  .app { gap: 6px; padding-bottom: 0 }
+  .top select, .top #bookPick { height: 44px; min-height: 44px }
   .views { order: 50 }
   .tabs { order: 99; overflow: hidden; gap: 0; border-bottom: 0; border-top: 1px solid var(--rule-strong); margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
           padding: 0 8px env(safe-area-inset-bottom, 0px); background: var(--ground) }
@@ -582,15 +597,11 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   #scrub { height: 36px }
   .chipbet, .rg, .lgo { padding-top: 12px; padding-bottom: 12px; margin-top: -12px; margin-bottom: -12px }   /* bigger tap area, same layout */
   .views .seg button { font-size: 12px }
-  .lrungs { flex-wrap: wrap; overflow-x: visible }
-  .lrungs .lrung { margin-top: 0 !important }
-  .views small, .views em, .cap span, .tag, .q, .sig, .conf, .bc-k, .lr-b, .lr-n, .lr-p, .lr-go, .lrung strong, .chipbet, .rg, .was, .mu-h,
-  .view[data-v="matchup"] .who, .view[data-v="players"] th { font-size: 12px }
 }
 
 /* ------------------------------------------------------------------ phone (Chris 2026-11-11): Replay bets sheet, stacked results */
 .bs-grab { display: none }
-@media (max-width: 760px) {
+@media (max-width: 760px) and (pointer: coarse) {   /* phones only: a narrow desktop window / embed keeps the bets under the court, open */
   .view[data-v="replay"] .rp { display: block; height: 100%; overflow-y: auto; padding-bottom: 76px; box-sizing: border-box }
   .view[data-v="replay"] .rp-right { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; height: 70px; transition: height .25s ease }
   .view[data-v="replay"] .rp-right.up { height: 82% }
@@ -602,6 +613,8 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .view[data-v="replay"] .bets-t { cursor: pointer }
   .view[data-v="replay"] .bets-t::after { content: " \25B4"; color: var(--muted); font-size: .8em }
   .view[data-v="replay"] .rp-right.up .bets-t::after { content: " \25BE" }
+}
+@media (max-width: 760px) {
   .rtab, .rtab tbody { display: block }
   .rtab tr { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; column-gap: 12px; row-gap: 3px; padding: 9px 2px; border-top: 1px solid var(--rule) }
   .rtab td { display: block; padding: 0; border: 0; white-space: nowrap; font-size: 13px }
@@ -2404,7 +2417,7 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
   const set = up => { right.classList.toggle("up", up); grab.setAttribute("aria-expanded", String(up)); grab.setAttribute("aria-label", up ? "Hide bets" : "Show bets"); };
   set(false);
   grab.addEventListener("click", () => set(!right.classList.contains("up")));
-  panel.querySelector(".bets-t")?.addEventListener("click", () => { if (mobile()) set(!right.classList.contains("up")); });
+  panel.querySelector(".bets-t")?.addEventListener("click", () => { if (matchMedia("(max-width: 760px) and (pointer: coarse)").matches) set(!right.classList.contains("up")); });
   let y0 = null;
   [grab, panel.querySelector(".bets-hd")].filter(Boolean).forEach(el => {
     el.addEventListener("touchstart", e => { y0 = e.touches[0].clientY; }, { passive: true });
