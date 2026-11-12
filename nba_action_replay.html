@@ -1727,7 +1727,8 @@ function insTable(el, key, head, rows) {   // pagedTable inside a sideways-scrol
   el.innerHTML = `<div class="tw"><table class="t"><thead>${head}</thead><tbody>${rows.slice(g.from, g.to).join("")}</tbody></table></div>${pagerHTML(key, g)}`;
 }
 const pname = n => mobile() ? (String(n).split(" ").slice(1).join(" ") || n) : n;
-const tsw = ab => { const t = teamIdx(ab), lg = t >= 0 ? logoImg(S.gid, ab) : ""; return lg || `<span class="tsw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>`; };
+const gidOfTeam = ab => teamIdx(ab) >= 0 ? S.gid : (Object.keys(S.local).find(k => S.local[k].mu?.teams?.includes(ab)) ?? null);   // 2026-11-11: logos on slate lists
+const tsw = ab => { const t = teamIdx(ab), g = gidOfTeam(ab), lg = g !== null ? logoImg(g, ab) : ""; return lg || `<span class="tsw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>`; };
 
 function renderBet() {   // a board of bet cards (Chris 2026-11-10): game lines, alt team totals, winning margin, overtime
   const sec = SEC(), el = $("betBoard");

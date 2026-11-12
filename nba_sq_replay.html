@@ -404,7 +404,9 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
 .cmp-head .r { text-align: right }
 .ptw { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 10px }
 .ptrow { display: grid; grid-template-columns: 112px minmax(0, 1fr) 56px; gap: 8px; align-items: center; font-size: 12.5px; padding: 2px 0 }
-.ptrow .who { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.ptrow { padding: 4px 0 6px; row-gap: 3px }
+.ptwho { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 12px; color: var(--muted) }
+.ptwho b { color: var(--ink) } .ptwho i { font-style: normal } .ptwho.up i { color: var(--good) } .ptwho.dn i { color: var(--bad) }
 .dbar { height: 12px; position: relative; background: linear-gradient(90deg, transparent calc(50% - .5px), var(--rule-strong) calc(50% - .5px), var(--rule-strong) calc(50% + .5px), transparent calc(50% + .5px)) }
 .dbar i { position: absolute; top: 1px; bottom: 1px; border-radius: 2px }
 .chipbet { display: inline-flex; gap: 4px; align-items: center; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--accent); color: #fff; text-decoration: none; white-space: nowrap }
@@ -1722,7 +1724,8 @@ function insTable(el, key, head, rows) {   // pagedTable inside a sideways-scrol
   el.innerHTML = `<div class="tw"><table class="t"><thead>${head}</thead><tbody>${rows.slice(g.from, g.to).join("")}</tbody></table></div>${pagerHTML(key, g)}`;
 }
 const pname = n => mobile() ? (String(n).split(" ").slice(1).join(" ") || n) : n;
-const tsw = ab => { const t = teamIdx(ab), lg = t >= 0 ? logoImg(S.gid, ab) : ""; return lg || `<span class="tsw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>`; };
+const gidOfTeam = ab => teamIdx(ab) >= 0 ? S.gid : (Object.keys(S.local).find(k => S.local[k].mu?.teams?.includes(ab)) ?? null);   // 2026-11-11: logos on slate lists
+const tsw = ab => { const t = teamIdx(ab), g = gidOfTeam(ab), lg = g !== null ? logoImg(g, ab) : ""; return lg || `<span class="tsw" style="background:${t >= 0 ? `var(--t${t})` : "var(--faint)"}"></span>`; };
 
 function renderBet() {   // a board of bet cards (Chris 2026-11-10): game lines, alt team totals, winning margin, overtime
   const sec = SEC(), el = $("betBoard");
@@ -2333,8 +2336,10 @@ function renderMatchup() {
       const m = Math.max(1, ...es.map(e => Math.abs(e.pts_per_100_shots || 0)));
       h += `<div class="chart"><h4>${logoImg(S.gid, T[t])}${esc(T[t])} offense vs ${esc(T[1 - t])} defense</h4><div class="cs">Green = this play type should go better than usual tonight; red = worse.</div>` +
         es.map(e => { const v = e.pts_per_100_shots || 0, w = 50 * Math.abs(v) / m, km = keyMan(T[t], e.play_type);
-          return `<div class="ptrow"><div><b>${esc(PT[e.play_type] || e.play_type)}</b><div class="who">${km ? esc(km.name) + " " + betFor(km, v > 0) : ""}</div></div>
-            <div class="dbar"><i style="${v >= 0 ? `left:50%;width:${w}%;background:var(--good)` : `left:${50 - w}%;width:${w}%;background:var(--bad)`}"></i></div><span class="num" style="text-align:right;font-weight:800">${sgn(v)}</span></div>`; }).join("") + `</div>`; }
+          const kx = km ? (km.play_types || []).find(q => q.play_type === e.play_type) : null;
+          return `<div class="ptrow"><div><b>${esc(PT[e.play_type] || e.play_type)}</b></div>
+            <div class="dbar"><i style="${v >= 0 ? `left:50%;width:${w}%;background:var(--good)` : `left:${50 - w}%;width:${w}%;background:var(--bad)`}"></i></div><span class="num" style="text-align:right;font-weight:800">${sgn(v)}</span>
+            ${km ? `<div class="ptwho ${v >= 0 ? "up" : "dn"}"><span><i>${v >= 0 ? "▲" : "▼"}</i> <b>${esc(km.name)}</b> ${v >= 0 ? "benefits most" : "hurt most"}${kx?.share !== undefined ? ` · ${fmt(kx.share, 0)}% of his shots` : ""}</span>${betFor(km, v > 0)}</div>` : ""}</div>`; }).join("") + `</div>`; }
     h += `</div></div>`;
   }
   const top = el.scrollTop; el.innerHTML = h; el.scrollTop = top;
