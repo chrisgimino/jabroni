@@ -655,6 +655,8 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .gain .chipbet { display: flex; justify-content: center; margin: 7px 0 0; padding: 10px; border-radius: 10px; white-space: normal; text-align: center; font-size: 13.5px }
   .cmp .lab small { font-size: 11px !important }
 }
+
+.lgo { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 6px; background: var(--bet, var(--accent)); color: #fff; font: 800 11px/1.2 var(--text); text-decoration: none; white-space: nowrap }
 </style>
 </head>
 <body>
@@ -2133,15 +2135,31 @@ function pickCard(p) {
   return `<li class="bc"><div class="bc-m"><div class="bc-k">${esc(p.type)}<span class="sig ${p.why === "always take" ? "up" : "nt"}">${esc(WHY_LBL[p.why] || p.why || "")}</span></div>
     <div class="bc-b">${lg}${esc(p.text)}</div><div class="bc-s">${esc(p.game)} · Sim ${pctf(p.sim, 0)} · EV <span class="up">${evf(p.ev)}</span> · ${p.books} books</div></div>${priceBtn(p.price, p.book, p.dl)}</li>`;
 }
+// parlay legs (Chris 2026-11-11: "let people bet the legs of the parlay that are still valid"): a leg is good while it is not past
+// our number and its game hasn't started; each good leg has its own link, and a parlay that is a pass offers its good legs together
+const legGone = (l, z) => z?.status === "started" || (!!l.tip && Date.parse(l.tip) <= Date.now());
+const legOK = (l, z) => !legGone(l, z) && (!z || z.status === "same" || z.status === "moved") && !!(z?.dl || l.dl);
+const amerOf = d => d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1));
 const legLi = (l, sameGame, z) => {
-  const st = z?.status, txt = z?.text || l.text, o = z?.odds ?? l.odds;
-  const was = st === "moved" ? ` · <span class="was">was ${z.text ? esc(l.text) + " " : ""}${odds(l.odds)}</span>` : st === "past" ? ` · <span class="was">${z.why ? esc(z.why) : "not +EV now"} (was ${odds(l.odds)})</span>` : "";
-  return `<li class="${st === "past" ? "past" : ""}"><i class="lgw">${l.team ? logoImg(l.gid, l.team, "") : ""}</i><div class="lgt"><b>${esc(txt)}</b><span>${sameGame ? "" : esc(l.game) + " · "}sim ${pctf(z?.p ?? l.p, 0)}${was}</span></div><em>${odds(o)}</em></li>`;
+  const gone = legGone(l, z), st = gone ? "started" : z?.status, txt = z?.text || l.text, o = z?.odds ?? l.odds;
+  const was = st === "moved" ? ` · <span class="was">was ${z.text ? esc(l.text) + " " : ""}${odds(l.odds)}</span>` : st === "past" ? ` · <span class="was">${z.why ? esc(z.why) : "not +EV now"} (was ${odds(l.odds)})</span>`
+    : st === "started" ? ` · <span class="was">game started</span>` : "";
+  const dl = z?.dl || l.dl, go = legOK(l, z) ? `<a class="lgo" href="${DLURL(dl)}" target="_blank" rel="noopener">Bet ›</a>` : "";
+  return `<li class="${st === "past" || st === "started" ? "past" : ""}"><i class="lgw">${l.team ? logoImg(l.gid, l.team, "") : ""}</i><div class="lgt"><b>${esc(txt)}</b><span>${sameGame ? "" : esc(l.game) + " · "}sim ${pctf(z?.p ?? l.p, 0)}${was}</span></div><em>${odds(o)}${go}</em></li>`;
 };
+function goodLegsBtn(legs, zs, book, sameGame) {   // the full parlay is a pass: its good legs together, when 2+ and +EV together
+  const good = legs.map((l, i) => [l, zs[i]]).filter(([l, z]) => legOK(l, z));
+  if (sameGame || good.length < 2) return `<div class="bc-p off pass"><b>PASS</b><small>past our number</small>${good.length ? `<small>1 leg still good: its own link</small>` : ""}</div>`;
+  const p = good.reduce((m, [l, z]) => m * (z?.p ?? l.p), 1), d = good.reduce((m, [l, z]) => m * (z?.dec ?? l.dec), 1), ev = p * d - 1, ids = good.map(([l, z]) => z?.dl || l.dl);
+  if (!(ev > 0)) return `<div class="bc-p off pass"><b>PASS</b><small>past our number</small><small>good legs: their own links</small></div>`;
+  const o = amerOf(d), u = typeof stakeU === "function" && stakeU(ev, o) ? ` · bet ${uTxt(stakeU(ev, o))}` : "";
+  return true ? `<a class="bc-p" href="${DLMULTI(ids)}" target="_blank" rel="noopener"><small>est. · ${good.length} of ${legs.length} legs${u}</small><b>${odds(o)}</b><small>${esc(book)}</small><span>Bet ${good.length} good legs ›</span></a>`
+    : `<div class="bc-p off"><small>est. · ${good.length} of ${legs.length} legs${u}</small><b>${odds(o)}</b><small>${esc(book)}</small><span>good legs: tap each</span></div>`;
+}
 function parlayCard(title, sub, legs, book, oddsTxt, sameGame, now) {
   const zs = now?.legs || [], pass = now?.status === "past";
   const ids = legs.map((l, i) => zs[i]?.dl || l.dl).filter(Boolean), ok = ids.length === legs.length;
-  const btn = pass ? `<div class="bc-p off pass"><b>PASS</b><small>past our number</small></div>`
+  const btn = pass || legs.some((l, i) => legGone(l, zs[i])) ? goodLegsBtn(legs, zs, book, sameGame)
     : ok ? `<a class="bc-p" href="${DLMULTI(ids)}" target="_blank" rel="noopener"><small>${sameGame ? "" : "est."}</small><b>${oddsTxt}</b><small>${esc(book)}</small><span>Bet all now ›</span></a>`
     : `<div class="bc-p off"><small>${sameGame ? "" : "est."}</small><b>${oddsTxt}</b><small>${esc(book)}</small></div>`;
   return `<div class="pcard"><div><h4>${title}</h4><div class="ps">${sub}</div><ol class="legs">${legs.map((l, i) => legLi(l, sameGame, zs[i])).join("")}</ol></div>${btn}</div>`;
@@ -2150,7 +2168,8 @@ function parlaySub(p) {
   const n = p.now, base = `One book (${esc(p.book)}), four different games. All four hit in ${pctf(n?.p ?? p.p, 1)} of our sims.`;
   if (!n || n.status === "same") return base + ` Estimated odds ${odds(p.odds)} (the legs' prices multiplied); ${esc(p.book)} sets the final price.` + (n ? `<span class="chk">Checked ${tET(n.t)}: every leg same price.</span>` : "");
   if (n.status === "moved") return base + ` Estimated odds now ${odds(n.odds)} (posted ${odds(p.odds)}); ${esc(p.book)} sets the final price.<span class="chk">Checked ${tET(n.t)}: a leg moved, every leg still +EV.</span>`;
-  return base + `<span class="chk bad">Checked ${tET(n.t)}: a leg is past our number at ${esc(p.book)}. Pass this one.</span>`;
+  const why = (n.legs || []).some(z => z.status === "started") ? "a leg's game has started" : `a leg is past our number at ${esc(p.book)}`;
+  return base + `<span class="chk bad">Checked ${tET(n.t)}: ${why}. Pass the full parlay; the legs still good have their own links, or bet them together.</span>`;
 }
 function renderParlay() {
   const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sec0 = SEC();
