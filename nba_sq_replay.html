@@ -837,7 +837,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 
     <section class="view" data-v="dfs" hidden>
       <div class="row wrap"><div class="seg" id="dfsKind"><button data-v="upside" aria-pressed="true">Upside</button><button data-v="downside" aria-pressed="false">Downside</button><button data-v="volatile" aria-pressed="false">Volatile</button></div>
-        <div class="seg" id="dfsScope"><button data-v="game" aria-pressed="true">This game</button><button data-v="slate" aria-pressed="false">Whole slate</button></div></div>
+        <div class="seg" id="dfsScope"><button data-v="game" aria-pressed="false">This game</button><button data-v="slate" aria-pressed="true">Whole slate</button></div></div>
       <div id="dfsWarn"></div>
       <div class="md closed" id="dfsMD" style="flex:1;min-height:0">
         <div class="panel"><div class="fill" id="dfsList"></div><div id="dfsPager"></div></div>
@@ -878,7 +878,7 @@ const SOURCES = [
 ];
 const S = { src: null, games: [], local: {}, index: null, gid: null, rp: null, mu: null, t: 0, playing: false, speed: 5, endT: 2880, cur: -2, st: null,
   team: -1, pt: null, view: "replay", boxMode: "box", boxTeam: 0, edgeTeam: 0, profTeam: 0, profSide: "offense", outTeam: 0,
-  angScope: "game", angSel: null, feedMode: "moments", propMode: "main", propScope: "game", propOnly: "all", fbKind: "first_basket", ladScope: "game", dfsKind: "upside", dfsScope: "game", dfsSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
+  angScope: "game", angSel: null, feedMode: "moments", propMode: "main", propScope: "game", propOnly: "all", fbKind: "first_basket", ladScope: "game", dfsKind: "upside", dfsScope: "slate", dfsSel: null, outSel: null, page: {}, sortKey: "sq_dk", sortDir: -1, last: 0, mo: null, dotEl: new Map() };
 const mobile = () => matchMedia("(max-width: 760px)").matches;
 const fmt = (x, d = 1) => (x === null || x === undefined || Number.isNaN(+x)) ? "–" : (+x).toFixed(d);
 const sgn = (x, d = 1) => { if (x === null || x === undefined || Number.isNaN(+x)) return "–"; const r = (+x).toFixed(d); return +r === 0 ? (0).toFixed(d) : (+r > 0 ? "+" : "") + r; };
