@@ -657,6 +657,32 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
 }
 
 .lgo { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 6px; background: var(--bet, var(--accent)); color: #fff; font: 800 11px/1.2 var(--text); text-decoration: none; white-space: nowrap }
+
+/* ------------------------------------------------------------------ book picker with logos (Chris 2026-11-11) */
+#bookPick.bk-native { display: none !important }
+.bkpick { position: relative; flex: 0 0 auto }
+.bk-btn { height: 32px; min-width: 58px; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 6px; border: 1px solid var(--rule-strong); border-radius: 8px;
+          background: var(--surface); color: var(--ink); font: 700 14px/1 var(--text); cursor: pointer; white-space: nowrap }
+.bk-btn.on { border-color: var(--accent) } .bk-btn.txt { padding-left: 10px }
+.bk-btn::after { content: "\25BE"; color: var(--muted); font-size: 12px; margin-left: 2px }
+.bk-tile { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: #fff; overflow: hidden; flex: none;
+           box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08) }
+.bk-tile img { max-width: 22px; max-height: 22px; object-fit: contain; display: block }
+.bk-tile.best { background: var(--accent); color: #fff; font: 900 10px/1 var(--text); letter-spacing: .04em }
+.bk-tile.ini { color: #16233f; font: 900 9px/1 var(--text) }
+.bk-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 70; min-width: 230px; max-height: 70vh; overflow-y: auto; margin: 0; padding: 6px; list-style: none;
+           background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .35) }
+.bk-list .bk-tile { width: 30px; height: 30px } .bk-list .bk-tile img { max-width: 26px; max-height: 26px }
+.bk-list li { display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 7px; border-radius: 8px; cursor: pointer; font: 700 14px/1.2 var(--text); color: var(--ink) }
+.bk-list li:hover, .bk-list li:focus { background: var(--panel2); outline: none }
+.bk-list li[aria-selected="true"] { background: var(--panel2); box-shadow: inset 3px 0 0 var(--accent) }
+@media (max-width: 760px) { .bk-btn { height: 40px } .bk-btn .bk-tile { width: 30px; height: 30px } .bk-btn .bk-tile img { max-width: 26px; max-height: 26px } }
+@media (max-width: 760px) and (pointer: coarse) {
+  .bk-btn { height: 44px }
+  .bk-list { position: fixed; left: 0; right: 0; bottom: 0; top: auto; min-width: 0; border-radius: 14px 14px 0 0; max-height: 72vh; z-index: 95;
+             padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px)) }
+  .bk-list li { min-height: 52px; font-size: 16px }
+}
 </style>
 </head>
 <body>
@@ -2400,6 +2426,39 @@ function renderView() {
 // ------------------------------------------------------------------ wiring
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b || b.disabled) return; S.view = b.dataset.view; showView(); });
 $("gamePick").addEventListener("change", e => pick(e.target.value));
+
+// ------------------------------------------------------------------ book picker with logos (Chris 2026-11-11): logo only when closed,
+// logo + name in the list. The hidden native select still holds the choice (its change event runs everything as before).
+(() => {
+  const sel = $("bookPick"); if (!sel) return;
+  const LOGO = {}, wrap = document.createElement("div"), btn = document.createElement("button"), list = document.createElement("ul");
+  wrap.className = "bkpick"; btn.type = "button"; btn.className = "bk-btn"; btn.setAttribute("aria-haspopup", "listbox"); btn.setAttribute("aria-expanded", "false");
+  list.className = "bk-list"; list.setAttribute("role", "listbox"); list.setAttribute("aria-label", "Book"); list.hidden = true;
+  sel.classList.add("bk-native"); sel.after(wrap); wrap.append(btn, list);
+  const ini = v => esc((v.match(/[A-Z0-9]/g) || [v.slice(0, 2)]).join("").slice(0, 4).toUpperCase());
+  const tile = v => v ? (LOGO[v] ? `<span class="bk-tile"><img src="nba_logos/books/${encodeURIComponent(LOGO[v])}" alt=""></span>` : "") : `<span class="bk-tile best">BEST</span>`;
+  const paint = () => {
+    const v = sel.value, o = sel.selectedOptions[0], name = v || "Best price";
+    btn.classList.toggle("on", !!v); btn.classList.toggle("txt", !(v && LOGO[v]));
+    btn.innerHTML = v && LOGO[v] ? tile(v) : esc(v || (mobile() ? "Best" : "Best price"));
+    btn.title = `Book: ${o ? o.textContent : name}`; btn.setAttribute("aria-label", btn.title);
+    const opts = [...sel.options].sort((a, b) => (a.value ? 1 : 0) - (b.value ? 1 : 0));   // Best price first
+    list.innerHTML = opts.map(x => `<li role="option" tabindex="-1" data-v="${esc(x.value)}" aria-selected="${x.value === v}">${tile(x.value) || `<span class="bk-tile ini">${ini(x.value)}</span>`}<span>${esc(x.value ? x.value : x.textContent)}</span></li>`).join("");
+  };
+  const close = () => { list.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  btn.addEventListener("click", e => { e.stopPropagation(); const open = list.hidden; list.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+    if (open) (list.querySelector('[aria-selected="true"]') || list.firstElementChild)?.focus(); });
+  list.addEventListener("click", e => { const li = e.target.closest("li[data-v]"); if (!li) return; close();
+    if (sel.value !== li.dataset.v) { sel.value = li.dataset.v; sel.dispatchEvent(new Event("change", { bubbles: true })); } paint(); btn.focus(); });
+  list.addEventListener("keydown", e => { const li = document.activeElement?.closest?.("li[data-v]");
+    if (e.key === "Escape") { close(); btn.focus(); } else if (e.key === "ArrowDown") { e.preventDefault(); (li?.nextElementSibling || list.firstElementChild)?.focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); (li?.previousElementSibling || list.lastElementChild)?.focus(); } else if ((e.key === "Enter" || e.key === " ") && li) { e.preventDefault(); li.click(); } });
+  document.addEventListener("click", e => { if (!wrap.contains(e.target)) close(); });
+  sel.addEventListener("change", paint);
+  new MutationObserver(paint).observe(sel, { childList: true, subtree: true });
+  paint();
+  fetch("nba_logos/books/index.json", { cache: "no-store" }).then(r => r.ok ? r.json() : {}).then(j => { Object.assign(LOGO, j || {}); paint(); }).catch(() => {});
+})();
 
 // ------------------------------------------------------------------ narrow screens (Chris 2026-11-11): Matchup jump bar
 (() => {
