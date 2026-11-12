@@ -608,9 +608,13 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .view[data-v="replay"] .rp-right .bets { flex: 1; min-height: 0; padding-top: 4px }
   .view[data-v="replay"] .rp-right.up { position: absolute; inset: 0; z-index: 20; min-height: 0 }
   .view[data-v="replay"] .rp-right.up .bets { box-shadow: 0 -8px 24px rgba(0, 0, 0, .35) }
-  .bs-grab { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 22px; padding: 2px 0 0; border: 0; background: none;
-             color: var(--muted); font: 700 12px/1 var(--text); cursor: pointer; touch-action: none }
-  .bs-grab i { width: 40px; height: 5px; border-radius: 3px; background: var(--rule-strong) }
+  .bs-grab { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px; margin: 2px 0 8px; padding: 0 14px;
+             border: 1.5px solid var(--accent); border-radius: 20px; background: transparent; background: color-mix(in srgb, var(--accent) 14%, transparent);
+             color: var(--accent); font: 800 14px/1 var(--text); letter-spacing: .01em; cursor: pointer; touch-action: none; box-sizing: border-box }
+  .bs-grab i { display: none }
+  .view[data-v="replay"] .rp-right:not(.up) .bs-grab { animation: bsNudge 1.1s ease-in-out .8s 3 }   /* a few nudges on arrival: it pulls up */
+  @keyframes bsNudge { 0%, 100% { transform: translateY(0) } 40% { transform: translateY(-5px) } 70% { transform: translateY(1px) } }
+  @media (prefers-reduced-motion: reduce) { .view[data-v="replay"] .rp-right:not(.up) .bs-grab { animation: none } }
   .view[data-v="replay"] .bets-t { cursor: pointer }
   .view[data-v="replay"] .bets-t::after { content: " \25B4"; color: var(--muted); font-size: .8em }
   .view[data-v="replay"] .rp-right.up .bets-t::after { content: " \25BE" }
@@ -2412,7 +2416,7 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
   const grab = document.createElement("button"); grab.type = "button"; grab.className = "bs-grab"; grab.setAttribute("aria-expanded", "false");
   grab.innerHTML = `<i></i><span></span>`; panel.prepend(grab);
   const count = () => { const n = feed.children.length, up = right.classList.contains("up");
-    grab.lastChild.textContent = `${n ? `${n} bet${n === 1 ? "" : "s"} · ` : ""}${up ? "shrink ▾" : "expand ▴"}`; };
+    grab.lastChild.textContent = up ? "▼  Back to the court" : `▲  Pull up all ${n ? n + " " : ""}bets`; };
   new MutationObserver(count).observe(feed, { childList: true }); count();
   const set = up => { right.classList.toggle("up", up); grab.setAttribute("aria-expanded", String(up)); grab.setAttribute("aria-label", up ? "Shrink bets" : "Expand bets"); count(); };
   set(false);
