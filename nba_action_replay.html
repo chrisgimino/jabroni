@@ -683,6 +683,33 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
              padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px)) }
   .bk-list li { min-height: 52px; font-size: 16px }
 }
+
+/* ------------------------------------------------------------------ phones: tab bar on top (Chris 2026-11-11 21:20: the tool lives in a
+   frame in an article, so the bottom of the frame is often off screen). More menu and book list drop down from the top. */
+@media (max-width: 760px) and (pointer: coarse) {
+  .top { order: -2 } .tabs { order: -1 }
+  .tabs { border-top: 0; border-bottom: 1px solid var(--rule-strong); padding: 0 8px; margin-top: -2px }
+  .tabs button { min-height: 46px; margin: 0 0 -1px; border-top: 0; border-bottom: 3px solid transparent }
+  .tabs button[aria-selected="true"], .tabs .more-btn.on { border-bottom-color: var(--accent) }
+  .msheet { align-items: flex-start }
+  .msheet .ms-in { border-radius: 0 0 14px 14px; padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 14px }
+  .bk-list { position: absolute; left: auto; right: 0; top: calc(100% + 6px); bottom: auto; width: min(calc(100vw - 32px), 340px); max-height: 70vh;
+             border-radius: 12px; padding: 6px }
+}
+
+/* ------------------------------------------------------------------ narrow: box score is a tab under the court, not on it (Chris 2026-11-11 21:22) */
+.rp-tabs, .boxpanel { display: none }
+@media (max-width: 760px) {
+  .view[data-v="replay"] .boxseg, .view[data-v="replay"] .courtbox .boxov { display: none !important }
+  .view[data-v="replay"] .rp-tabs { display: flex; flex: 0 0 auto; width: 100% }
+  .rp-tabs button { flex: 1 1 0; min-height: 40px; font-weight: 800 }
+  .view[data-v="replay"] .rp-right[data-tab="box"] .bets { display: none }
+  .view[data-v="replay"] .rp-right[data-tab="box"] .boxpanel { display: grid; flex: 1 1 auto; min-height: 0; overflow: auto }
+  .boxpanel.boxov { position: static; inset: auto; backdrop-filter: none; background: var(--surface); color: var(--ink); border: 1px solid var(--rule);
+                    border-radius: 10px; padding: 8px 10px; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start }
+  .boxpanel.boxov th { color: var(--muted); font-size: 11px; height: 22px }
+  .boxpanel.boxov td { font-size: 13px; height: 26px; border-top: 1px solid var(--rule) }
+}
 </style>
 </head>
 <body>
@@ -2098,8 +2125,10 @@ function renderBets() {
 }
 
 function renderFive() {   // the box score on the court: the ten on the floor, or the full box (off on phones until asked)
-  const el = $("boxov"), st = S.st; if (!el) return;
-  const mode = S.boxOv || (mobile() ? "off" : "floor");
+  const narrow = mobile(), bp = $("boxPanel"), st = S.st;
+  if (narrow) { if ($("boxov")) $("boxov").hidden = true; if (!bp || S.rpTab !== "box") return; }
+  const el = narrow ? bp : $("boxov"); if (!el) return;
+  const mode = narrow ? "full" : (S.boxOv || "floor");
   $("boxOv")?.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === mode)));
   if (mode === "off" || !st) { el.hidden = true; return; }
   el.hidden = false; el.dataset.mode = mode;
@@ -2481,6 +2510,20 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
     nav.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); });
 })();
 
+// ------------------------------------------------------------------ narrow (Chris 2026-11-11 21:22): Bets | Box score tabs under the court
+(() => {
+  const right = document.querySelector('.view[data-v="replay"] .rp-right'), panel = $("betsPanel"); if (!right || !panel) return;
+  const seg = document.createElement("div"); seg.className = "seg rp-tabs"; seg.setAttribute("role", "tablist"); seg.setAttribute("aria-label", "Bets or box score");
+  seg.innerHTML = `<button type="button" data-t="bets" aria-pressed="true">Bets</button><button type="button" data-t="box" aria-pressed="false">Box score</button>`;
+  const box = document.createElement("div"); box.className = "boxov boxpanel"; box.id = "boxPanel"; box.dataset.mode = "full";
+  right.prepend(seg); panel.after(box);
+  const set = t => { S.rpTab = t; right.dataset.tab = t; seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+    if (t === "box" && right.classList.contains("up")) right.querySelector(".bs-grab")?.click();   // back to the court first
+    renderFive(); };
+  seg.addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if (!b) return; e.stopPropagation(); set(b.dataset.t); });
+  set("bets");
+})();
+
 // ------------------------------------------------------------------ phone (Chris 2026-11-11): Replay's Bets panel as a sheet you pull up
 (() => {
   const right = document.querySelector('.view[data-v="replay"] .rp-right'), panel = $("betsPanel"), feed = $("feed");
@@ -2514,7 +2557,7 @@ $("gamePick").addEventListener("change", e => pick(e.target.value));
     sheet.classList.add("open"); });
   sheet.addEventListener("click", e => { const b = e.target.closest("button[data-go]"); sheet.classList.remove("open"); if (b) nav.querySelector(`button[data-view="${b.dataset.go}"]`)?.click(); });
   const sync = () => { app.dataset.view = S.view; const off = !PRI.includes(S.view);
-    more.classList.toggle("on", off); more.textContent = off ? `${nav.querySelector(`button[data-view="${S.view}"]`)?.textContent || "More"} ▴` : "More ▴"; };
+    more.classList.toggle("on", off); more.textContent = off ? `${nav.querySelector(`button[data-view="${S.view}"]`)?.textContent || "More"} ▾` : "More ▾"; };
   const sv = showView; showView = function () { const r = sv.apply(this, arguments); sync(); return r; }; sync();
   const tb = document.createElement("div"); tb.className = "gtoast"; document.body.appendChild(tb);
   const toast = t => { tb.textContent = t; tb.classList.add("on"); clearTimeout(tb._t); tb._t = setTimeout(() => tb.classList.remove("on"), 900); };
