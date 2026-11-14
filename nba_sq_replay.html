@@ -1104,7 +1104,7 @@ function renderStatic() {
     $("l" + t).textContent = `Vegas ${fmt(tm.vegas_total)} · SQ ${fmt(tm.sq_mean_points)}`;
     $("h" + t).textContent = $("h" + t + "t").textContent = t === 0 ? `◀ ${tShort(t).toUpperCase()} SHOOTS THIS WAY` : `${tShort(t).toUpperCase()} SHOOTS THIS WAY ▶`;
   }
-  $("simLbl").textContent = `typical sim · ${(rp.sim_index ?? 0) + 1} of ${(rp.sims || 0).toLocaleString()}`;
+  $("simLbl").textContent = `typical sim`;
   $("scrub").max = Math.ceil(S.endT);
   $("ticks").innerHTML = [0, ...S.periods.slice(0, -1)].map((t, i) => `<span style="left:${100 * t / S.endT}%">${i < 4 ? "Q" + (i + 1) : "OT"}</span>`).join("");
   $("legend").innerHTML = `<span><i style="background:var(--t0)"></i>${esc(tShort(0))} ← left</span><span><i style="background:var(--t1)"></i>${esc(tShort(1))} right →</span><span>● made</span><span>✕ missed</span><span>shot chart at the final</span>`;
@@ -1885,7 +1885,7 @@ function moments() {   // the moments of the replayed game, by event index; pr 3
     if (scored) {
       const p = e.type === "shot" ? e.pts : 1, o = e.team;
       if (!firstDone) { firstDone = true; const s = fbShare(e.player), f = fav();
-        add(3, `First basket · ${lastName(e.player)}`, s !== null ? `<b>${(100 * s).toFixed(1)}%</b> of ${N} sims${f && f[0] !== nm(e.player) ? ` · sims' favorite ${esc(f[0].split(" ").slice(-1)[0])} ${(100 * f[1]).toFixed(1)}%` : " · the sims' favorite"}` : "first points of the game"); }
+        add(3, `First basket · ${lastName(e.player)}`, s !== null ? `<b>${(100 * s).toFixed(1)}%</b> of sims${f && f[0] !== nm(e.player) ? ` · sims' favorite ${esc(f[0].split(" ").slice(-1)[0])} ${(100 * f[1]).toFixed(1)}%` : " · the sims' favorite"}` : "first points of the game"); }
       run[o] += p; run[1 - o] = 0;
       if (run[o] >= 8 && run[o] - runMark >= 4 && run[1 - o] === 0) { runMark = run[o]; add(2, `${tShort(o)} on a ${run[o]}-0 run`, `${e.score[0]}-${e.score[1]} · Q${Math.min(e.period, 5)} ${e.clock}`); }
       if (run[o] === p) runMark = 0;
@@ -2108,8 +2108,8 @@ function renderBets() {
   if (S.betC.bk !== S.book) { S.betC.bk = S.book; S.betC.at = S.book ? S.betC.list.flatMap(x => candAt(x, S.book)) : S.betC.list; }
   const C = S.betC.at, sc = S.tr.sc, byEv = (a, b) => (b.ev ?? -9) - (a.ev ?? -9);
   sub.innerHTML = mode === "trial"
-    ? `This sim: <b>${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}</b>${S.tr.ot ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all ${N} sims. Watch them cash as it plays.`
-    : `The best edge in each market over all ${N} sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the books"}. Tap a price to bet it.`;
+    ? `This sim: <b>${esc(tShort(0))} ${sc[0]}-${sc[1]} ${esc(tShort(1))}</b>${S.tr.ot ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all the sims. Watch them cash as it plays.`
+    : `The best edge in each market over all the sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the books"}. Tap a price to bet it.`;
   const rows = BET_CATS.map(([key, label]) => {
     const xs = C.filter(x => x.cat === key);
     const pick = mode === "trial"
@@ -2225,7 +2225,7 @@ function parlaySub(p) {
   return base + `<span class="chk bad">Checked ${tET(n.t)}: ${why}. Pass the full parlay; the legs still good have their own links, or bet them together.</span>`;
 }
 function renderParlay() {
-  const el = $("parBoard"), slots = (S.index?.best_bets?.slots || []).slice().reverse(), sec0 = SEC();
+  const el = $("parBoard"), slots = liveSlots().slice().reverse(), sec0 = SEC();
   const sg = S.book ? (sec0?.sgp_books?.[S.book] || (sec0?.sgp?.book === S.book ? sec0.sgp : null)) : sec0?.sgp;   // book picker: that book's own
   const parOf = s => { const sm = s.sims?.[SIMKEY]; return !S.book ? sm?.parlay : sm?.by_book ? sm.by_book[S.book]?.parlay : (sm?.parlay?.book === S.book ? sm.parlay : null); };
   const pars = slots.map(s => [s.slot, parOf(s)]).filter(([, p]) => p);
@@ -2281,15 +2281,15 @@ function svgBars(rows, o = {}) {   // rows: [{label, v, n}] -> vertical bars aro
 function svgLine(series, o = {}) {   // series: [{name, color, pts: [[label, y]]}] -> cumulative units
   const all = series.flatMap(s => s.pts.map(p => p[1])), n = Math.max(...series.map(s => s.pts.length));
   if (!n) return "";
-  const W = 460, H = 190, pl = 38, pr = 10, pt = 12, pb = 22, lo = Math.min(0, ...all), hi = Math.max(0, ...all), sp = (hi - lo) || 1;
+  const W = 460, H = 190, pl = 38, pr = 10, pt = 24, pb = 22, lo = Math.min(0, ...all), hi = Math.max(0, ...all), sp = (hi - lo) || 1;
   const x = i => pl + (W - pl - pr) * (n > 1 ? i / (n - 1) : 0), y = v => pt + (H - pt - pb) * (hi - v) / sp;
   const lab = series[0].pts;
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || "")}"><line x1="${pl}" x2="${W - pr}" y1="${y(0)}" y2="${y(0)}" stroke="var(--rule-strong)"/>
-    <text x="${pl - 4}" y="${y(hi) + 4}" text-anchor="end">${hi >= 0 ? "+" : ""}${hi.toFixed(0)}</text><text x="${pl - 4}" y="${y(0) + 4}" text-anchor="end">0</text>
-    ${lo < 0 ? `<text x="${pl - 4}" y="${y(lo) + 4}" text-anchor="end">${lo.toFixed(0)}</text>` : ""}
+    ${y(0) - y(hi) >= 12 ? `<text x="${pl - 4}" y="${y(hi) + 4}" text-anchor="end">${hi >= 0 ? "+" : ""}${hi.toFixed(Math.abs(hi) < 10 ? 1 : 0)}</text>` : ""}<text x="${pl - 4}" y="${y(0) + 4}" text-anchor="end">0</text>
+    ${lo < 0 && y(lo) - y(0) >= 12 ? `<text x="${pl - 4}" y="${y(lo) + 4}" text-anchor="end">${lo.toFixed(Math.abs(lo) < 10 ? 1 : 0)}</text>` : ""}
     <text x="${pl}" y="${H - 6}">${esc(lab[0]?.[0] || "")}</text><text x="${W - pr}" y="${H - 6}" text-anchor="end">${esc(lab[lab.length - 1]?.[0] || "")}</text>` +
     series.map(s => `<polyline fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" points="${s.pts.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ")}"/>
-      <text class="v" x="${W - pr}" y="${y(s.pts[s.pts.length - 1][1]) - 6}" text-anchor="end" style="fill:${s.color}">${s.pts[s.pts.length - 1][1] >= 0 ? "+" : ""}${s.pts[s.pts.length - 1][1].toFixed(1)} u</text>`).join("") + `</svg>`;
+      <text class="v" x="${W - pr}" y="${(v => v - 6 < 12 ? v + 16 : v - 6)(y(s.pts[s.pts.length - 1][1]))}" text-anchor="end" style="fill:${s.color}">${s.pts[s.pts.length - 1][1] >= 0 ? "+" : ""}${s.pts[s.pts.length - 1][1].toFixed(1)} u${s.est ? " est." : ""}</text>`).join("") + `</svg>`;
 }
 const BT = /*BT*/{"action":{"bands":[{"label":"4-8%","n":25241,"v":2.8},{"label":"8-12%","n":11817,"v":2.8},{"label":"12-16%","n":5269,"v":6.0},{"label":"16-20%","n":2104,"v":9.1},{"label":"20-30%","n":1337,"v":12.9},{"label":"30%+","n":219,"v":23.8}],"bands_note":"Every main-line prop where our sims + the books found an edge, at the best closing price (one bet per player-stat). One bet per player and stat a night, pre-game prices. EV 8%+: 20,746 bets, +5.1%.","cum":[{"name":"Top 4 a day","color":"var(--accent)","pts":[["10-27",0.28],["10-29",1.6],["10-31",3.62],["11-02",2.35],["11-04",1.01],["11-06",-0.92],["11-08",-4.75],["11-10",-2.68],["11-12",4.49],["11-14",7.74],["11-16",11.78],["11-18",16.19],["11-20",14.18],["11-22",12.38],["11-24",14.49],["11-26",15.64],["11-29",14.27],["12-01",10.71],["12-03",6.9],["12-05",7.28],["12-07",11.9],["12-09",13.59],["12-11",15.32],["12-13",16.27],["12-15",18.19],["12-17",18.62],["12-19",21.49],["12-21",19.2],["12-23",22.21],["12-26",18.51],["12-28",21.12],["12-31",27.58],["01-02",31.68],["01-04",35.9],["01-06",35.7],["01-08",35.57],["01-10",29.67],["01-12",32.09],["01-14",37.82],["01-16",37.18],["01-18",37.17],["01-20",41.28],["01-22",39.78],["01-24",35.8],["01-26",35.5],["01-28",34.75],["01-31",34.56],["02-02",34.95],["02-04",35.25],["02-06",37.26],["02-08",35.1],["02-10",38.69],["02-12",42.58],["02-20",47.17],["02-22",49.6],["02-24",47.73],["02-26",48.68],["03-01",50.46],["03-03",52.96],["03-05",55.01],["03-07",55.32],["03-09",55.78],["03-11",60.0],["03-13",63.03],["03-15",61.42],["03-17",63.37],["03-19",70.49],["03-21",70.65],["03-23",66.61],["03-25",67.35],["03-27",68.74],["03-29",71.05],["03-31",70.82],["04-02",71.2],["04-04",73.3],["04-06",75.13],["04-08",74.64],["04-10",72.63],["04-12",72.73]]}],"cum_note":"Each day's 4 best props by the board's rules (EV 8-35%, 2+ books, -200 to +300, a player once, a stat at most twice), best price, 1 unit each, 156 days.","kpis":[["bets","624"],["record","328-296"],["units","+72.7"],["return","+11.7%"]],"lines":[{"label":"Moneyline","n":39,"v":11.2},{"label":"Spread","n":299,"v":8.3},{"label":"Total","n":159,"v":6.9},{"label":"All","n":497,"v":8.1}],"lines_note":"One bet per game and market (the best price across 8 books, last pre-game line), only when it passes the board's rules: EV 6-35% (moneyline 6-20% and shorter than +200), 25%+ to hit, no heavier than -200. All: +8.1% (95% range +0.9 to +15.4)."},"sq":{"bands":[{"label":"4-8%","n":26136,"v":1.9},{"label":"8-12%","n":13386,"v":2.5},{"label":"12-16%","n":6202,"v":6.0},{"label":"16-20%","n":2726,"v":9.8},{"label":"20-30%","n":1738,"v":10.6},{"label":"30%+","n":252,"v":25.7}],"bands_note":"Every main-line prop where ShotQuality sims + the books found an edge, at the best closing price (one bet per player-stat). One bet per player and stat a night, pre-game prices. EV 8%+: 24,304 bets, +5.1%.","cum":[{"name":"Top 4 a day","color":"var(--accent)","pts":[["10-27",0.75],["10-29",2.21],["10-31",6.22],["11-02",6.9],["11-04",5.01],["11-06",5.12],["11-08",4.76],["11-10",9.38],["11-12",18.81],["11-14",21.43],["11-16",21.01],["11-18",19.27],["11-20",17.19],["11-22",13.13],["11-24",11.1],["11-26",14.25],["11-29",14.69],["12-01",10.86],["12-03",12.86],["12-05",15.14],["12-07",20.15],["12-09",19.86],["12-11",29.14],["12-13",25.69],["12-15",25.63],["12-17",28.73],["12-19",32.85],["12-21",33.13],["12-23",35.61],["12-26",31.83],["12-28",33.98],["12-31",36.24],["01-02",38.84],["01-04",43.06],["01-06",48.63],["01-08",48.54],["01-10",44.71],["01-12",47.76],["01-14",46.68],["01-16",44.48],["01-18",42.91],["01-20",43.03],["01-22",41.39],["01-24",37.19],["01-26",41.33],["01-28",42.58],["01-31",42.39],["02-02",40.92],["02-04",40.97],["02-06",36.81],["02-08",32.74],["02-10",34.49],["02-12",36.12],["02-20",37.23],["02-22",39.37],["02-24",39.56],["02-26",40.43],["03-01",38.15],["03-03",38.3],["03-05",43.75],["03-07",49.69],["03-09",49.87],["03-11",52.17],["03-13",54.38],["03-15",48.84],["03-17",50.78],["03-19",57.6],["03-21",59.35],["03-23",57.67],["03-25",53.81],["03-27",54.35],["03-29",54.69],["03-31",56.57],["04-02",58.95],["04-04",63.4],["04-06",65.63],["04-08",67.23],["04-10",67.27],["04-12",65.47]]}],"cum_note":"Each day's 4 best props by the board's rules (EV 8-35%, 2+ books, -200 to +300, a player once, a stat at most twice), best price, 1 unit each, 156 days.","kpis":[["bets","624"],["record","324-300"],["units","+65.5"],["return","+10.5%"]],"lines":[{"label":"Moneyline","n":198,"v":0.3},{"label":"Spread","n":686,"v":3.3},{"label":"Total","n":670,"v":2.3},{"label":"All","n":1554,"v":2.5}],"lines_note":"One bet per game and market (the best price across 8 books, last pre-game line), only when it passes the board's rules: EV 6-35% (moneyline 6-20% and shorter than +200), 25%+ to hit, no heavier than -200. All: +2.5% (95% range -2.8 to +8.1)."}}/*BT*/;
 function renderResults() {
@@ -2301,21 +2301,32 @@ function renderResults() {
       <div class="kpis">${b.kpis.map(k => `<span><b>${esc(k[1])}</b>${esc(k[0])}</span>`).join("")}</div>${svgLine(b.cum, { aria: "Cumulative units 2025-26" })}</div>`;
     if (b.lines?.length) h += `<div class="chart"><h4>2025-26 game lines, best price, board rules</h4><div class="cs">${esc(b.lines_note)}</div>${svgBars(b.lines, { aria: "Game lines return" })}</div>`;
   } else h += `<div class="chart"><h4>2025-26 backtest</h4><div class="cs">Not loaded.</div></div>`;
-  const pk = L?.pick, pa = L?.parlay;
-  if (pk && pk.days?.length) {
-    const cum = (d, nm, color) => { let c = 0; return { name: nm, color, pts: d.map(x => [x[0].slice(5), c += x[3]]) }; };
-    const ser = [cum(pk.days, "Picks", "var(--accent)")]; if (pa?.days?.length > 1) ser.push(cum(pa.days, "Parlays", "var(--t0)"));
-    const roi = pk.n ? 100 * pk.units / pk.n : 0;
-    h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Every pick at 1 unit, graded each night from the box scores.${pa?.n ? ` Parlays: ${pa.won}-${pa.lost}, ${pa.units >= 0 ? "+" : ""}${pa.units.toFixed(1)} u.` : ""}</div>
-      <div class="kpis"><span><b>${pk.won}-${pk.lost}</b>record</span><span><b>${pk.units >= 0 ? "+" : ""}${pk.units.toFixed(1)} u</b>units</span><span><b>${roi >= 0 ? "+" : ""}${roi.toFixed(1)}%</b>return</span>
-      ${Object.entries(L.groups || {}).map(([g, x]) => `<span><b>${x.won}-${x.n - x.won}</b>${esc(g)}</span>`).join("")}</div>${svgLine(ser, { aria: "Cumulative units 2026-27" })}</div>`;
+  const pk = L?.pick, pa = L?.parlay, rv = S.resView || "straight";
+  if (pk?.days?.length || pa?.days?.length) {
+    const comb = (...ks) => { const by = {}, t = { n: 0, won: 0, lost: 0, units: 0 };
+      ks.filter(Boolean).forEach(k => { (k.days || []).forEach(d => { const x = by[d[0]] || (by[d[0]] = [d[0], 0, 0, 0]); x[1] += d[1]; x[2] += d[2]; x[3] += d[3]; });
+        t.n += k.n || 0; t.won += k.won || 0; t.lost += k.lost || 0; t.units += k.units || 0; });
+      return { ...t, days: Object.values(by).sort((a, b) => a[0] < b[0] ? -1 : 1) }; };
+    const V = rv === "parlays" ? comb(pa) : rv === "overall" ? comb(pk, pa) : comb(pk);
+    let c = 0; const ser = [{ name: rv, color: "var(--accent)", est: rv === "parlays" || (rv === "overall" && !!pa?.won), pts: V.days.map(x => [x[0].slice(5), c += x[3]]) }];
+    const roi = V.n ? 100 * V.units / V.n : 0, sg = v => v >= 0 ? "+" : "";
+    const NOTE = {"straight": "Every pick at 1 unit, graded each night from the box scores.", "parlays": "The parlay of the day at 1 unit, graded each night from the box scores.", "overall": "Straight bets and parlays together, 1 unit each."};
+    const seg = `<div class="seg" id="resView" style="margin:6px 0 2px">${[["straight", "Straight bets"], ["parlays", "Parlays"], ["overall", "Overall"]]
+      .map(([v, l]) => `<button data-rv="${v}" aria-pressed="${v === rv}">${l}</button>`).join("")}</div>`;
+    const extra = rv === "straight" ? Object.entries(L.groups || {}).map(([g, x]) => `<span><b>${x.won}-${x.n - x.won}</b>${esc(g)}</span>`).join("")
+      : rv === "overall" ? `<span><b>${pk?.won || 0}-${pk?.lost || 0}</b>straight</span><span><b>${pa?.won || 0}-${pa?.lost || 0}</b>parlays</span>` : "";
+    h += `<div class="chart"><h4>2026-27 live: our best bets</h4>${seg}<div class="cs">${NOTE[rv]}${rv === "straight" ? "" : " Parlay wins are estimated: the legs' prices multiplied, which can differ from the book's own parlay price."}</div>
+      <div class="kpis"><span><b>${V.won}-${V.lost}</b>record</span><span><b>${sg(V.units)}${V.units.toFixed(1)} u</b>${rv === "parlays" || (rv === "overall" && pa?.won) ? "units (est.)" : "units"}</span><span><b>${sg(roi)}${roi.toFixed(1)}%</b>return</span>${extra}</div>
+      ${V.days.length ? svgLine(ser, { aria: "Cumulative units 2026-27" }) : `<div class="cs">No graded ${rv === "parlays" ? "parlays" : "bets"} yet.</div>`}</div>`;
   } else h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Starts with the first graded picks (the nightly grades them after the games).</div></div>`;
   h += `</div>`;
-  if (L?.recent?.length) h += `<div class="bb-h" style="margin-top:12px">Latest graded</div><div class="chart"><table class="rtab">${L.recent.slice(0, 20).map(r =>
+  const RK = { straight: "pick", parlays: "parlay" }[rv], REC = (L?.recent || []).filter(r => !RK || r.kind === RK);
+  if (REC.length) h += `<div class="bb-h" style="margin-top:12px">Latest graded</div><div class="chart"><table class="rtab">${REC.slice(0, 20).map(r =>
     `<tr><td>${esc(r.date.slice(5))} ${esc(SLOT_LBL[r.slot] || r.slot)}</td><td class="t">${esc(r.text)}<br><span style="color:var(--muted)">${esc(r.actual || "")}</span></td><td>${odds(+r.price)}</td>
-     <td class="${r.result}">${esc(r.result)}</td><td>${r.units >= 0 ? "+" : ""}${(+r.units).toFixed(2)}</td></tr>`).join("")}</table></div>`;
+     <td class="${r.result}">${esc(r.result)}</td><td>${r.units >= 0 ? "+" : ""}${(+r.units).toFixed(2)}${r.kind === "parlay" && r.result === "win" ? " est." : ""}</td></tr>`).join("")}</table></div>`;
   el.innerHTML = h;
 }
+$("resBoard").addEventListener("click", e => { const b = e.target.closest("button[data-rv]"); if (!b) return; S.resView = b.dataset.rv; renderResults(); });
 
 // ------------------------------------------------------------------ matchup (SQ page): bets it points to, the board, play types
 const BSTAT = [["pace", "Pace", "{:.1f}", "fastest = 1"], ["ortg", "Points per 100", "{:.1f}"], ["drtg", "Allowed per 100", "{:.1f}"], ["efg", "Effective FG%", "%"], ["o_efg", "Opp eFG%", "%"],
@@ -2474,20 +2485,37 @@ function etNow() {   // seconds since midnight ET, from the browser's clock
     .formatToParts(new Date()).filter(x => x.type !== "literal").map(x => [x.type, +x.value]));
   return p.hour * 3600 + p.minute * 60 + p.second;
 }
+function todayET() { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date()); }   // YYYY-MM-DD
+const relOf = lab => { const [h, m] = String(lab).split(":").map(Number); return h * 3600 + m * 60; };
+// slots are made ~20 min before their release time (nightly BB_LEAD_MIN): today's slate shows a slot from its release time on
+function liveSlots() { const bb = S.index?.best_bets, s = bb?.slots || []; if (bb?.date !== todayET()) return s; const t = etNow(); return s.filter(x => relOf(x.slot) <= t); }
+function dropState() {   // releases passed today, and whether the latest (within 10 min) is still missing from the data
+  const t = etNow(), past = DROPS.filter(([h, m]) => h * 3600 + m * 60 <= t), ld = past[past.length - 1];
+  if (!ld) return { n: 0, missing: false };
+  const lab = `${ld[0]}:${String(ld[1]).padStart(2, "0")}`, bb = S.index?.best_bets;
+  const have = bb?.date === todayET() && (bb.slots || []).some(s => s.slot === lab);
+  return { n: past.length, missing: t - (ld[0] * 3600 + ld[1] * 60) < 600 && !have };
+}
 function nextDrop() {
   const t = etNow(), d = DROPS.find(([h, m]) => h * 3600 + m * 60 > t);
   return d ? { secs: d[0] * 3600 + d[1] * 60 - t, label: d[2] + " ET", tomorrow: false } : { secs: 86400 - t + 11 * 3600 + 1800, label: "11:30 AM ET tomorrow", tomorrow: true };
 }
 const hms = x => { const h = Math.floor(x / 3600), m = Math.floor(x % 3600 / 60), sec = x % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(sec).padStart(2, "0"); };
 function cdHTML(what) {
-  const n = nextDrop(), last = etNow() - (DROPS.filter(([h, m]) => h * 3600 + m * 60 <= etNow()).map(([h, m]) => h * 3600 + m * 60).pop() ?? -1e9);
-  const fresh = last >= 0 && last < 600;   // a release takes a few minutes to run and push
+  const n = nextDrop(), fresh = dropState().missing;   // past the release time and its picks not in yet
   return `<div class="cdown" data-cd="${what}"><span class="cd-l">${fresh ? `${esc(what)} releasing now` : `Next ${esc(what)}`}</span>
     <span class="cd-t">${fresh ? "refresh in a few min" : hms(n.secs)}</span><span class="cd-w">${fresh ? "" : esc(n.label)}</span></div>`;
 }
-setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { if (el.offsetParent) el.outerHTML = cdHTML(el.dataset.cd); }); }, 1000);
+let dropsSeen = null;
+setInterval(() => {
+  const ds = dropState();
+  if (dropsSeen !== null && ds.n !== dropsSeen && (S.view === "best" || S.view === "parlay")) renderView();   // release time: show the slot now
+  dropsSeen = ds.n;
+  if (ds.missing && Date.now() - lastRefresh > 60 * 1000) refreshData();   // late: look every minute
+  document.querySelectorAll("[data-cd]").forEach(el => { if (el.offsetParent) el.outerHTML = cdHTML(el.dataset.cd); });
+}, 1000);
 function renderBest() {
-  const el = $("bestBoard"), bb = S.index?.best_bets, slots = (bb?.slots || []).slice().reverse();
+  const el = $("bestBoard"), bb = S.index?.best_bets, slots = liveSlots().slice().reverse();
   if (!slots.length) { el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets</h3>${cdHTML("best bets")}<div class="lnote">3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate.</div></div>`; return; }
   el.innerHTML = `<div class="lcol" style="height:100%"><h3>Today's best bets<small>${bkTag()}3–4 picks at 11:30 AM, 3:30 and 5:30 PM ET from the whole slate · lines re-checked every hour</small></h3>${cdHTML("best bets")}<ol>` + slots.map(s => {
     const sm = s.sims?.[SIMKEY], bw = S.book && sm?.by_book ? sm.by_book[S.book] || {} : null;   // book picker: that book's own picks
