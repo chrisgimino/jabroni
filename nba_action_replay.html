@@ -714,57 +714,68 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   .boxpanel.boxov td { font-size: 13px; height: 26px; border-top: 1px solid var(--rule) }
 }
 
-/* ==== PickLabs theme (Chris 2026-11-17): light + dark from PickLabs, labs blue up front ==== */
-:root { --labs: #5fa9e2; --labs2: #4a93d0; --labs-deep: #2d6fb3; --labs-ink: #ffffff; --bet: #5fa9e2; --bet2: #4a93d0; --betdk: #2f6ea8 }
+/* ==== DFS Terminal (FantasyLabs) light + dark themes (Chris 2026-11-17: "lets use dfs terminals labs dark and light themes ... change that
+   main blue to match"): navy #142c4c is the main color in light, pale #c9dbe7 on navy in dark ==== */
 :root[data-theme="light"] {
-  --ground: #f2f4f7; --surface: #ffffff; --ink: #1f2328; --muted: #5d6876; --faint: #8c96a3; --rule: #e3e7ec; --rule-strong: #cdd4dc;
-  --panel2: #eef1f5; --accent: #2b7cc4; --accent-soft: #e4f0fb; --accent-ink: #ffffff;
-  --good: #2f8f57; --good-soft: #dcf0e4; --bad: #c0392b; --bad-soft: #f8e1de;
-  --board: #2d6fb3; --board-ink: #ffffff; --board-muted: #d3e6f7; --board-rule: rgba(255, 255, 255, .24);
+  --ground: #e5f0f7; --surface: #f3f9fd; --ink: #0c2138; --muted: #58778f; --faint: #829bae; --rule: #ccdfed; --rule-strong: #a5c2d7;
+  --panel2: #dbe9f3; --accent: #22496f; --accent-soft: #dbe9f3; --accent-ink: #ffffff;
+  --good: #2f7d32; --good-soft: #dff2db; --bad: #c0392b; --bad-soft: #f8e1de;
+  --board: linear-gradient(180deg, #1d3a60, #142c4c); --board-ink: #ffffff; --board-muted: #c9dbe7; --board-rule: rgba(255, 255, 255, .18);
+  --hdr: #142c4c; --hdr-ink: #ffffff; --sel: #142c4c; --sel-ink: #ffffff; --bar: #142c4c; --bar-ink: #ffffff; --bar-sub: #c9dbe7;
+  --bet: #1d3a60; --bet2: #142c4c; --betdk: #0b1f36; --bet-ink: #ffffff; --ctl-bg: #ffffff; --ctl-ink: #0c2138; --ctl-rule: #ffffff;
+  --maple: #f3f9fd; --maple2: #f3f9fd; --grain: transparent; --walnut: #0c2138; --walnut2: #58778f; --paintline: #22496f; --logo-c: #142c4c; --barfill: #22496f;
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --ground: #191d1f; --surface: #22272b; --ink: #f1f3f5; --muted: #a7b0bb; --faint: #77818c; --rule: #2f353b; --rule-strong: #3d444c;
-  --panel2: #2b3036; --accent: #5fa9e2; --accent-soft: rgba(95, 169, 226, .18); --accent-ink: #ffffff;
-  --good: #3fcf7e; --good-soft: rgba(63, 207, 126, .14); --bad: #ff6f5e; --bad-soft: rgba(255, 111, 94, .14);
-  --board: #2d6fb3; --board-ink: #ffffff; --board-muted: #cfe3f5; --board-rule: rgba(255, 255, 255, .22);
+  --ground: #0b1f36; --surface: #142c4c; --ink: #e8f0f6; --muted: #8fa2b6; --faint: #6c8299; --rule: #264765; --rule-strong: #31567a;
+  --panel2: #183353; --accent: #9ccae1; --accent-soft: rgba(156, 202, 225, .14); --accent-ink: #0b1f36;
+  --good: #aeef9c; --good-soft: #26481b; --bad: #ff8a7a; --bad-soft: rgba(255, 111, 94, .16);
+  --board: linear-gradient(180deg, #183353, #142c4c); --board-ink: #ffffff; --board-muted: #9ccae1; --board-rule: #264765;
+  --hdr: #142c4c; --hdr-ink: #ffffff; --sel: #c9dbe7; --sel-ink: #0b1f36; --bar: #c9dbe7; --bar-ink: #0b1f36; --bar-sub: #31567a;
+  --bet: #c9dbe7; --bet2: #b3cadb; --betdk: #9ccae1; --bet-ink: #0b1f36; --ctl-bg: #183353; --ctl-ink: #e8f0f6; --ctl-rule: #31567a;
+  --maple: #142c4c; --maple2: #142c4c; --grain: transparent; --walnut: #e8f0f6; --walnut2: #8fa2b6; --paintline: #9ccae1; --logo-c: #264765; --barfill: #9ccae1;
   color-scheme: dark;
 }
-/* the header: one labs-blue bar, edge to edge */
-.top { background: var(--labs); color: #fff; margin-top: calc(-1 * max(10px, env(safe-area-inset-top, 0px))); padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px;
-  box-shadow: 0 0 0 100vmax var(--labs); clip-path: inset(0 -100vmax) }
-.brand span { color: #fff }
+/* the header: one navy bar, edge to edge */
+.top { background: var(--hdr); color: var(--hdr-ink); margin-top: calc(-1 * max(10px, env(safe-area-inset-top, 0px))); padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px;
+  box-shadow: 0 0 0 100vmax var(--hdr); clip-path: inset(0 -100vmax); border-bottom: 1px solid var(--rule) }
+.brand span { color: var(--hdr-ink) }
 .brand .an { border-radius: 0 }
-.top select, .top #bookPick, .filebtn, .thm { background: #fff; color: #1f2328; border: 1px solid rgba(255, 255, 255, .9) }
-.top #bookPick.on { border-color: #fff; box-shadow: 0 0 0 2px var(--labs-deep) inset }
-.upd { color: rgba(255, 255, 255, .9) }
+.top select, .top #bookPick, .filebtn, .thm, .top .bk-btn { background: var(--ctl-bg); color: var(--ctl-ink); border: 1px solid var(--ctl-rule) }
+.top .bk-btn::after { color: var(--muted) }
+.top #bookPick.on, .top .bk-btn.on { box-shadow: 0 0 0 2px var(--accent) inset }
+.upd { color: #c9dbe7 }
 .thm { flex: 0 0 auto; min-width: 34px; min-height: 32px; border-radius: 6px; font-size: 15px; line-height: 1; padding: 0 8px }
-/* scoreboard, tabs, toggles, chips: labs blue */
-.board { background: linear-gradient(180deg, var(--labs), var(--labs-deep)); border: 0 }
+/* scoreboard, tabs, toggles, chips, buttons: the main color */
+.board { background: var(--board); border: 1px solid var(--rule) }
 .tabs { border-bottom-color: var(--rule-strong) }
 .tabs button { border-radius: 6px 6px 0 0 }
-.tabs button[aria-selected="true"] { background: var(--labs); color: #fff; border-bottom-color: var(--labs-deep) }
-.seg { border-color: var(--labs) }
-.seg button[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--labs); color: #fff; border-color: var(--labs) }
-.chip[aria-pressed="true"] small { color: #e8f3fc }
-.ctl .btn.primary { background: var(--labs); border-color: var(--labs); color: #fff }
-#court .logo circle { fill: var(--labs) }
-@media (max-width: 760px) { .tabs button[aria-selected="true"], .tabs .more-btn.on { background: var(--labs); color: #fff; border-top-color: var(--labs-deep) } }
-/* bet lanes, best bets and parlay cards: PickLabs panels (white / dark) with a labs-blue title bar (were maple hardwood) */
-:root[data-theme="light"] { --maple: #ffffff; --maple2: #ffffff; --grain: transparent; --walnut: #1f2328; --walnut2: #5d6876; --paintline: #2d6fb3 }
-:root[data-theme="dark"] { --maple: #22272b; --maple2: #22272b; --grain: transparent; --walnut: #f1f3f5; --walnut2: #a7b0bb; --paintline: #ffffff }
+.tabs button[aria-selected="true"] { background: var(--sel); color: var(--sel-ink); border-bottom-color: var(--sel) }
+.seg { border-color: var(--sel) }
+.seg button[aria-pressed="true"], .chip[aria-pressed="true"] { background: var(--sel); color: var(--sel-ink); border-color: var(--sel) }
+.chip[aria-pressed="true"] small { color: var(--sel-ink); opacity: .75 }
+.ctl .btn.primary { background: var(--sel); border-color: var(--sel); color: var(--sel-ink) }
+#court .logo circle { fill: var(--logo-c) }
+@media (max-width: 760px) { .tabs button[aria-selected="true"], .tabs .more-btn.on { background: var(--sel); color: var(--sel-ink); border-top-color: var(--sel); border-bottom-color: var(--sel) } }
+/* bet lanes, best bets and parlay cards: Terminal panels with a main-color title bar */
 .lcol { border: 1px solid var(--rule) }
-.lcol > h3 { background: var(--labs); color: #fff; border-bottom: 0; padding-bottom: 10px }
-.lcol > h3 small { color: #e8f3fc }
+.lcol > h3 { background: var(--bar); color: var(--bar-ink); border-bottom: 0; padding-bottom: 10px }
+.lcol > h3 small { color: var(--bar-sub) }
 .lane { border-bottom: 1px solid var(--rule) }
 .track { background: var(--panel2); box-shadow: inset 0 1px 0 var(--rule) }
 .track .be { box-shadow: 0 0 0 1px rgba(0, 0, 0, .25) }
 .pcard { border: 1px solid var(--rule) }
 .pcard .legs li { background: var(--panel2); border-color: var(--rule) }
-.top .bk-btn { background: #fff; color: #1f2328; border-color: #fff } .top .bk-btn::after { color: #5d6876 }
-.cdown .cd-w, .tkt em, .lrung .lr-go, .lrung .lr-u { color: #e8f3fc }
+.cdown .cd-w { color: var(--board-muted) }
+/* bet buttons in the main color */
+.tkt, a.bc-p { color: var(--bet-ink) } .tkt b { color: var(--bet-ink); text-shadow: none } .tkt small { color: var(--bet-ink); opacity: .85 }
+.tkt em, a.bc-p span, a.lrung .lr-go { color: var(--bet-ink) }
+.lgo { background: var(--bet); color: var(--bet-ink) }
+.tkt.off { background: var(--panel2); color: var(--walnut) }
+.lrung { background: var(--panel2); color: var(--ink); border-bottom-color: var(--sel) }
+.lrung .lr-k, .lrung .lr-n, .lrung .lr-b { color: var(--muted) } .lrung .lr-o, .lrung .lr-p { color: var(--ink) } .lrung .lr-u { color: var(--accent) }
 /* light theme: the few spots the dark look had fixed */
-:root[data-theme="light"] .tip { background: #1f2328; color: #ffffff }
+:root[data-theme="light"] .tip { background: #0c2138; color: #ffffff }
 :root[data-theme="light"] .warn { background: #fff6dd; border-color: #f0d48a; color: #5c4300 }
 :root[data-theme="light"] .warn .q { background: #f0d48a; color: #3d2d00 }
 :root[data-theme="light"] .sig.lean { background: rgba(214, 150, 20, .14); color: #9a6400 }
@@ -2344,7 +2355,7 @@ function svgBars(rows, o = {}) {   // rows: [{label, v, n}] -> vertical bars aro
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(o.aria || "")}"><line x1="${pl}" x2="${W}" y1="${y0}" y2="${y0}" stroke="var(--rule-strong)"/>
     <text x="${pl - 4}" y="${y(mx / 1.15) + 4}" text-anchor="end">+${Math.round(mx / 1.15)}%</text><text x="${pl - 4}" y="${y0 + 4}" text-anchor="end">0</text>` +
     rows.map((r, i) => { const x = pl + i * bw + bw * .18, w = bw * .64, yy = y(Math.max(0, r.v)), hh = Math.abs(y(r.v) - y0);
-      return `<rect x="${x}" y="${yy}" width="${w}" height="${Math.max(1, hh)}" rx="2" fill="${r.v >= 0 ? "var(--labs)" : "var(--bad)"}"/>
+      return `<rect x="${x}" y="${yy}" width="${w}" height="${Math.max(1, hh)}" rx="2" fill="${r.v >= 0 ? "var(--barfill)" : "var(--bad)"}"/>
         <text class="v" x="${x + w / 2}" y="${r.v >= 0 ? yy - 4 : yy + hh + 12}" text-anchor="middle">${r.v >= 0 ? "+" : ""}${r.v.toFixed(1)}%</text>
         <text x="${x + w / 2}" y="${H - 18}" text-anchor="middle">${esc(r.label)}</text><text x="${x + w / 2}" y="${H - 5}" text-anchor="middle">${mobile() ? (r.n >= 1000 ? (r.n / 1000).toFixed(1) + "k" : r.n) : r.n.toLocaleString() + " bets"}</text>`; }).join("") + `</svg>`;
 }
