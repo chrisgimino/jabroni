@@ -737,8 +737,9 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
   color-scheme: dark;
 }
 /* the header: one navy bar, edge to edge */
-.top { background: var(--hdr); color: var(--hdr-ink); margin-top: calc(-1 * max(10px, env(safe-area-inset-top, 0px))); padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px;
-  box-shadow: 0 0 0 100vmax var(--hdr); clip-path: inset(0 -100vmax); border-bottom: 1px solid var(--rule) }
+.top { position: relative; z-index: 60; color: var(--hdr-ink); margin-top: calc(-1 * max(10px, env(safe-area-inset-top, 0px))); padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px }
+/* the bar itself: a layer behind the header row, stretched to both edges (no clipping, so the book list can drop below it) */
+.top::before { content: ""; position: absolute; top: 0; bottom: 0; left: -100vmax; right: -100vmax; z-index: -1; background: var(--hdr); border-bottom: 1px solid var(--rule) }
 .brand span { color: var(--hdr-ink) }
 .brand .an { border-radius: 0 }
 .top select, .top #bookPick, .filebtn, .thm, .top .bk-btn { background: var(--ctl-bg); color: var(--ctl-ink); border: 1px solid var(--ctl-rule) }
@@ -798,7 +799,7 @@ a.lrung { border-bottom-width: 0 } a.lrung .lr-go { align-self: stretch; margin:
     <select id="bookPick" aria-label="Book: best price or one book's prices"></select>
     <span class="upd" id="upd"></span>
     <button class="thm" id="themeBtn" type="button" aria-label="Dark theme">&#9790;</button>
-    <label class="filebtn">Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
+    <label class="filebtn" hidden>Open<input id="fileIn" type="file" accept=".json,application/json" multiple aria-label="Open replay and matchup files"></label>
   </header>
 
   <section class="board" id="board" aria-live="polite">
