@@ -2331,27 +2331,30 @@ function renderResults() {
   } else h += `<div class="chart"><h4>2025-26 backtest</h4><div class="cs">Not loaded.</div></div>`;
   const pk = L?.pick, pa = L?.parlay, rv = S.resView || "straight";
   if (pk?.days?.length || pa?.days?.length) {
-    const comb = (...ks) => { const by = {}, t = { n: 0, won: 0, lost: 0, units: 0 };
+    const comb = (...ks) => { const by = {}, sl = {}, t = { n: 0, won: 0, lost: 0, units: 0, staked: 0 };
       ks.filter(Boolean).forEach(k => { (k.days || []).forEach(d => { const x = by[d[0]] || (by[d[0]] = [d[0], 0, 0, 0]); x[1] += d[1]; x[2] += d[2]; x[3] += d[3]; });
-        t.n += k.n || 0; t.won += k.won || 0; t.lost += k.lost || 0; t.units += k.units || 0; });
-      return { ...t, days: Object.values(by).sort((a, b) => a[0] < b[0] ? -1 : 1) }; };
+        Object.entries(k.slots || {}).forEach(([q, v]) => { const y = sl[q] || (sl[q] = { n: 0, won: 0, lost: 0, units: 0, staked: 0 }); for (const f in y) y[f] += v[f] ?? (f === "staked" ? v.n : 0); });
+        t.n += k.n || 0; t.won += k.won || 0; t.lost += k.lost || 0; t.units += k.units || 0; t.staked += k.staked ?? k.n ?? 0; });
+      return { ...t, slots: sl, days: Object.values(by).sort((a, b) => a[0] < b[0] ? -1 : 1) }; };
     const V = rv === "parlays" ? comb(pa) : rv === "overall" ? comb(pk, pa) : comb(pk);
     let c = 0; const ser = [{ name: rv, color: "var(--accent)", est: rv === "parlays" || (rv === "overall" && !!pa?.won), pts: V.days.map(x => [x[0].slice(5), c += x[3]]) }];
-    const roi = V.n ? 100 * V.units / V.n : 0, sg = v => v >= 0 ? "+" : "";
-    const NOTE = {"straight": "Each pick sized 0.05–1 unit by edge and price (quarter-Kelly, 40-unit bankroll; 1 unit each before Nov 11), graded each night from the box scores.", "parlays": "The parlay of the day, sized the same way, graded each night from the box scores.", "overall": "Straight bets and parlays together, at their sizes."};
+    const roi = V.staked ? 100 * V.units / V.staked : 0, sg = v => v >= 0 ? "+" : "";
+    const NOTE = {"straight": "Every pick sized 0.05–1 unit by edge and price (quarter-Kelly on a 40-unit bankroll, at the posted price), graded each night from the box scores. Return = units won ÷ units bet.", "parlays": "The parlay of the day, sized the same way (quarter-Kelly at its posted odds), graded each night from the box scores. Return = units won ÷ units bet.", "overall": "Straight bets and parlays together, at their sizes. Return = units won ÷ units bet."};
     const seg = `<div class="seg" id="resView" style="margin:6px 0 2px">${[["straight", "Straight bets"], ["parlays", "Parlays"], ["overall", "Overall"]]
       .map(([v, l]) => `<button data-rv="${v}" aria-pressed="${v === rv}">${l}</button>`).join("")}</div>`;
     const extra = rv === "straight" ? Object.entries(L.groups || {}).map(([g, x]) => `<span><b>${x.won}-${x.n - x.won}</b>${esc(g)}</span>`).join("")
       : rv === "overall" ? `<span><b>${pk?.won || 0}-${pk?.lost || 0}</b>straight</span><span><b>${pa?.won || 0}-${pa?.lost || 0}</b>parlays</span>` : "";
     h += `<div class="chart"><h4>2026-27 live: our best bets</h4>${seg}<div class="cs">${NOTE[rv]}${rv === "straight" ? "" : " Parlay wins are estimated: the legs' prices multiplied, which can differ from the book's own parlay price."}</div>
       <div class="kpis"><span><b>${V.won}-${V.lost}</b>record</span><span><b>${sg(V.units)}${V.units.toFixed(1)} u</b>${rv === "parlays" || (rv === "overall" && pa?.won) ? "units (est.)" : "units"}</span><span><b>${sg(roi)}${roi.toFixed(1)}%</b>return</span>${extra}</div>
-      ${V.days.length ? svgLine(ser, { aria: "Cumulative units 2026-27" }) : `<div class="cs">No graded ${rv === "parlays" ? "parlays" : "bets"} yet.</div>`}</div>`;
+      ${V.days.length ? svgLine(ser, { aria: "Cumulative units 2026-27" }) : `<div class="cs">No graded ${rv === "parlays" ? "parlays" : "bets"} yet.</div>`}
+      ${Object.keys(V.slots).length ? `<div class="cs" style="margin-top:8px"><b>By release</b>: the picks made at each release time</div><div class="kpis">${Object.entries(V.slots).sort((a, b) => a[0] < b[0] ? -1 : 1)
+        .map(([q, x]) => `<span><b>${x.won}-${x.lost} · ${sg(x.units)}${x.units.toFixed(1)}u · ${sg(x.staked ? 100 * x.units / x.staked : 0)}${(x.staked ? 100 * x.units / x.staked : 0).toFixed(1)}%</b>${esc(SLOT_LBL[q] || q)} ET</span>`).join("")}</div>` : ""}</div>`;
   } else h += `<div class="chart"><h4>2026-27 live: our best bets</h4><div class="cs">Starts with the first graded picks (the nightly grades them after the games).</div></div>`;
   h += `</div>`;
   const RK = { straight: "pick", parlays: "parlay" }[rv], REC = (L?.recent || []).filter(r => !RK || r.kind === RK);
   if (REC.length) h += `<div class="bb-h" style="margin-top:12px">Latest graded</div><div class="chart"><table class="rtab">${REC.slice(0, 20).map(r =>
     `<tr><td>${esc(r.date.slice(5))} ${esc(SLOT_LBL[r.slot] || r.slot)}</td><td class="t">${esc(r.text)}<br><span style="color:var(--muted)">${esc(r.actual || "")}</span></td><td>${odds(+r.price)}</td>
-     <td class="${r.result}">${esc(r.result)}</td><td>${r.units >= 0 ? "+" : ""}${(+r.units).toFixed(2)}${r.kind === "parlay" && r.result === "win" ? " est." : ""}</td></tr>`).join("")}</table></div>`;
+     <td class="${r.result}">${esc(r.result)}</td><td>${r.units >= 0 ? "+" : ""}${(+r.units).toFixed(2)}${r.kind === "parlay" && r.result === "win" ? " est." : ""}${r.stake ? `<br><span style="color:var(--muted)">bet ${uTxt(+r.stake)}</span>` : ""}</td></tr>`).join("")}</table></div>`;
   el.innerHTML = h;
 }
 $("resBoard").addEventListener("click", e => { const b = e.target.closest("button[data-rv]"); if (!b) return; S.resView = b.dataset.rv; renderResults(); });
