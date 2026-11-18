@@ -1,0 +1,130 @@
+{
+ "ARI": {
+  "core": "1926",
+  "file": "ARI.png"
+ },
+ "ATL": {
+  "core": "2149",
+  "file": "ATL.png"
+ },
+ "BAL": {
+  "core": "2170",
+  "file": "BAL.png"
+ },
+ "BUF": {
+  "core": "2207",
+  "file": "BUF.png"
+ },
+ "CAR": {
+  "core": "2204",
+  "file": "CAR.png"
+ },
+ "CHI": {
+  "core": "1943",
+  "file": "CHI.png"
+ },
+ "CIN": {
+  "core": "2141",
+  "file": "CIN.png"
+ },
+ "CLE": {
+  "core": "2087",
+  "file": "CLE.png"
+ },
+ "DAL": {
+  "core": "2237",
+  "file": "DAL.png"
+ },
+ "DEN": {
+  "core": "2049",
+  "file": "DEN.png"
+ },
+ "DET": {
+  "core": "2165",
+  "file": "DET.png"
+ },
+ "GBP": {
+  "core": "2062",
+  "file": "GBP.png"
+ },
+ "HOU": {
+  "core": "2029",
+  "file": "HOU.png"
+ },
+ "IND": {
+  "core": "1928",
+  "file": "IND.png"
+ },
+ "JAC": {
+  "core": "2097",
+  "file": "JAC.png"
+ },
+ "KCC": {
+  "core": "2102",
+  "file": "KCC.png"
+ },
+ "LAC": {
+  "core": "2202",
+  "file": "LAC.png"
+ },
+ "LAR": {
+  "core": "2203",
+  "file": "LAR.webp"
+ },
+ "LVR": {
+  "core": "2138",
+  "file": "LVR.png"
+ },
+ "MIA": {
+  "core": "1990",
+  "file": "MIA.png"
+ },
+ "MIN": {
+  "core": "2171",
+  "file": "MIN.png"
+ },
+ "NEP": {
+  "core": "1993",
+  "file": "NEP.png"
+ },
+ "NOS": {
+  "core": "2026",
+  "file": "NOS.png"
+ },
+ "NYG": {
+  "core": "2044",
+  "file": "NYG.png"
+ },
+ "NYJ": {
+  "core": "2206",
+  "file": "NYJ.png"
+ },
+ "PHI": {
+  "core": "1999",
+  "file": "PHI.png"
+ },
+ "PIT": {
+  "core": "2198",
+  "file": "PIT.png"
+ },
+ "SEA": {
+  "core": "2166",
+  "file": "SEA.png"
+ },
+ "SFO": {
+  "core": "1933",
+  "file": "SFO.png"
+ },
+ "TBB": {
+  "core": "2083",
+  "file": "TBB.png"
+ },
+ "TEN": {
+  "core": "1965",
+  "file": "TEN.png"
+ },
+ "WAS": {
+  "core": "2021",
+  "file": "WAS.png"
+ }
+}
