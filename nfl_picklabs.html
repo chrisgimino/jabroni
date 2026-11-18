@@ -158,6 +158,7 @@ td small { color: var(--muted) }
 .kpis { display: flex; gap: 8px; flex-wrap: wrap }
 .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 8px 12px; min-width: 150px }
 .kpi b { display: block; font-size: 22px } .kpi span { color: var(--muted); font-size: 12px }
+.stk { color: var(--muted); font-weight: 600; font-size: 11px }
 </style>
 <script>
 (function () { var t = null; try { t = localStorage.getItem("plTheme"); } catch (e) {}
@@ -270,6 +271,11 @@ function px(price, book, dl) {
   return !isTest(dl) && price !== null && price !== undefined ? `<a class="px" href="${DLURL(dl)}" target="_blank" rel="noopener">${t}</a>` : `<span class="px">${t}</span>`;
 }
 const evh = ev => ev === null || ev === undefined ? "–" : `<span class="ev ${ev >= 0 ? "pos" : "neg"}">${ev >= 0 ? "+" : ""}${(100 * ev).toFixed(1)}%</span>`;
+// bet size (Chris 2026-11-17, as the NBA boards): quarter-Kelly on a 40-unit bankroll, 0.05-1 unit, at the price shown
+const stakeU = (ev, price) => { if (price === null || price === undefined) return 0; const d = dec1(price); if (!(ev > 0) || !(d > 1)) return 0;
+  return Math.min(1, Math.max(.05, Math.floor(10 * ev / (d - 1) / .05 + .5) * .05)); };
+const uTxt = u => (Math.round(u * 100) / 100).toFixed(2).replace(/0$/, "") + "u";
+const evs = (ev, price) => { const u = stakeU(ev, price); return evh(ev) + (u ? ` <small class="stk" title="bet size: quarter-Kelly on a 40-unit bankroll, 1 unit max">${uTxt(u)}</small>` : ""); };
 const tag = ok => ok ? `<span class="tag ok" title="${esc(S.prices?.tested?.props || "")}">Tested</span>` : `<span class="tag un" title="${esc(S.prices?.tested?.untested || "")}">Untested</span>`;
 
 // ---------------------------------------------------------------- field + replay
@@ -391,12 +397,13 @@ function renderLiveBets() {
     const st = hit ? `<span class="hit">Cashed</span>` : dead ? `<span class="miss">Lost</span>` : `<span>${v} so far</span>`;
     const w = Math.max(0, Math.min(100, 100 * v / Math.max(x.line + .5, .5)));
     return `<li><div>${x.best ? `<span class="tag ok">Best bet</span> ` : ""}${esc(x.text)}<div class="st">sim ${pct(x.sim)} · ${st}</div></div>
-      <div style="text-align:right">${at ? px(at.price, at.book, at.dl) : "<span class='note'>not at this book</span>"}<div>${evh(at?.ev)}</div></div>
+      <div style="text-align:right">${at ? px(at.price, at.book, at.dl) : "<span class='note'>not at this book</span>"}<div>${at ? evs(at.ev, at.price) : evh(null)}</div></div>
       <div class="bar"><i class="${hit ? "ok" : ""}" style="width:${w}%"></i></div></li>`;
   }).join("") : `<li class="empty">No priced props for this game yet</li>`;
 }
 
 // ---------------------------------------------------------------- best bets (Wed-Sat 5 PM ET: a slot shows from its release time on)
+const BOOKS_WORD = "books";
 const DROPS = [3, 4, 5, 6];   // JS getDay(): Wed, Thu, Fri, Sat
 function etParts(d = new Date()) {
   return Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit", hour: "numeric", minute: "numeric", second: "numeric", hourCycle: "h23", weekday: "short" })
@@ -417,10 +424,10 @@ function nextDrop() {
 const hms = x => { const d = Math.floor(x / 86400), h = Math.floor(x % 86400 / 3600), m = Math.floor(x % 3600 / 60), s = x % 60; return (d ? d + "d " : "") + (d || h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); };
 function cdHTML() { const n = nextDrop(); return n ? `<div class="cdown" data-cd="1"><span>Next picks</span><span class="t">${hms(n.left)}</span><span class="w">${esc(n.label)}</span></div>` : ""; }
 setInterval(() => { document.querySelectorAll("[data-cd]").forEach(el => { el.outerHTML = cdHTML(); }); }, 1000);
-function pickHTML(p) {
+function pickHTML(p) {   // the size at the price shown (the book picker can move it)
   const at = atBook(p.price, p.book, p.dl, p.bp, p.sim);
   return `<div class="pick"><div><b>${esc(p.text)}</b></div><div style="text-align:right">${at ? px(at.price, at.book, at.dl) : "<span class='note'>not at this book</span>"}</div>
-    <div class="g">${esc(p.game)} · sim ${pct(p.sim)} · EV ${evh(at ? at.ev : p.ev)}${p.books ? ` · ${p.books} books` : ""}</div></div>`;
+    <div class="g">${esc(p.game)} · sim ${pct(p.sim)} · EV ${at ? evs(at.ev, at.price) : evh(p.ev)}${p.books ? ` · ${p.books} ${BOOKS_WORD}` : ""}</div></div>`;
 }
 function renderBest() {
   const sl = (S.prices?.best_bets?.slots || []).filter(s => slotLive(s.slot)).slice().reverse();
@@ -433,7 +440,7 @@ function renderParlay() {
   const sl = (S.prices?.best_bets?.slots || []).filter(s => slotLive(s.slot) && s.parlay).slice().reverse();
   const sgp = INS(S.gid)?.sgp; let h = `${cdHTML()}<div class="cards">`;
   h += sl.map(s => { const p = s.parlay, ids = p.legs.map(l => l.dl).filter(d => !isTest(d));
-    return `<div class="card"><h3>Parlay of the day · ${esc(s.slot.slice(5, 10))}<small>${esc(p.book)} ${odds(p.odds)}</small></h3><div class="bd">
+    return `<div class="card"><h3>Parlay of the day · ${esc(s.slot.slice(5, 10))}<small>${esc(p.book)} ${odds(p.odds)} · bet ${uTxt(p.stake ?? stakeU(p.ev, p.odds))}</small></h3><div class="bd">
       ${p.legs.map(l => `<div class="pick"><div>${esc(l.text)}</div><div>${odds(l.odds)}</div><div class="g">${esc(l.game)} · sim ${pct(l.p)}</div></div>`).join("")}
       <div class="row"><span class="note">All legs hit in ${pct(p.p, 1)} of the sims (different games: chances multiplied)</span><span class="spacer"></span>${ids.length === p.legs.length ? `<a class="px" href="${DLMULTI(ids)}" target="_blank" rel="noopener">${odds(p.odds)}<small>${esc(p.book)}</small></a>` : `<span class="px">${odds(p.odds)}<small>${esc(p.book)}</small></span>`}</div></div></div>`; }).join("");
   if (sgp) { const ids = sgp.legs.map(l => l.dl).filter(d => !isTest(d));
@@ -446,7 +453,7 @@ function renderParlay() {
 const PER = { game: "Game", h1: "1st half", h2: "2nd half", q1: "1st qtr", q2: "2nd qtr", q3: "3rd qtr", q4: "4th qtr" };
 function line2(label, sim, price, book, dl, bp, extra = "") {
   const at = atBook(price, book, dl, bp, sim); if (!at) return "";
-  return `<tr><td class="l">${esc(label)}${extra}</td><td>${pct(sim, 1)}</td><td>${px(at.price, at.book, at.dl)}</td><td>${evh(at.ev)}</td></tr>`;
+  return `<tr><td class="l">${esc(label)}${extra}</td><td>${pct(sim, 1)}</td><td>${px(at.price, at.book, at.dl)}</td><td>${evs(at.ev, at.price)}</td></tr>`;
 }
 function renderBet() {
   $("betCtl").innerHTML = `<div class="seg">${Object.entries(PER).map(([k, v]) => `<button data-per="${k}" aria-pressed="${S.per === k}">${v}</button>`).join("")}</div><span class="note">${tag(false)} game lines aren't backtested: shown for the range only</span>`;
@@ -477,7 +484,7 @@ function renderProps() {
   const best = r => Math.max(...["over", "under"].map(s => { const o = r[s]; const at = o && atBook(o.price, o.book, o.dl, o.bp, s === "over" ? r.sim_over : 1 - r.sim_over); return at?.ev ?? -9; }));
   rows.sort((a, b) => best(b) - best(a));
   const cell = (r, s) => { const o = r[s]; if (!o) return "<td></td><td></td>"; const at = atBook(o.price, o.book, o.dl, o.bp, s === "over" ? r.sim_over : 1 - r.sim_over);
-    return at ? `<td>${px(at.price, at.book, at.dl)}</td><td>${evh(at.ev)}</td>` : "<td class='note'>–</td><td></td>"; };
+    return at ? `<td>${px(at.price, at.book, at.dl)}</td><td>${evs(at.ev, at.price)}</td>` : "<td class='note'>–</td><td></td>"; };
   $("propT").innerHTML = rows.length ? `<table><thead><tr><th>Player</th><th class="l">Prop</th><th>Line</th><th>Sim mean</th><th>Sim over</th><th>Market over</th><th>Over</th><th>EV</th><th>Under</th><th>EV</th><th></th></tr></thead><tbody>${rows.map(r =>
     `<tr><td>${esc(r.name)} <small>${esc(r.team || "")}</small></td><td class="l">${esc(r.stat)}</td><td>${r.line}</td><td>${r.mean ?? "–"}</td><td>${pct(r.sim_over, 1)}</td><td>${pct(r.market_over, 1)}</td>${cell(r, "over")}${cell(r, "under")}<td>${tag(r.tested)}</td></tr>`).join("")}</tbody></table>` : `<div class="empty">No props up${S.tested ? " in the tested markets" : ""}</div>`;
 }
@@ -491,26 +498,27 @@ function renderTD() {
   rows.sort((a, b) => (b.sim || 0) - (a.sim || 0));
   $("tdT").innerHTML = rows.length ? `<table><thead><tr><th>Player</th><th>Sim</th><th>Market</th><th>Best price</th><th>EV</th><th>Books</th></tr></thead><tbody>${rows.map(r => {
     const at = atBook(r.best_price, r.best_book, r.dl, r.bp, r.sim);
-    return `<tr><td>${esc(r.name)} <small>${esc(r.team || "")}</small></td><td>${pct(r.sim, 1)}</td><td>${pct(r.market, 1)}</td><td>${at ? px(at.price, at.book, at.dl) : "–"}</td><td>${evh(at?.ev)}</td><td>${r.books}</td></tr>`; }).join("")}</tbody></table>` : `<div class="empty">No ${TDK[S.tdKind]} prices up</div>`;
+    return `<tr><td>${esc(r.name)} <small>${esc(r.team || "")}</small></td><td>${pct(r.sim, 1)}</td><td>${pct(r.market, 1)}</td><td>${at ? px(at.price, at.book, at.dl) : "–"}</td><td>${at ? evs(at.ev, at.price) : "–"}</td><td>${r.books}</td></tr>`; }).join("")}</tbody></table>` : `<div class="empty">No ${TDK[S.tdKind]} prices up</div>`;
 }
 // ---------------------------------------------------------------- ladders (untested)
 function renderLadders() {
   const ins = INS(S.gid) || {}, L = ins.ladders || [], A = ins.alts || [];
   let h = `<p class="note">${tag(false)} Alt lines and milestones aren't backtested yet. A ladder = the rungs of one player's stat the sim prices best, safest first.</p><div class="cards">`;
   h += L.map(l => `<div class="card"><h3>${esc(l.name)} · ${esc(l.stat)}<small>avg EV ${evh(l.ev_per_unit)}</small></h3><div class="bd">${l.rungs.map(r => { const at = atBook(r.price, r.book, r.dl, r.bp, r.sim);
-    return at ? `<div class="pick"><div>${r.k}+ ${esc(l.stat)}</div><div>${px(at.price, at.book, at.dl)}</div><div class="g">sim ${pct(r.sim, 1)} · books ${pct(r.market, 1)} · EV ${evh(at.ev)}</div></div>` : ""; }).join("")}</div></div>`).join("");
+    return at ? `<div class="pick"><div>${r.k}+ ${esc(l.stat)}</div><div>${px(at.price, at.book, at.dl)}</div><div class="g">sim ${pct(r.sim, 1)} · ${BOOKS_WORD} ${pct(r.market, 1)} · EV ${evs(at.ev, at.price)}</div></div>` : ""; }).join("")}</div></div>`).join("");
   h += `</div>`;
   if (A.length) h += `<div class="panel" style="margin-top:8px"><div class="lbl">Alt lines and milestones</div><div class="tbl"><table><thead><tr><th>Player</th><th class="l">Bet</th><th>Sim</th><th>Books</th><th>Best price</th><th>EV</th></tr></thead><tbody>${A.map(r => {
-    const at = atBook(r.price, r.book, r.dl, r.bp, r.sim); return at ? `<tr><td>${esc(r.name)} <small>${esc(r.team || "")}</small></td><td class="l">${r.k}+ ${esc(r.stat)}</td><td>${pct(r.sim, 1)}</td><td>${pct(r.market, 1)}</td><td>${px(at.price, at.book, at.dl)}</td><td>${evh(at.ev)}</td></tr>` : ""; }).join("")}</tbody></table></div></div>`;
+    const at = atBook(r.price, r.book, r.dl, r.bp, r.sim); return at ? `<tr><td>${esc(r.name)} <small>${esc(r.team || "")}</small></td><td class="l">${r.k}+ ${esc(r.stat)}</td><td>${pct(r.sim, 1)}</td><td>${pct(r.market, 1)}</td><td>${px(at.price, at.book, at.dl)}</td><td>${evs(at.ev, at.price)}</td></tr>` : ""; }).join("")}</tbody></table></div></div>`;
   $("ladBoard").innerHTML = L.length || A.length ? h : `<div class="empty">No alt lines or milestones up for this game</div>`;
 }
 // ---------------------------------------------------------------- results
 function renderResults() {
-  const R = S.prices?.bet_results || {}, k = (x, lab) => x ? `<div class="kpi"><b>${x.units >= 0 ? "+" : ""}${x.units}u</b><span>${lab}: ${x.won}-${x.lost}${x.push ? "-" + x.push : ""} (${x.bets} graded)</span></div>` : "";
+  const R = S.prices?.bet_results || {};
+  const k = (x, lab) => x ? `<div class="kpi"><b>${x.units >= 0 ? "+" : ""}${x.units}u</b><span>${lab}: ${x.won}-${x.lost}${x.push ? "-" + x.push : ""} (${x.bets} graded)${x.staked ? ` · ${uTxt(x.staked)} bet · return ${x.units >= 0 ? "+" : ""}${(100 * x.units / x.staked).toFixed(1)}%` : ""}</span></div>` : "";
   const last = (R.last || []).slice().reverse();
-  $("resBoard").innerHTML = `<div class="kpis">${k(R.pick, "Best bets")}${k(R.parlay, "Parlays")}</div><p class="note">1 unit a bet at the price we posted. Graded from the official stats once the games are final.</p>
-    <div class="panel"><div class="tbl"><table><thead><tr><th>Bet</th><th class="l">Game</th><th>Price</th><th>Result</th><th>Units</th></tr></thead><tbody>${last.map(r =>
-      `<tr><td>${esc(r.text)}</td><td class="l">${esc(r.game || "")}</td><td>${odds(+r.price)} <small>${esc(r.book)}</small></td><td class="${r.grade === "win" ? "ev pos" : r.grade === "loss" ? "ev neg" : ""}">${esc(r.grade)}</td><td>${esc(r.units)}</td></tr>`).join("") || `<tr><td>No graded bets yet</td><td></td><td></td><td></td><td></td></tr>`}</tbody></table></div></div>`;
+  $("resBoard").innerHTML = `<div class="kpis">${k(R.pick, "Best bets")}${k(R.parlay, "Parlays")}</div><p class="note">Each bet sized quarter-Kelly on a 40-unit bankroll (0.05 to 1 unit) at the price we posted; return = units won ÷ units bet. Parlay wins are the legs' prices multiplied (estimated). Graded from the official stats once the games are final.</p>
+    <div class="panel"><div class="tbl"><table><thead><tr><th>Bet</th><th class="l">Game</th><th>Price</th><th>Size</th><th>Result</th><th>Units</th></tr></thead><tbody>${last.map(r =>
+      `<tr><td>${esc(r.text)}</td><td class="l">${esc(r.game || "")}</td><td>${odds(+r.price)} <small>${esc(r.book)}</small></td><td>${r.stake ? uTxt(+r.stake) : "1u"}</td><td class="${r.grade === "win" ? "ev pos" : r.grade === "loss" ? "ev neg" : ""}">${esc(r.grade)}${r.kind === "parlay" && r.grade === "win" ? " <small>est.</small>" : ""}</td><td>${esc(r.units)}</td></tr>`).join("") || `<tr><td>No graded bets yet</td><td></td><td></td><td></td><td></td><td></td></tr>`}</tbody></table></div></div>`;
 }
 // ---------------------------------------------------------------- players (sim means)
 function renderPlayers() {
