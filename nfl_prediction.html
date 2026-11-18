@@ -153,13 +153,8 @@ td small { color: var(--muted) }
 .ctl select { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 4px 6px; min-height: 30px }
 .ctl input[type=range] { flex: 1; min-width: 110px; accent-color: var(--accent) }
 .ctl .note { white-space: nowrap }
-.bets { list-style: none; margin: 0; padding: 0 }
-.bets li { padding: 7px 4px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: center; border-radius: 6px }
-.bets li.up { animation: flUp 1.4s ease-out } .bets li.dn { animation: flDn 1.4s ease-out }
 @keyframes flUp { 0% { background: rgba(47, 191, 113, .38) } 100% { background: transparent } }
 @keyframes flDn { 0% { background: rgba(229, 72, 77, .32) } 100% { background: transparent } }
-.bets .st { font-size: 12px; color: var(--muted) }
-.bets .hit { color: var(--good); font-weight: 700 } .bets .miss { color: var(--bad); font-weight: 700 }
 .bar { height: 5px; border-radius: 3px; background: var(--panel2); grid-column: 1 / -1; overflow: hidden }
 .bar i { display: block; height: 100%; background: var(--accent); transition: width .5s ease } .bar i.ok { background: var(--good) } .bar i.bad { background: var(--bad) }
 @media (max-width: 900px) { .rp { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: auto; align-content: start }
@@ -262,12 +257,42 @@ a.lrung:hover { filter: brightness(1.08) } .lrung.off { opacity: .55 }
 #perSeg { max-width: 100%; overflow-x: auto }
 .rtab td { text-align: left } .rtab td:last-child { text-align: right }
 .lgo { display: inline-block; margin-left: 8px; padding: 3px 8px; border-radius: 6px; background: var(--bet); color: var(--bet-ink); font: 800 11px/1.2 var(--text); text-decoration: none; white-space: nowrap; vertical-align: 2px }
-.bc-p { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 128px; min-height: 84px; padding: 6px 8px 0; border-radius: 8px; text-decoration: none; line-height: 1.15; overflow: hidden;
-  background: linear-gradient(180deg, var(--bet), var(--bet2)); color: var(--bet-ink); box-shadow: 0 3px 0 var(--betdk), 0 5px 10px rgba(0, 0, 0, .22) }
-.bc-p b { font: 800 28px/1 var(--disp) } .bc-p small { font-size: 10.5px; opacity: .85; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
-.bc-p span { align-self: stretch; margin: 6px -8px 0; padding: 7px 0; background: var(--betdk); color: var(--bet-ink); font-size: 13px; font-weight: 900; text-transform: uppercase; letter-spacing: .07em; text-align: center }
+/* price buttons: the bet cards' (NBA) and the parlay cards' bigger one */
+.bc-p { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 82px; max-width: 104px; padding: 6px 8px; border-radius: 8px;
+  background: var(--accent); color: var(--accent-ink, #fff); text-decoration: none; line-height: 1.15; border: 1px solid var(--accent) }
+.bc-p b { font-size: 16.5px; font-weight: 800 } .bc-p small { font-size: 10.5px; opacity: .85; max-width: 92px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bc-p span { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; opacity: .9; margin-top: 1px }
+a.bc-p { background: linear-gradient(180deg, var(--bet), var(--bet2)); border: 0; color: var(--bet-ink); box-shadow: 0 3px 0 var(--betdk), 0 5px 10px rgba(0, 0, 0, .25); overflow: hidden; padding-bottom: 0 }
+a.bc-p span { align-self: stretch; margin: 5px -8px 0; padding: 5px 0; background: var(--betdk); color: var(--bet-ink); opacity: 1; font-size: 11px; font-weight: 900; text-align: center }
 a.bc-p:hover { filter: brightness(1.08) } a.bc-p:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--betdk) }
-.bc-p.off { background: var(--panel2); color: var(--ink); box-shadow: none; padding-bottom: 6px }
+.bc-p.off { background: var(--surface); color: var(--ink); border-color: var(--rule-strong) }
+.pcard > .bc-p { min-width: 128px; max-width: none; min-height: 84px; border-radius: 8px } .pcard > .bc-p b { font: 800 28px/1 var(--disp) } .pcard > .bc-p small { max-width: 150px }
+.pcard > a.bc-p span { font-size: 13px; padding: 7px 0 }
+/* the Replay tab's Bets panel (NBA) */
+.bets { flex: 1; min-height: 0; gap: 8px; padding: 12px 12px 10px }
+.bets-hd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap }
+.bets-t { font-size: 19px; font-weight: 800; letter-spacing: .02em; margin-right: auto }
+.bets-sub { font-size: 12px; color: var(--muted); line-height: 1.35; flex: 0 0 auto } .bets-sub b { color: var(--ink) }
+.bets-fill { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain }
+.betlist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px }
+.betlist li.pe { font-size: 13px; color: var(--muted); padding: 10px 2px }
+.bc { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; background: var(--panel2); border: 1px solid var(--rule); border-radius: 9px; padding: 8px 8px 8px 11px }
+.bc-m { min-width: 0 }
+.bc-k { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); display: flex; gap: 6px; align-items: center; min-height: 16px }
+.bc-b { font-size: 14.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px }
+.bc-b .tsw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; vertical-align: 1px }
+.bc-s { font-size: 12px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.bc-s .pos { color: var(--good) } .bc-s .neg { color: var(--bad) }
+.bc-r { font-size: 12px; margin-top: 3px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.bc-r.won { color: var(--good); font-weight: 700 } .bc-r.live { color: var(--ink) } .bc-r.lost { color: var(--bad); font-weight: 700 }
+.bc.none { grid-template-columns: minmax(0, 1fr); opacity: .62 } .bc.none .bc-b { font-size: 13px; font-weight: 600; color: var(--muted) }
+.bc.fl-up { background: var(--good-soft); border-color: var(--good) } .bc.fl-dn { background: var(--bad-soft); border-color: var(--bad) }
+.bc.cashed { background: var(--good-soft) !important; border-color: var(--good) !important }
+.bc.dead { background: var(--bad-soft) !important; border-color: color-mix(in srgb, var(--bad) 60%, var(--rule)) !important }
+.rgs { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap }
+.rg { font-size: 11.5px; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 1px 6px; color: var(--ink); text-decoration: none; white-space: nowrap }
+.rg.hit { border-color: var(--good); background: var(--good-soft) } .rg.miss { opacity: .5 }
+@media (max-width: 900px) { .bets { padding: 9px 9px 8px } .bets-t { font-size: 16px } .bets-hd .seg button { font-size: 12px; padding: 4px 8px } .rp-right .bets-fill { flex: 0 0 auto; max-height: 46vh } }
 /* Results: backtest + live charts */
 #resBoard { padding: 2px }
 .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 10px }
@@ -343,9 +368,10 @@ a.bc-p:hover { filter: brightness(1.08) } a.bc-p:active { transform: translateY(
             <span class="note" id="drv"></span>
           </div>
         </div>
-        <div class="panel rp-right">
-          <div class="row"><div class="lbl">Bets in this sim</div><span class="spacer"></span><span class="note" id="betsNote"></span></div>
-          <div class="scroll"><ul class="bets" id="betsLive"></ul></div>
+        <div class="panel rp-right bets" id="betsPanel">
+          <div class="bets-hd"><div class="bets-t">Bets</div><div class="seg" id="betsMode"><button data-v="trial" aria-pressed="true">From this sim</button><button data-v="all" aria-pressed="false">Best of all sims</button></div></div>
+          <div class="bets-sub" id="betsSub"></div>
+          <div class="bets-fill"><ol class="betlist" id="feed"></ol></div>
         </div>
       </div>
     </section>
@@ -375,11 +401,15 @@ S.book = (() => { try { const v = localStorage.getItem("ppNflBook"); return v ==
 
 // ---------------------------------------------------------------- data (nfl-data branch; prices re-read every 5 minutes)
 async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+const BOARD = "pp";   // this page's board in the one prices file (Prediction Pro: "pp")
+const OLD_FILE = "nfl_prediction_prices.json";   // Prediction Pro: its own prices file from before 2026-11-18, read only while the data branch still has the old layout
 async function load(first) {
-  const p = await getJSON(DATA + "nfl_prediction_prices.json");
+  let p = await getJSON(DATA + "nfl_picklabs_prices.json");
   if (!first && S.prices && p.created_utc === S.prices.created_utc) return false;
+  const one = !!(p.best_bets && (p.best_bets.std || p.best_bets.pp));
+  if (!one && OLD_FILE) p = await getJSON(DATA + OLD_FILE);
   if (first || !S.slate || p.slate !== S.slate.id) S.slate = await getJSON(DATA + "nfl_picklabs_replay_data.json");
-  S.prices = p; return true;
+  S.prices = one ? { ...p, best_bets: p.best_bets[BOARD] || {}, bet_results: p.bet_results?.[BOARD] || {} } : p; return true;
 }
 const stamp = s => { const d = new Date(s); return isNaN(d) ? "" : d.toLocaleString("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", minute: "2-digit" }) + " ET"; };
 const games = () => S.slate?.index?.games || [];
@@ -967,54 +997,185 @@ try { new ResizeObserver(() => layout()).observe($("fieldbox")); } catch (e) { a
 document.addEventListener("visibilitychange", () => { if (document.hidden) stopLoop(); else if (S.view === "replay") startLoop(); });
 
 // the bets of this game, settled against the replayed sim as it plays; a flash when a play moves one toward (green) or away (red)
-function renderLiveBets(k) {
-  if (k === undefined) k = R.done ?? -1;
-  const P = R.P, fin = P.length > 0 && k >= P.length - 1, b = boxTo(k), b0 = boxTo(k - 1), L = liveBets();
-  $("betsNote").textContent = fin ? "Final" : k < 0 ? "before kickoff" : "as the sim plays";
-  $("betsLive").innerHTML = L.length ? L.map(x => {
-    const at = atBook(x.price, x.book, x.dl, x.bp, x.sim); const v = (b[x.rg] || {})[x.stat] || 0, v0 = (b0[x.rg] || {})[x.stat] || 0;
-    const over = x.side === "over", hit = over ? v > x.line : fin && v < x.line, dead = over ? fin && v <= x.line : v > x.line;
-    const st = hit ? `<span class="hit">Cashed</span>` : dead ? `<span class="miss">Lost</span>` : `<span>${v} so far</span>`;
-    const w = Math.max(0, Math.min(100, 100 * v / Math.max(x.line + .5, .5))), fl = v === v0 ? "" : (over === v > v0 ? "up" : "dn");
-    return `<li class="${fl}"><div>${x.best ? `<span class="tag ok">Best bet</span> ` : ""}${esc(x.text)}<div class="st">sim ${pct(x.sim)} · ${st}</div></div>
-      <div style="text-align:right">${at ? px(at.price, at.book, at.dl) : "<span class='note'>not at this book</span>"}<div>${at ? evs(at.ev, at.price) : evh(null)}</div></div>
-      <div class="bar"><i class="${hit ? "ok" : dead ? "bad" : ""}" style="width:${w}%"></i></div></li>`;
-  }).join("") : `<li class="empty">No priced props for this game yet</li>`;
+// ---------------------------------------------------------------- the Replay tab's Bets panel, as the NBA page (Chris 2026-11-18)
+//   From this sim     in each market, of the bets the replayed game cashes, the one with the best edge over all the sims
+//   Best of all sims  in each market, the best edge over all the sims
+// Each card plays along: live progress, "Cashed Q2 5:12" when the play that settles it happens, "Lost" once it can't win.
+const BET_CATS = [["td", "Touchdown scorer"], ["ml", "Moneyline"], ["spread", "Spread"], ["total", "Total"], ["pass", "Passing"], ["rush", "Rushing"],
+  ["rec", "Receiving"], ["prop", "Other props"], ["ladder", "Ladder"], ["special", "Specials"]];
+const CAT_OF = { pass_yds: "pass", pass_att: "pass", comp: "pass", pass_td: "pass", int: "pass", long_comp: "pass", pass_rush_yds: "pass",
+  rush_yds: "rush", rush_att: "rush", long_rush: "rush", rush_rec_yds: "rush", rec: "rec", rec_yds: "rec", long_rec: "rec" };
+const UNIT = { pass_yds: "pass yds", pass_att: "att", comp: "comp", pass_td: "pass TD", int: "INT", long_comp: "long", pass_rush_yds: "yds", rush_yds: "rush yds",
+  rush_att: "carries", long_rush: "long", rush_rec_yds: "yds", rec: "rec", rec_yds: "rec yds", long_rec: "long", td: "TD" };
+const ZB = () => ({ pass_att: 0, comp: 0, pass_yds: 0, pass_td: 0, int: 0, long_comp: 0, rush_att: 0, rush_yds: 0, long_rush: 0, rec: 0, rec_yds: 0, long_rec: 0, td: 0, tgt: 0 });
+const statOf = (b, k) => k === "rush_rec_yds" ? b.rush_yds + b.rec_yds : k === "pass_rush_yds" ? b.pass_yds + b.rush_yds : b[k];
+// the replayed game play by play: each player's running line after every play, scores, touchdowns in order
+function trialFacts() {
+  const P = G(S.gid)?.replay?.plays || [], box = {}, snaps = {}, tds = [], [h, a] = teams();
+  const one = id => (box[id] ||= ZB());
+  P.forEach((p, i) => {
+    const hit = new Set(), td = p.result === "touchdown";
+    if (p.type === "pass" && p.passer) { const q = one(p.passer); q.pass_att++; hit.add(p.passer);
+      if (p.complete) { q.comp++; q.pass_yds += p.yards || 0; q.long_comp = Math.max(q.long_comp, p.yards || 0); if (td) q.pass_td++; }
+      if (p.result === "interception") q.int++; }
+    if (p.type === "pass" && p.target) { const r = one(p.target); r.tgt++; hit.add(p.target);
+      if (p.complete) { r.rec++; r.rec_yds += p.yards || 0; r.long_rec = Math.max(r.long_rec, p.yards || 0); if (td) { r.td++; tds.push({ i, id: p.target, team: p.offense }); } } }
+    if ((p.type === "run" || p.type === "scramble") && (p.carrier || p.passer)) { const id = p.carrier || p.passer, r = one(id); hit.add(id);
+      r.rush_att++; r.rush_yds += p.yards || 0; r.long_rush = Math.max(r.long_rush, p.yards || 0); if (td) { r.td++; tds.push({ i, id, team: p.offense }); } }
+    const otherTD = /touchdown|_td$/.test(p.result || "") && !(td && ((p.type === "pass" && p.complete) || p.type === "run" || p.type === "scramble"));
+    if (otherTD) tds.push({ i, id: null, team: null });   // return and defensive touchdowns: no listed scorer in the log
+    for (const id of hit) (snaps[id] ||= []).push({ i, ...box[id] });
+  });
+  const fin = P.length - 1, sc = [G(S.gid)?.replay?.final?.[h] ?? 0, G(S.gid)?.replay?.final?.[a] ?? 0];
+  const scoreAt = i => { const s = P[Math.max(0, Math.min(i, fin))]?.score || {}; return [s[h] || 0, s[a] || 0]; };
+  return { P, box, snaps, tds, fin, sc, scoreAt, played: new Set(Object.keys(box)) };
 }
+const atOf = (tr, i) => { const p = tr.P[i]; return p ? `${p.q >= 5 ? "OT" : "Q" + p.q} ${p.clock || ""}`.trim() : ""; };
+const crossAt = (tr, id, k, thr) => (tr.snaps[id] || []).find(s => statOf(s, k) >= thr)?.i ?? null;
+function liveLine(id, i) { const tr = S.tr, s = (tr.snaps[id] || []).filter(x => x.i <= i).pop(); return s || ZB(); }
 
-// running box score of the replayed sim up to play i (receptions, yards, carries, TDs)
-function boxTo(i) {
-  const P = G(S.gid)?.replay?.plays || [], b = {};
-  const one = id => (b[id] = b[id] || { rec: 0, rec_yds: 0, rush_att: 0, rush_yds: 0, pass_yds: 0, pass_att: 0, comp: 0, td: 0 });
-  for (let k = 0; k <= i && k < P.length; k++) {
-    const p = P[k], td = p.result === "touchdown";
-    if (p.type === "pass" && p.passer) { const q = one(p.passer); q.pass_att++; if (p.complete) { q.comp++; q.pass_yds += p.yards || 0; } }
-    if (p.type === "pass" && p.complete && p.target) { const r = one(p.target); r.rec++; r.rec_yds += p.yards || 0; if (td) r.td++; }
-    if ((p.type === "run" || p.type === "scramble") && (p.carrier || p.passer)) { const r = one(p.carrier || p.passer); r.rush_att++; r.rush_yds += p.yards || 0; if (td) r.td++; }
-  }
-  return b;
-}
-// the bets of this game the page shows during the replay: this week's best bets on it, then its tested props with the best EV
-function liveBets() {
-  const out = [], seen = new Set(), g = G(S.gid)?.matchup; if (!g) return out;
-  const core2rg = Object.fromEntries(Object.entries(g.players || {}).map(([rg, p]) => [p.core_id, rg]));
-  for (const sl of S.prices?.best_bets?.slots || []) for (const p of slotPicks(sl)) if (p.gid === S.gid && !seen.has(p.key)) {
-    seen.add(p.key); seen.add(`${p.g.player}|${p.g.stat}`); out.push({ text: p.text, rg: core2rg[p.g.player], stat: p.g.stat, side: p.g.side, line: p.g.line, price: p.price, book: p.book, dl: p.dl, sim: p.sim, ev: p.ev, best: true });
-  }
-  const props = (INS(S.gid)?.props || []).filter(r => r.tested);
-  const lanes = [];
-  for (const r of props) for (const sd of ["over", "under"]) { const o = r[sd]; if (o && o.ev !== null) lanes.push({ r, sd, o }); }
-  lanes.sort((x, y) => y.o.ev - x.o.ev);
-  for (const { r, sd, o } of lanes) {   // one side per player and stat (the better EV), ten at most
-    if (out.length >= 10) break;
-    const k = `${r.core_id}|${r.stat_key}`; if (seen.has(k)) continue; seen.add(k);
-    const p = sd === "over" ? r.sim_over : 1 - r.sim_over;
-    out.push({ text: `${r.name} ${sd === "over" ? "Over" : "Under"} ${r.line} ${r.stat}`, rg: core2rg[r.core_id], stat: r.stat_key, side: sd, line: r.line, price: o.price, book: o.book, dl: o.dl, sim: p, ev: o.ev, bp: o.bp });
-  }
+function betCands(ins, tr) {   // every priced bet, with how it went in the replayed game (won, the play that settled it, the final line)
+  const out = [], gm = ins.game?.game || {}, [h, a] = teams(), fin = tr.fin, sc = tr.sc, core2rg = {};
+  for (const [rg, p] of Object.entries(G(S.gid)?.matchup?.players || {})) if (p.core_id) core2rg[String(p.core_id)] = rg;
+  const rgOf = c => core2rg[String(c)] || null;
+  const add = x => { if (x.price !== null && x.price !== undefined && x.sim !== null && x.sim !== undefined) out.push(x); };
+  const ti = t => t === h ? 0 : 1, nowScore = () => tr.scoreAt(R.done ?? -1), scTxt = s => `${h} ${s[0]}-${s[1]} ${a}`;
+  // game lines
+  for (const r of gm.moneyline?.teams || []) { const t = ti(r.team), won = sc[0] === sc[1] ? null : sc[t] > sc[1 - t];
+    add({ cat: "ml", team: r.team, text: `${r.team} moneyline`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
+      res: { won, at: fin, txt: scTxt(sc) }, live: () => scTxt(nowScore()), pv: () => { const s = nowScore(); return s[t] - s[1 - t]; } }); }
+  for (const r of gm.spread?.teams || []) { const t = ti(r.team), m = sc[t] - sc[1 - t] + r.line;
+    add({ cat: "spread", team: r.team, text: `${r.team} ${r.line > 0 ? "+" : ""}${r.line}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
+      res: { won: m === 0 ? null : m > 0, at: fin, txt: `${r.team} ${sc[t] >= sc[1 - t] ? "by" : "loses by"} ${Math.abs(sc[t] - sc[1 - t])}` },
+      live: () => { const s = nowScore(); return `${r.team} ${s[t] - s[1 - t] >= 0 ? "+" : ""}${s[t] - s[1 - t]} now`; }, pv: () => { const s = nowScore(); return s[t] - s[1 - t]; } }); }
+  if (gm.total && gm.total.sim_over !== null && gm.total.sim_over !== undefined) { const L = gm.total.line, T = sc[0] + sc[1];
+    for (const sd of ["over", "under"]) { const o = gm.total[sd]; if (!o) continue;
+      const won = T === L ? null : (sd === "over" ? T > L : T < L), at = sd === "over" && won ? tr.P.findIndex(p => p.score && (p.score[h] || 0) + (p.score[a] || 0) > L) : fin;
+      add({ cat: "total", text: `${sd === "over" ? "Over" : "Under"} ${L}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "over" ? gm.total.sim_over : 1 - gm.total.sim_over, ev: o.ev,
+        res: { won, at, txt: `${T} total` }, live: () => { const s = nowScore(); return `${s[0] + s[1]} of ${L} so far`; },
+        pv: () => { const s = nowScore(); return (sd === "over" ? 1 : -1) * (s[0] + s[1]); }, dd: () => { const s = nowScore(); return sd === "under" && s[0] + s[1] > L; } }); } }
+  // player props: main lines
+  for (const r of ins.props || []) { const id = rgOf(r.core_id), k = r.stat_key; if (!id || r.sim_over === null || r.sim_over === undefined || !(k in UNIT || k === "rush_rec_yds" || k === "pass_rush_yds")) continue;
+    const v = tr.played.has(id) ? statOf(tr.box[id], k) : null, L = r.line, u = UNIT[k] || "";
+    for (const sd of ["over", "under"]) { const o = r[sd]; if (!o) continue;
+      const won = v === null || v === L ? null : (sd === "over" ? v > L : v < L), at = sd === "over" && won ? crossAt(tr, id, k, Math.floor(L) + 1) : fin;
+      add({ cat: CAT_OF[k] || "prop", team: r.team, text: `${r.name} ${sd === "over" ? "Over" : "Under"} ${L} ${String(r.stat).toLowerCase()}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp,
+        sim: sd === "over" ? r.sim_over : 1 - r.sim_over, ev: o.ev, res: { won, at, txt: `${v ?? 0} ${u}` },
+        live: () => `${statOf(liveLine(id, R.done ?? -1), k)} ${sd === "over" ? `of ${L} ` : ""}${u}${sd === "over" ? "" : " so far"}`,
+        pv: () => (sd === "over" ? 1 : -1) * statOf(liveLine(id, R.done ?? -1), k), dd: () => sd === "under" && statOf(liveLine(id, R.done ?? -1), k) > L }); } }
+  // alt lines and milestones (k or more)
+  for (const r of ins.alts || []) { const id = rgOf(r.core_id), k = r.stat_key; if (!id) continue;
+    const v = tr.played.has(id) ? statOf(tr.box[id], k) : null, won = v === null ? null : v >= r.k, u = UNIT[k] || "";
+    add({ cat: CAT_OF[k] || "prop", team: r.team, text: `${r.name} ${r.k}+ ${String(r.stat).toLowerCase()}`, price: r.price, book: r.book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
+      res: { won, at: won ? crossAt(tr, id, k, r.k) : fin, txt: `${v ?? 0} ${u}` }, live: () => `${statOf(liveLine(id, R.done ?? -1), k)} of ${r.k} ${u}`,
+      pv: () => statOf(liveLine(id, R.done ?? -1), k) }); }
+  // ladders: one card, each rung its own bet
+  for (const l of ins.ladders || []) { const id = rgOf(l.core_id); if (!id || !l.rungs?.length) continue; const k = l.rungs[0].stat_key, u = UNIT[k] || "";
+    const v = tr.played.has(id) ? statOf(tr.box[id], k) : null;
+    const rungs = l.rungs.map(r => ({ ...r, p: r.sim, hit: v !== null && v >= r.k, at: v !== null && v >= r.k ? crossAt(tr, id, k, r.k) : null }));
+    const hits = rungs.filter(r => r.hit), units = hits.reduce((s, r) => s + dec1(r.price) - 1, 0) - (rungs.length - hits.length);
+    out.push({ cat: "ladder", team: l.team, text: `${l.name} · ${String(l.stat).toLowerCase()} ladder`, price: l.top_payout, book: "", dl: null, sim: null, ev: l.ev_per_unit, rungs, trialRank: units,
+      res: { won: hits.length > 0, at: hits.length ? hits[0].at : fin, txt: `${hits.length} of ${rungs.length} rungs · ${units >= 0 ? "+" : ""}${units.toFixed(1)} units · ${v ?? 0} ${u}` },
+      live: () => `${statOf(liveLine(id, R.done ?? -1), k)} ${u} so far`, pv: () => statOf(liveLine(id, R.done ?? -1), k) }); }
+  // touchdown scorers
+  const firstOf = list => list[0] || null, lastOf = list => list[list.length - 1] || null;
+  const TDS = { anytime_td: [1, "anytime TD"], td2: [2, "2+ TDs"], td3: [3, "3+ TDs"] };
+  for (const [key, [n, lab]] of Object.entries(TDS)) for (const r of ins.scorers?.[key] || []) { const id = rgOf(r.core_id); if (!id) continue;
+    const v = tr.played.has(id) ? tr.box[id].td : null, won = v === null ? null : v >= n, at = won ? tr.tds.filter(x => x.id === id)[n - 1].i : fin;
+    add({ cat: "td", team: r.team, text: `${r.name} ${lab}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev, res: { won, at, txt: `${v ?? 0} TD` },
+      live: () => `${liveLine(id, R.done ?? -1).td} of ${n} TD`, pv: () => liveLine(id, R.done ?? -1).td }); }
+  const scorerTxt = x => x ? (x.id ? `${playerName(x.id) || "?"} scored ${atOf(tr, x.i)}` : `non-offensive TD ${atOf(tr, x.i)}`) : "no TD";
+  const firstGone = x => () => !!x && (R.done ?? -1) >= x.i;
+  for (const [key, lab, pickTD] of [["first_td", "first TD", () => firstOf(tr.tds)], ["last_td", "last TD", () => lastOf(tr.tds)]]) {
+    const x = pickTD();
+    for (const r of ins.scorers?.[key] || []) { const id = rgOf(r.core_id); if (!id) continue; const won = !!x && x.id === id;
+      add({ cat: "td", team: r.team, text: `${r.name} ${lab}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
+        res: { won, at: x ? x.i : fin, txt: scorerTxt(x) }, dd: key === "first_td" ? () => firstGone(x)() && !won : null }); } }
+  for (const r of ins.scorers?.team_first_td || []) { const id = rgOf(r.core_id); if (!id) continue; const x = tr.tds.find(t => t.team === r.team) || null, won = !!x && x.id === id;
+    add({ cat: "td", team: r.team, text: `${r.name} first TD for ${r.team}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, sim: r.sim, ev: r.ev,
+      res: { won, at: x ? x.i : fin, txt: scorerTxt(x) }, dd: () => firstGone(x)() && !won }); }
+  // specials: alt team totals, winning margin, overtime, no touchdown
+  for (const t0 of gm.alt_team_totals || []) { const t = ti(t0.team), v = sc[t], won = v === t0.line ? null : (t0.side === "Over" ? v > t0.line : v < t0.line);
+    add({ cat: "special", team: t0.team, text: `${t0.team} ${String(t0.side).toLowerCase()} ${t0.line} points`, price: t0.best_price, book: t0.best_book, dl: t0.dl, bp: t0.bp, sim: t0.sim, ev: t0.ev,
+      res: { won, at: t0.side === "Over" && won ? tr.P.findIndex(p => p.score && (p.score[t0.team] || 0) > t0.line) : fin, txt: `${t0.team} ${v}` },
+      live: () => `${t0.team} ${nowScore()[t]} so far`, pv: () => (t0.side === "Over" ? 1 : -1) * nowScore()[t], dd: () => t0.side !== "Over" && nowScore()[t] > t0.line }); }
+  for (const w of gm.winning_margin || []) { const t = ti(w.team), m = sc[t] - sc[1 - t], mm = /^(\d+)(?:-(\d+)|\+)$/.exec(String(w.band).trim());
+    const won = !!mm && m >= +mm[1] && (mm[2] === undefined || m <= +mm[2]);
+    add({ cat: "special", team: w.team, text: `${w.team} wins by ${w.band}`, price: w.best_price, book: w.best_book, dl: w.dl, bp: w.bp, sim: w.sim, ev: w.ev, res: { won, at: fin, txt: scTxt(sc) } }); }
+  const ot = tr.P.some(p => p.q >= 5);
+  if (gm.overtime) for (const sd of ["yes", "no"]) { const o = gm.overtime[sd]; if (!o) continue;
+    add({ cat: "special", text: `Overtime: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "yes" ? gm.overtime.sim : 1 - gm.overtime.sim, ev: o.ev,
+      res: { won: sd === "yes" ? ot : !ot, at: fin, txt: ot ? "went to overtime" : "decided in regulation" } }); }
+  if (gm.no_td) for (const sd of ["yes", "no"]) { const o = gm.no_td[sd]; if (!o) continue; const none = tr.tds.length === 0;
+    add({ cat: "special", text: `No touchdown in the game: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "yes" ? gm.no_td.sim : 1 - gm.no_td.sim, ev: o.ev,
+      res: { won: sd === "yes" ? none : !none, at: !none && sd === "no" ? tr.tds[0].i : fin, txt: none ? "no touchdown" : `${tr.tds.length} TD` } }); }
+  for (const x of out) if ((x.ev === null || x.ev === undefined) && x.sim !== null && x.sim !== undefined) x.ev = x.sim * dec1(x.price) - 1;
   return out;
 }
+function candAt(x, bk) {   // a bet at one book (our chance stays); [] when that book doesn't offer it
+  if (x.rungs) { const rungs = x.rungs.flatMap(r => { const q = r.book === bk ? [r.price, r.dl] : r.bp?.[bk]; return q ? [{ ...r, price: q[0], book: bk, dl: q[1], ev: r.sim * dec1(q[0]) - 1 }] : []; });
+    return rungs.length ? [{ ...x, rungs, ev: rungs.reduce((s, r) => s + r.ev, 0) / rungs.length }] : []; }
+  if (x.book === bk) return [x];
+  const q = x.bp?.[bk]; if (!q) return [];
+  return [{ ...x, price: q[0], book: bk, dl: q[1], ev: x.sim * dec1(q[0]) - 1, was: [x.price, x.book] }];
+}
+const evf = ev => ev === null || ev === undefined ? "–" : `${ev >= 0 ? "+" : ""}${(100 * ev).toFixed(1)}%`;
+const evc = ev => ev === null || ev === undefined ? "" : ev >= 0 ? "pos" : "neg";
+const tsw = t => t ? `<span class="tsw" style="background:${tcol(t)}"></span>` : "";
+function flashOf(key, x) {   // green / red for a moment when a play moves the bet's number toward / away from cashing
+  const v = x.pv ? x.pv() : null, F = (S.flv ||= {}), was = F[key]; F[key] = v;
+  if (v === null || was === undefined || was === null || v === was || R.playing === false) return "";
+  return v > was ? " fl-up" : " fl-dn";
+}
+function betCard(label, x, n, mode) {
+  if (!x) return `<li class="bc none"><div class="bc-m"><div class="bc-k">${esc(label)}</div><div class="bc-b">${
+    n ? (mode === "trial" ? "No bet on the board cashed here in this sim" : "Nothing priced") : S.book ? `Nothing at ${esc(S.book)} here` : "Not on the board for this game yet"}</div></div></li>`;
+  const k = R.done ?? -1, fin = R.fin || (S.tr && k >= S.tr.fin);
+  let status = "", cls = "";
+  const nowTxt = () => fin || !x.live ? x.res.txt : x.live();
+  if (x.rungs) { const got = x.rungs.filter(r => r.hit && r.at !== null && k >= r.at).length;
+    status = mode === "trial" ? (fin ? `<div class="bc-r ${got ? "won" : "lost"}">${got ? "✓" : "✕"} ${esc(x.res.txt)}</div>` : `<div class="bc-r live">◷ ${got} of ${x.rungs.length} rungs so far · ${esc(x.live ? x.live() : "")}</div>`) : `<div class="bc-r live">◷ ${esc(x.live ? x.live() : "")}</div>`;
+    cls = got ? " cashed" : fin && mode === "trial" ? " dead" : ""; }
+  else { const done = x.res.won === true && x.res.at !== null && k >= x.res.at, dead = (fin && x.res.won === false) || (!fin && !!x.dd && x.dd());
+    if (done) { status = `<div class="bc-r won">✓ Cashed ${x.res.at === S.tr.fin ? "at the final" : atOf(S.tr, x.res.at)} · ${esc(nowTxt())}</div>`; cls = " cashed"; }
+    else if (dead) { status = `<div class="bc-r lost">✕ Lost · ${esc(nowTxt())}</div>`; cls = " dead"; }
+    else if (fin && x.res.won === null) status = `<div class="bc-r live">Push / void · ${esc(x.res.txt)}</div>`;
+    else status = `<div class="bc-r live">◷ ${esc(x.live ? x.live() : "not yet")}</div>`; }
+  if (!cls) cls = flashOf(label + "|" + x.text, x);
+  const rg = x.rungs ? `<div class="rgs">${x.rungs.map(r => { const st = mode === "trial" ? (r.hit ? (r.at !== null && k >= r.at ? " hit" : "") : (fin ? " miss" : "")) : "";
+      const inner = `${r.k}+ <b>${odds(r.price)}</b>`;
+      return live(r.dl) ? `<a class="rg${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" title="${esc(r.book)} · EV ${evf(r.ev)}">${inner}</a>` : `<span class="rg${st}">${inner}</span>`; }).join("")}</div>` : "";
+  const u = x.rungs ? 0 : stakeU(x.ev, x.price);
+  const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs`
+    : `Sim ${pct(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${u ? ` · bet ${uTxt(u)}` : ""}${x.was ? ` at ${esc(x.book)} (best ${odds(x.was[0])} at ${esc(x.was[1])})` : ""}`;
+  const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
+    : live(x.dl) ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>${GO}</span></a>`
+    : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
+  return `<li class="bc${cls}"><div class="bc-m"><div class="bc-k">${esc(label)}</div>
+    <div class="bc-b">${x.team ? tsw(x.team) : ""}${esc(x.text)}</div><div class="bc-s">${sub}</div>${status}${rg}</div>${btn}</li>`;
+}
+function renderLiveBets() {   // the replay calls this after every play
+  const el = $("feed"); if (!el) return;
+  const mode = S.betsMode || "trial", ins = INS(S.gid), sub = $("betsSub"), g = G(S.gid);
+  $("betsMode")?.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === mode)));
+  if (!ins || !g?.replay?.plays?.length) { sub.textContent = ""; el.innerHTML = `<li class="pe">No prices for this game yet: the bets come with the board run (every 10 minutes) once the books post this game.</li>`; return; }
+  if (!S.tr || S.tr.gid !== S.gid || S.tr.P !== g.replay.plays) { S.tr = trialFacts(); S.tr.gid = S.gid; S.betC = null; S.flv = {}; }
+  if (!S.betC || S.betC.ins !== ins) S.betC = { ins, list: betCands(ins, S.tr) };
+  if (S.betC.bk !== S.book) { S.betC.bk = S.book; S.betC.at = S.book ? S.betC.list.flatMap(x => candAt(x, S.book)) : S.betC.list; }
+  const C = S.betC.at, sc = S.tr.sc, [h, a] = teams();
+  sub.innerHTML = mode === "trial"
+    ? `This sim: <b>${esc(h)} ${sc[0]}-${sc[1]} ${esc(a)}</b>${S.tr.P.some(p => p.q >= 5) ? " (OT)" : ""}. In each market, the bet this game cashes with the best edge over all the sims. Watch them cash as it plays.`
+    : `The best edge in each market over all the sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the " + BOOKS_WORD}. Tap a price to bet it.`;
+  const rows = BET_CATS.map(([key, label]) => {
+    const xs = C.filter(x => x.cat === key);
+    const pick = mode === "trial" ? xs.filter(x => x.res?.won === true).sort((p, q) => (q.trialRank ?? q.ev ?? -9) - (p.trialRank ?? p.ev ?? -9))[0]
+      : xs.slice().sort((p, q) => (q.ev ?? -9) - (p.ev ?? -9))[0];
+    return betCard(label, pick, xs.length, mode);
+  });
+  const box = el.parentElement, top = box.scrollTop; el.innerHTML = rows.join(""); box.scrollTop = top;
+}
+$("betsMode")?.addEventListener("click", e => { const b = e.target.closest("button[data-v]"); if (!b) return; S.betsMode = b.dataset.v; renderLiveBets(); });
 
-// ---------------------------------------------------------------- best bets (Wed-Sat 5 PM ET: a slot shows from its release time on)
 // ---------------------------------------------------------------- bet tabs: the NBA page's lanes, parlay cards and Results charts
 // (Chris 2026-11-18: "what was wrong with the NBA interface? why cant you borrow that?"). A lane = one bet that clears the rules now:
 // the painted line = the chance its price needs, the ball = our chance; the ticket = price, book, link; the box = the bet size.
