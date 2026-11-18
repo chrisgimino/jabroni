@@ -27,12 +27,12 @@
   color-scheme: light;
 }
 :root[data-theme="dark"] {
-  --ground: #0b1f36; --surface: #142c4c; --ink: #e8f0f6; --muted: #8fa2b6; --faint: #6c8299; --rule: #264765; --rule-strong: #31567a;
-  --panel2: #183353; --accent: #9ccae1; --accent-soft: rgba(156, 202, 225, .14); --accent-ink: #0b1f36;
+  --ground: #03080f; --surface: #10233d; --ink: #e8f0f6; --muted: #8fa2b6; --faint: #6c8299; --rule: #2c5584; --rule-strong: #3d6c9e;
+  --panel2: #1f4069; --accent: #9ccae1; --accent-soft: rgba(156, 202, 225, .14); --accent-ink: #0b1f36;
   --good: #aeef9c; --good-soft: #26481b; --bad: #ff8a7a; --bad-soft: rgba(255, 111, 94, .16);
-  --board: linear-gradient(180deg, #183353, #142c4c); --board-ink: #ffffff; --board-muted: #9ccae1;
-  --hdr: #142c4c; --hdr-ink: #ffffff; --sel: #c9dbe7; --sel-ink: #0b1f36; --bar: #c9dbe7; --bar-ink: #0b1f36; --bar-sub: #31567a;
-  --bet: #c9dbe7; --bet-ink: #0b1f36; --ctl-bg: #183353; --ctl-ink: #e8f0f6; --ctl-rule: #31567a;
+  --board: linear-gradient(180deg, #1d3a60, #11243f); --board-ink: #ffffff; --board-muted: #9ccae1;
+  --hdr: #071426; --hdr-ink: #ffffff; --sel: #c9dbe7; --sel-ink: #0b1f36; --bar: #c9dbe7; --bar-ink: #0b1f36; --bar-sub: #31567a;
+  --bet: #c9dbe7; --bet-ink: #0b1f36; --ctl-bg: #0e2038; --ctl-ink: #e8f0f6; --ctl-rule: #3d6c9e;
   --turf: #1f5a2b; --turf2: #1b5026; --turf-line: rgba(255, 255, 255, .6); --turf-num: rgba(255, 255, 255, .4);
   color-scheme: dark;
 }
@@ -348,6 +348,8 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
   .bk-list { width: min(calc(100vw - 32px), 340px); max-height: 70vh; border-radius: 12px }
   .bk-list li { min-height: 52px; font-size: 16px }
 }
+:root[data-theme="dark"] .board { background: linear-gradient(90deg, var(--home-c, #11243f) 0%, color-mix(in srgb, var(--home-c, #11243f) 35%, #11243f) 30%, #11243f 50%,
+  color-mix(in srgb, var(--away-c, #11243f) 35%, #11243f) 70%, var(--away-c, #11243f) 100%) }
 </style>
 <script>
 (function () { var t = null; try { t = localStorage.getItem("plTheme"); } catch (e) {}
@@ -1276,6 +1278,7 @@ function paintTeams() {   // the scoreboard: logo when it has loaded, else the d
   const h = logoImg(m.home, "tlogo") || `<i style="background:${homeFill(m.home)};box-shadow:inset 0 0 0 1px #fff"></i>`;
   const a = logoImg(m.away, "tlogo") || `<i style="background:#fff;box-shadow:inset 0 0 0 2px ${tcol(m.away)}"></i>`;
   $("n0").innerHTML = `${h}${esc(m.home)}`; $("n1").innerHTML = `${esc(m.away)}${a}`;
+  const bd = document.querySelector(".board"); if (bd) { bd.style.setProperty("--home-c", tcol(m.home)); bd.style.setProperty("--away-c", tcol(m.away)); }   // dark mode: the scoreboard in the teams' colors
 }
 const teamOfP = (gid, core) => (INS(gid)?.props || []).find(r => String(r.core_id) === String(core))?.team || null;
 // the rules a lane must clear (EV at the price shown, floor and ceiling; chance to hit): props = the board's; game lines, specials and alt lines = the NBA page's

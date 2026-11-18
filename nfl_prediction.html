@@ -1276,6 +1276,7 @@ function paintTeams() {   // the scoreboard: logo when it has loaded, else the d
   const h = logoImg(m.home, "tlogo") || `<i style="background:${homeFill(m.home)};box-shadow:inset 0 0 0 1px #fff"></i>`;
   const a = logoImg(m.away, "tlogo") || `<i style="background:#fff;box-shadow:inset 0 0 0 2px ${tcol(m.away)}"></i>`;
   $("n0").innerHTML = `${h}${esc(m.home)}`; $("n1").innerHTML = `${esc(m.away)}${a}`;
+  const bd = document.querySelector(".board"); if (bd) { bd.style.setProperty("--home-c", tcol(m.home)); bd.style.setProperty("--away-c", tcol(m.away)); }   // dark mode: the scoreboard in the teams' colors
 }
 const teamOfP = (gid, core) => (INS(gid)?.props || []).find(r => String(r.core_id) === String(core))?.team || null;
 // the rules a lane must clear (EV at the price shown, floor and ceiling; chance to hit): props = the board's; game lines, specials and alt lines = the NBA page's
