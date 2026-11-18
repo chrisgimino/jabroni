@@ -1055,16 +1055,14 @@ const slotPar = s => BY(s) ? BY(s).parlay : !S.book ? s.parlay : s.parlay?.book 
 // ---------------------------------------------------------------- lanes
 const bkTag = () => S.book ? `${esc(S.book)} only · ` : "";
 const allGames = () => games().map(g => g.schedule_id);
-const gameLbl = gid => { const g = games().find(x => String(x.schedule_id) === String(gid)); return g ? `${g.away} at ${g.home}` : ""; };
+const gameLbl = gid => { const g = games().find(x => String(x.schedule_id) === String(gid)); return g ? `${g.away}-${g.home}` : ""; };
 const kickOf = gid => { const g = games().find(x => String(x.schedule_id) === String(gid)); return g?.kick ? Date.parse(g.kick) : null; };
-const tchip = t => t ? `<span class="tchip" style="background:${tcol(t)}">${esc(t)}</span>` : "";
+const tchip = t => "";
 const teamOfP = (gid, core) => (INS(gid)?.props || []).find(r => String(r.core_id) === String(core))?.team || null;
-// the rules a lane must clear (EV at the price shown, floor and ceiling; chance to hit): props = the board's tested rules;
-// game lines, specials and alt lines = the NBA page's (not backtested on NFL yet)
+// the rules a lane must clear (EV at the price shown, floor and ceiling; chance to hit): props = the board's; game lines, specials and alt lines = the NBA page's
 const LRULE = { prop: [.05, .35], game: [.06, .35], special: [.15, .60], alt: [.20, .80] };
 const LMIN = { game: .25, special: .08, alt: .25 };
 const MAXP = 300, LANE_N = { game: 6, slate: 10 };
-const TESTED_K = new Set(["rec", "rec_yds", "rush_att", "rush_yds"]);
 const PER = { game: "Game", h1: "1st half", h2: "2nd half", q1: "1st qtr", q2: "2nd qtr", q3: "3rd qtr", q4: "4th qtr" };
 const TDK = { anytime_td: "anytime TD", td2: "2+ TDs", td3: "3+ TDs" };   // the exchanges' scorer markets
 const POOL_TXT = { bet: "game lines", props: "props", td: "touchdown bets", ladders: "alt lines" };
@@ -1072,21 +1070,21 @@ function poolOf(kind, gid) {   // -> [{gid, k, team, who, what, price, book, dl,
   const ins = INS(gid); if (!ins) return [];
   const out = [], add = (k, x) => { if (x.price === null || x.price === undefined || x.p === null || x.p === undefined) return; out.push({ gid, k, books: 2, ...x, books: x.books ?? 2 }); };
   if (kind === "bet") {
-    const g = ins.game?.[S.per] || {}, pl = S.per === "game" ? "" : ` · ${PER[S.per]}`;
-    for (const r of g.moneyline?.teams || []) add("game", { fam: "ml" + S.per, ml: true, team: r.team, who: r.team, what: "to win" + pl, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, p: r.sim, books: r.books });
-    for (const r of g.spread?.teams || []) add("game", { fam: "sp" + S.per + Math.abs(r.line), team: r.team, who: r.team, what: `${r.line > 0 ? "+" : ""}${r.line}${pl}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, p: r.sim, books: r.books });
+    const g = ins.game?.game || {}, pl = "";
+    for (const r of g.moneyline?.teams || []) add("game", { fam: "ml", ml: true, team: r.team, who: r.team, what: "to win" + pl, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, p: r.sim, books: r.books });
+    for (const r of g.spread?.teams || []) add("game", { fam: "sp" + Math.abs(r.line), team: r.team, who: r.team, what: `${r.line > 0 ? "+" : ""}${r.line}${pl}`, price: r.best_price, book: r.best_book, dl: r.dl, bp: r.bp, p: r.sim, books: r.books });
     if (g.total && g.total.sim_over !== null && g.total.sim_over !== undefined) for (const sd of ["over", "under"]) { const o = g.total[sd];
-      if (o) add("game", { fam: "tot" + S.per, team: null, who: sd === "over" ? "Over" : "Under", what: `${g.total.line} total points${pl}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, p: sd === "over" ? g.total.sim_over : 1 - g.total.sim_over }); }
-    for (const a of g.alt_team_totals || []) add("game", { fam: `att${S.per}|${a.team}|${a.line}`, team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${a.line} points${pl}`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, p: a.sim, books: a.books });
-    for (const a of g.alt_lines || []) add("game", { team: null, who: a.text, what: pl ? PER[S.per] : "alt line", price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, p: a.sim, books: a.books });
-    if (S.per === "game") {
+      if (o) add("game", { fam: "tot", team: null, who: sd === "over" ? "Over" : "Under", what: `${g.total.line} total points${pl}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, p: sd === "over" ? g.total.sim_over : 1 - g.total.sim_over }); }
+    for (const a of g.alt_team_totals || []) add("game", { fam: `att|${a.team}|${a.line}`, team: a.team, who: a.team, what: `${String(a.side).toLowerCase()} ${a.line} points${pl}`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, p: a.sim, books: a.books });
+    for (const a of g.alt_lines || []) add("game", { team: null, who: a.text, what: "alt line", price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, p: a.sim, books: a.books });
+    {
       for (const a of g.winning_margin || []) add("special", { team: a.team, who: a.team, what: `wins by ${a.band}`, price: a.best_price, book: a.best_book, dl: a.dl, bp: a.bp, p: a.sim });
       for (const [key, lab] of [["overtime", "Overtime"], ["no_td", "No touchdown"]]) { const o = g[key];
         if (o) for (const sd of ["yes", "no"]) if (o[sd]) add("special", { fam: key, team: null, who: lab, what: sd, price: o[sd].best_price, book: o[sd].best_book, dl: o[sd].dl, bp: o[sd].bp, p: sd === "yes" ? o.sim : 1 - o.sim }); }
     }
   }
   if (kind === "props") for (const r of ins.props || []) {
-    if (!TESTED_K.has(r.stat_key) || r.sim_over === null || r.sim_over === undefined) continue;
+    if (r.sim_over === null || r.sim_over === undefined) continue;
     for (const sd of ["over", "under"]) { const o = r[sd];
       if (o) add("prop", { fam: `p|${r.core_id}|${r.stat_key}`, team: r.team, who: r.name, what: `${sd} ${r.line} ${String(r.stat).toLowerCase()}`, price: o.price, book: o.book, dl: o.dl, bp: o.bp, p: sd === "over" ? r.sim_over : 1 - r.sim_over, books: r.books }); }
   }
@@ -1129,7 +1127,7 @@ function ladderHTML(x, showGame) {   // the rungs climb left to right, each its 
 }
 function laneHTML(x, showGame) {
   if (x.ladder) return ladderHTML(x, showGame);
-  const be = 100 * x.be, p = 100 * x.p, col = x.team ? tcol(x.team) : "var(--accent)";
+  const be = 100 * x.be, p = 100 * x.p, col = String(x.gid) === String(S.gid) && x.team ? tcol(x.team) : "var(--accent)";
   const right = p > 78, tight = right && p - be < (mobile() ? 36 : 14);   // our label flips left of the ball near the end; both labels between line and ball
   const cap = `<span style="${be < 26 || tight ? "left:0" : `right:${100 - be}%;padding-right:6px`}">needs <b>${be.toFixed(0)}%</b></span>` +
     `<span style="${right ? `right:${Math.max(0, 100 - p)}%;padding-right:14px;text-align:right` : `left:${p}%;padding-left:16px`}">we say <b>${p.toFixed(0)}%</b></span>`;
@@ -1141,18 +1139,10 @@ function laneHTML(x, showGame) {
     <div class="track" role="img" aria-label="Needs ${be.toFixed(0)}% to break even, we say ${p.toFixed(0)}%"><span class="gap" style="left:${Math.min(be, p)}%;width:${Math.max(.5, Math.abs(p - be))}%;background:${col}"></span><span class="be" style="left:${be}%"></span><span class="ball" style="left:${p}%"></span></div>
     <div class="cap">${cap}</div></div>${tk}</li>`;
 }
-const BT_TXT = () => {
-  const t = S.prices?.tested || {};
-  return { props: `<b>Backtested.</b> ${esc(t.props || "")}`,
-    bet: `<b>Not backtested yet</b> (no NFL price history for game lines): shown when a line clears the NBA page's lane rules (EV 6–35%, 25%+ to hit), never a best bet.`,
-    td: `<b>Not backtested yet</b> (no NFL price history for scorer markets): shown when a bet clears the NBA page's rules for specials (EV 15–60%), never a best bet.`,
-    ladders: `<b>Not backtested yet</b> (no NFL price history for alt lines): rungs with EV 10–80%, −200 to +300; never a best bet.` };
-};
 function renderLanes(kind) {
   const el = $("lanes_" + kind); if (!el) return;
   const top = $("top_" + kind);
-  if (top) top.innerHTML = (kind === "bet" ? `<div class="row"><div class="seg" id="perSeg">${Object.entries(PER).map(([k, v]) => `<button data-per="${k}" aria-pressed="${S.per === k}">${v}</button>`).join("")}</div></div>` : "")
-    + `<div class="bt-note">${BT_TXT()[kind]}</div>`;
+  if (top) top.innerHTML = "";
   const mine = poolOf(kind, S.gid), good = oneSide(mine.filter(laneOK)).sort(laneRank).slice(0, LANE_N.game);
   const scope = S.laneScope || (good.length ? "game" : "slate");   // nothing here: the slate first
   el.dataset.scope = scope;
@@ -1193,10 +1183,10 @@ function pickLane(p) {   // as posted; with one book picked, the pick at that bo
 }
 function renderBest() {
   const el = $("bestBoard"), slots = (S.prices?.best_bets?.slots || []).filter(s => slotLive(s.slot)).slice().reverse();
-  const sub = `${bkTag()}3–4 picks Wed–Sat at 5 PM ET from the whole slate · tested props only`;
-  const head = `<div class="lcol" style="height:100%"><h3>This week's best bets<small>${sub}</small></h3>${cdHTML("picks")}${PRICE_NOTE ? `<div class="lnote" style="padding-bottom:0">${PRICE_NOTE}</div>` : ""}`;
-  if (!slots.length) { el.innerHTML = head + `<div class="lnote">This week's picks go up Wednesday–Saturday at 5 PM ET.</div></div>`; return; }
-  el.innerHTML = head + `<ol>` + slots.map(s => { const ps = slotPicks(s).map(pickLane);
+  const sub = `${bkTag()}3–4 picks Wed–Sat at 5 PM ET from the whole slate`;
+  const head = h => `<div class="lcol" style="height:100%"><h3>This week's best bets${h ? `<small>${sub}</small>` : ""}</h3>${cdHTML("best bets")}${PRICE_NOTE ? `<div class="lnote" style="padding-bottom:0">${PRICE_NOTE}</div>` : ""}`;
+  if (!slots.length) { el.innerHTML = head(false) + `<div class="lnote">3–4 picks Wednesday–Saturday at 5 PM ET from the whole slate.</div></div>`; return; }
+  el.innerHTML = head(true) + `<ol>` + slots.map(s => { const ps = slotPicks(s).map(pickLane);
     return `<li class="lnote slot-h">${esc(slotTitle(s.slot))}</li>` + (ps.length ? ps.map(x => laneHTML(x, true)).join("") : `<li class="lnote">No bet cleared the bar${S.book ? " at " + esc(S.book) : ""}.</li>`); }).join("") + `</ol></div>`;
 }
 
