@@ -315,6 +315,39 @@ a.bc-p:hover { filter: brightness(1.08) } a.bc-p:active { transform: translateY(
   .rtab td:nth-child(3) { grid-column: 2; grid-row: 1 } .rtab td:nth-child(4) { grid-column: 3; grid-row: 1 } .rtab td:nth-child(5) { grid-column: 4; grid-row: 1; text-align: right }
   .rtab td.t { grid-column: 1 / -1; grid-row: 2; white-space: normal; font-size: 14px; line-height: 1.35 }
 }
+
+/* ---------------------------------------------------------------- logos (the NBA page's sizes, Chris 2026-11-18) */
+img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !important; object-fit: contain; vertical-align: -4px !important; margin-right: 6px; background: none !important; display: inline-block }
+.tn img.tlogo { width: 26px; height: 26px; object-fit: contain; vertical-align: -6px; margin-right: 8px }
+.side.r .tn img.tlogo { margin: 0 0 0 8px }
+.ln-bet img { width: 30px; height: 30px; object-fit: contain; flex: 0 0 auto }
+.legs li .lgw img { width: 30px; height: 30px; object-fit: contain; display: block }
+@media (max-width: 760px) { .ln-bet img { width: 26px; height: 26px; margin-top: 1px } }
+
+/* ---------------------------------------------------------------- book picker with logos (the NBA page's) */
+#bookPick.bk-native { display: none !important }
+.bkpick { position: relative; flex: 0 0 auto }
+.bk-btn { height: 32px; min-width: 58px; display: flex; align-items: center; gap: 8px; padding: 0 10px 0 6px; border: 1px solid var(--rule-strong); border-radius: 8px;
+          background: var(--surface); color: var(--ink); font: 700 14px/1 var(--text); cursor: pointer; white-space: nowrap }
+.bk-btn.on { border-color: var(--accent) } .bk-btn.txt { padding-left: 10px }
+.bk-btn::after { content: "\25BE"; color: var(--muted); font-size: 12px; margin-left: 2px }
+.bk-tile { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; background: #fff; overflow: hidden; flex: none;
+           box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .08) }
+.bk-tile img { max-width: 22px; max-height: 22px; object-fit: contain; display: block }
+.bk-tile.best { background: var(--accent); color: #fff; font: 900 10px/1 var(--text); letter-spacing: .04em }
+.bk-tile.ini { color: #16233f; font: 900 9px/1 var(--text) }
+.bk-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 70; min-width: 230px; max-height: 70vh; overflow-y: auto; margin: 0; padding: 6px; list-style: none;
+           background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .35) }
+.bk-list .bk-tile { width: 30px; height: 30px } .bk-list .bk-tile img { max-width: 26px; max-height: 26px }
+.bk-list li { display: flex; align-items: center; gap: 10px; padding: 7px 10px 7px 7px; border-radius: 8px; cursor: pointer; font: 700 14px/1.2 var(--text); color: var(--ink) }
+.bk-list li:hover, .bk-list li:focus { background: var(--panel2); outline: none }
+.bk-list li[aria-selected="true"] { background: var(--panel2); box-shadow: inset 3px 0 0 var(--accent) }
+@media (max-width: 760px) { .bk-btn { height: 40px } .bk-btn .bk-tile { width: 30px; height: 30px } .bk-btn .bk-tile img { max-width: 26px; max-height: 26px } }
+@media (max-width: 760px) and (pointer: coarse) {
+  .bk-btn { height: 44px }
+  .bk-list { width: min(calc(100vw - 32px), 340px); max-height: 70vh; border-radius: 12px }
+  .bk-list li { min-height: 52px; font-size: 16px }
+}
 </style>
 <script>
 (function () { var t = null; try { t = localStorage.getItem("plTheme"); } catch (e) {}
@@ -1121,7 +1154,7 @@ function candAt(x, bk) {   // a bet at one book (our chance stays); [] when that
 }
 const evf = ev => ev === null || ev === undefined ? "–" : `${ev >= 0 ? "+" : ""}${(100 * ev).toFixed(1)}%`;
 const evc = ev => ev === null || ev === undefined ? "" : ev >= 0 ? "pos" : "neg";
-const tsw = t => t ? `<span class="tsw" style="background:${tcol(t)}"></span>` : "";
+const tsw = t => t ? (logoImg(t, "tsw") || `<span class="tsw" style="background:${tcol(t)}"></span>`) : "";   // logo once loaded (as NBA)
 function flashOf(key, x) {   // green / red for a moment when a play moves the bet's number toward / away from cashing
   const v = x.pv ? x.pv() : null, F = (S.flv ||= {}), was = F[key]; F[key] = v;
   if (v === null || was === undefined || was === null || v === was || R.playing === false) return "";
@@ -1218,7 +1251,32 @@ const bkTag = () => S.book ? `${esc(S.book)} only · ` : "";
 const allGames = () => games().map(g => g.schedule_id);
 const gameLbl = gid => { const g = games().find(x => String(x.schedule_id) === String(gid)); return g ? `${g.away}-${g.home}` : ""; };
 const kickOf = gid => { const g = games().find(x => String(x.schedule_id) === String(gid)); return g?.kick ? Date.parse(g.kick) : null; };
-const tchip = t => "";
+// ---------------------------------------------------------------- logos (as NBA, Chris 2026-11-18): team logos the agent pushes once to
+// nfl_logos/ (index.json: code -> file), book logos from NBA's nba_logos/books/ (same repo). A logo is drawn once its file has loaded;
+// until then (or with no file) the team's color square shows, as before.
+const LOGO = { map: null, ok: new Map(), t: 0 };
+function logoReady(u) {
+  if (!u) return false;
+  if (!LOGO.ok.has(u)) { LOGO.ok.set(u, null); const im = new Image();
+    im.onload = () => { LOGO.ok.set(u, true); clearTimeout(LOGO.t); LOGO.t = setTimeout(relogo, 200); };
+    im.onerror = () => LOGO.ok.set(u, false); im.src = u; }
+  return LOGO.ok.get(u) === true;
+}
+function relogo() {   // a logo just loaded: redraw what shows teams
+  if (!S.slate) return; paintTeams();
+  if (S.view === "replay") renderLiveBets(); else VIEWS[S.view]?.();
+}
+fetch("nfl_logos/index.json", { cache: "no-store" }).then(r => r.ok ? r.json() : {}).catch(() => ({})).then(m => { LOGO.map = m && typeof m === "object" ? m : {};
+  Object.keys(LOGO.map).forEach(t => logoReady(logoURL(t))); relogo(); });   // all 32 load up front: no tab waits on its logos
+const logoURL = t => t && LOGO.map?.[t]?.file ? `nfl_logos/${LOGO.map[t].file}` : null;
+const logoImg = (t, cls = "") => { const u = logoURL(t); return logoReady(u) ? `<img${cls ? ` class="${cls}"` : ""} src="${u}" alt="">` : ""; };
+const tchip = t => logoImg(t);
+function paintTeams() {   // the scoreboard: logo when it has loaded, else the dots' color swatch
+  const m = G(S.gid)?.matchup; if (!m) return;
+  const h = logoImg(m.home, "tlogo") || `<i style="background:${homeFill(m.home)};box-shadow:inset 0 0 0 1px #fff"></i>`;
+  const a = logoImg(m.away, "tlogo") || `<i style="background:#fff;box-shadow:inset 0 0 0 2px ${tcol(m.away)}"></i>`;
+  $("n0").innerHTML = `${h}${esc(m.home)}`; $("n1").innerHTML = `${esc(m.away)}${a}`;
+}
 const teamOfP = (gid, core) => (INS(gid)?.props || []).find(r => String(r.core_id) === String(core))?.team || null;
 // the rules a lane must clear (EV at the price shown, floor and ceiling; chance to hit): props = the board's; game lines, specials and alt lines = the NBA page's
 const LRULE = { prop: [.05, .35], game: [.06, .35], special: [.15, .60], alt: [.20, .80] };
@@ -1436,6 +1494,39 @@ function renderResults() {
      <td class="${r.grade}">${esc(r.grade)}</td><td>${(+r.units) >= 0 ? "+" : ""}${(+r.units).toFixed(2)}${r.kind === "parlay" && r.grade === "win" ? " est." : ""}<br><span style="color:var(--muted)">bet ${uTxt(+(r.stake || 1))}</span></td></tr>`).join("")}</table></div>`;
   el.innerHTML = h;
 }
+
+// ---------------------------------------------------------------- book picker with logos (the NBA page's, Chris 2026-11-11): logo only when
+// closed, logo + name in the list. The hidden native select still holds the choice (its change event runs everything as before).
+(() => {
+  const sel = $("bookPick"); if (!sel) return;
+  const BL = {}, wrap = document.createElement("div"), btn = document.createElement("button"), list = document.createElement("ul");
+  wrap.className = "bkpick"; btn.type = "button"; btn.className = "bk-btn"; btn.setAttribute("aria-haspopup", "listbox"); btn.setAttribute("aria-expanded", "false");
+  list.className = "bk-list"; list.setAttribute("role", "listbox"); list.setAttribute("aria-label", "Book"); list.hidden = true;
+  sel.classList.add("bk-native"); sel.after(wrap); wrap.append(btn, list);
+  const ini = v => esc((v.match(/[A-Z0-9]/g) || [v.slice(0, 2)]).join("").slice(0, 4).toUpperCase());
+  const tile = v => v ? (BL[v] ? `<span class="bk-tile"><img src="nba_logos/books/${encodeURIComponent(BL[v])}" alt=""></span>` : "") : `<span class="bk-tile best">BEST</span>`;
+  const paint = () => {
+    const v = sel.value, o = sel.selectedOptions[0], name = v || "Best price";
+    btn.classList.toggle("on", !!v); btn.classList.toggle("txt", !(v && BL[v]));
+    btn.innerHTML = v && BL[v] ? tile(v) : esc(v || (mobile() ? "Best" : "Best price"));
+    btn.title = `Book: ${o ? o.textContent : name}`; btn.setAttribute("aria-label", btn.title);
+    const opts = [...sel.options].sort((a, b) => (a.value ? 1 : 0) - (b.value ? 1 : 0));   // Best price first
+    list.innerHTML = opts.map(x => `<li role="option" tabindex="-1" data-v="${esc(x.value)}" aria-selected="${x.value === v}">${tile(x.value) || `<span class="bk-tile ini">${ini(x.value)}</span>`}<span>${esc(x.value ? x.value : x.textContent)}</span></li>`).join("");
+  };
+  const close = () => { list.hidden = true; btn.setAttribute("aria-expanded", "false"); };
+  btn.addEventListener("click", e => { e.stopPropagation(); const open = list.hidden; list.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+    if (open) (list.querySelector('[aria-selected="true"]') || list.firstElementChild)?.focus(); });
+  list.addEventListener("click", e => { const li = e.target.closest("li[data-v]"); if (!li) return; close();
+    if (sel.value !== li.dataset.v) { sel.value = li.dataset.v; sel.dispatchEvent(new Event("change", { bubbles: true })); } paint(); btn.focus(); });
+  list.addEventListener("keydown", e => { const li = document.activeElement?.closest?.("li[data-v]");
+    if (e.key === "Escape") { close(); btn.focus(); } else if (e.key === "ArrowDown") { e.preventDefault(); (li?.nextElementSibling || list.firstElementChild)?.focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); (li?.previousElementSibling || list.lastElementChild)?.focus(); } else if ((e.key === "Enter" || e.key === " ") && li) { e.preventDefault(); li.click(); } });
+  document.addEventListener("click", e => { if (!wrap.contains(e.target)) close(); });
+  sel.addEventListener("change", paint);
+  new MutationObserver(paint).observe(sel, { childList: true, subtree: true });
+  paint();
+  fetch("nba_logos/books/index.json", { cache: "no-store" }).then(r => r.ok ? r.json() : {}).then(j => { Object.assign(BL, j || {}); paint(); }).catch(() => {});
+})();
 const VIEWS = { replay: () => renderReplay(false), best: renderBest, parlay: renderParlay, bet: renderBet, props: renderProps, td: renderTD, ladders: renderLadders, results: renderResults };
 function showView(v) {
   S.view = v; document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === v));
@@ -1444,7 +1535,7 @@ function showView(v) {
 $("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (b) { if (S.view === "replay") { stop(); stopLoop(); } showView(b.dataset.view); } });
 function pick(gid) {
   stop(); R.ready = false; S.gid = gid; const m = G(gid)?.matchup; if (!m) return;
-  $("n0").innerHTML = `<i style="background:${homeFill(m.home)};box-shadow:inset 0 0 0 1px #fff"></i>${esc(m.home)}`; $("n1").innerHTML = `${esc(m.away)}<i style="background:#fff;box-shadow:inset 0 0 0 2px ${tcol(m.away)}"></i>`;
+  paintTeams();
   $("l0").textContent = "Home"; $("l1").textContent = "Away";
   renderReplay(true); if (S.view !== "replay") VIEWS[S.view]();
 }
