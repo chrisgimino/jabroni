@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PickLabs NHL Sims</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAL9ElEQVR42u2be4xc1X3HP79z7p2Z3Z19P/1YbK8NNoXgEKsk4AjcYLUoDYHQ5gFBRU2AEkpjl4ZCWikOadIQwCERIShCVJiqeSwhMaQRaQWogdiCVuFhxa0X4/Lyet+zu7Ovmbn3nNM/7szaJth7Z3ZN/ciR7l+je+f8Xt/f9/c7vyOU1pYtittvtxr49N//+sK3MnrzW4P5D2Rnwo6hyRBECSfScta11XrUprz+ZW3J55Y1mW9t+9q6Z8whsgIIwMe7u/Ujn/iE2fnki0tu/r791u4385dPmaRngxyIRRQn5HIWcArlp6jRhfA9y1Lb7/4smy+44NzeksxS0sbGT21f/JuJ9qcH83WrbX7EicKJiOAQd2LKH1lXcM455yyiks2yKJXtWdc28KHH/+nyA1u2bFEC3fpnP1vbcd39mSf7pxJrhMkAlM9JuWzgSPtL0sGebX/duHHjxpf7tZZH3CuJqx7eN1r/QezYSSw8gGghH0y5xvaeN8a6+l6+5AdyzRd3ru/+T/fMTME6UWhOgeWsmOqEyJXnyYXq1UH9hbxNKVGOU2WJsuRcSu0Z0l/w+jJmvQ1ClOaUUYGAsoUcB0ZY703kXStiACkrzysB9S5RA+fAOodbMAuJIIbpQLd6Q5PGiZLyUp2AyVvMjI1yjTtaHipH0nd4XwBPIKHQCYUA1jjmowtHxOsGs6HzRMq3vM1b3remlksvaMI5x5E+IVKZtQEsMJWzZEYL7D2QY8/r04wM56Pd13h4nmCMmy8YiFfuO0oJZtrwyQ+18LdXd75rcTuUKbBzV5YfPTnE9h0ZZsYDVJ0P8wwNrxL3QQuLGn1C4wiNw9PHDgtEQInQ2pTgsg0tXLahhT2vTfP1bW/y8BMD4Ct0UmEr9AavIhdVwqKWJJ4WREC/C2BYAkKANSuq2fblNVyxoYW/+MZeBkYLeDVeRSGhyuXW1jp0laK92a8I5+brCUqE0DgKgeWyDS08+733smZZNeFkiK7AE1W5CdRZR01K01JfVIDIvNA4smykWGPdbFiVHmMd1h1Uggh4Wkj4CmMdp59WxZPfOYeVS6sIp03Zqbn8Qtc66tIe9bX+vF1aZi0bgatWgqcPf7QSSjJNzRj6h/P0vDHNr14aJwwdxjiWtCZ5/M6zqKvSENqyso9XnhsKhLC40ac6pSpOdaX3rHVMzRiyU4axbEhmImAgEzAyGjI4XmD/cIHMRMjYeMDwRMhQNiQ3YxgbKfD+tfU8fd85iBKC0PF7K2vYuqmL677Sg27wcTHxwCt30xhHW1MCAGNdWQBorUMpofvfBvnqQ28iCUUmG5CZNMzMmGjTBRuRADnkUQL64KM84bu3rCKZiMLAL3KCaz+6iAd/PsBzL49HoGjdwoMg1tFRBMBy86+IYJ3jkvVNnN5Zxa7nRtk/XGC6YMEXVErhNfj4TT5+o4/f4OPX+3hpD51SJFIaJkNuuGIRa89IH2YAV9zgrVctBeNwcqwwwMGKtmTFbo8T0tUej955Frdt7sKzEaiJixRqzDsDIUCYN7R1JLn9s8ux7nAA1lpwDi45v4kVK2owOUMc56xIAe3NiUqwE2McSoFSkBkPaK/30Z5g7dzcXpRgJw23f2YZLY0+1rnDBCyl6FRSsXFdPeRsrIzglSsEvtDZnozNAUrC6WIc7x/I8+D2Ph741356e3NI3dxb0EoIp0LOfW8d11626IjYU1Li+rPreKD7wMKDoLUOSSoWtybnzADGugi/ihvd+8Y03/1JHw8/MUBmuADVGq/Rj8XeHCAO7rmpKyqCit8+UvG1qrMKEooYGBhfASJRGVpX49HScGQSZGxUHZYs9FLPBPc90scPnxpicjyAtMZv9DHWxRLe00IwFvCpj3Rw0bqGo2YeKaqltcEnUaUomChM3IIoAMBAS1rTUKN/y0LWuFkyA7DjpXHu7e7l0WdHCKcNpL1ZwcOYOVoAEzrS9T5fv355RJ6O5nbFn1IJRUILBeuO3q8oKwREwBga6n1SqYMKMMahtczy8F/syPDtR3r5xfOjEFik1sNr8LFmbsFLhi25rvaEYCTg1s93sXxJau7K00VKCEJLUPqIW6gQKHYpFjf5OAdB6Ej4keBh6Hjsl8Pc293LL18Yj5puaY2q1lgTz9W1FsIZAwKSUCggnDacfkYNN1+5BGvnrjpdUQMj2ZB8zqKSak6u4pXLApe2JhGBhC/M5Aw//PdB7v1xHy/+dxa0Qtd6ketah4nRuFJKcM4RjhRYfWYtnhZ2vzaFqtKYguWOG5ZTndIY61Bz8e7i373el4e8jb4xh/LL6wcYx6rOKqZnDA/85AD3P9ZPz76pqF9X7yOOWPSz5FHaE4IpAw5u+OQS7tq0km0/7+emO/YSGLjkwhau+IPW2JS79M/P7c6Ci5emYyvAWIfUaB5/doTvPdbP3j0TUKPxGqKQKKcjo3XE3YNMwNo1abZuXsnF5zUCcObyasRXJBKKu25cUZZ9tIq++9SvxyCpZhsoC6IA54CE4pkXxkGD15zAxUxlhzU1lBBOhvi+4rbrlnHbn59GdUoThBHAnbOqBucc13+sg7NX1cRuuZVCZOeuLLtemURXe1jrFrgl5kBXKyjS2rKsUwRLOxZw0fsb2LppJevOrJ3dvO9FQjY3JLh0fTO3Xt2Jc2W02xyIgnu6eyGMX6aLXPTsMT0QmrV6NqSu1uMr1y7j81cuRQRCE8X2oZu1FvpH8rNsM1Z4FlPxr14a46IbdkG1imYDjkVTtGyrFyx2KuQjG1q4e1MXq5dVR5hh39m1lYLFrcki6YlXn4jATN7yubv2YQU0Qtyjk2OiACVR9RaOBbS3JvnHW1bxmY8uikraYkwfjdHFFf5QRd545yv85n8mYtcXx0wB2isSmrzjqg+3c8dfdtHZkSwCksQCtFiWL5re08IX73uNh37ah188qzim5wJHIzTgCDMBKzqr+MZfdfHxja2HxehCnQ+YotWdg81bX+Xb/7Ifr6F84RdMAZ4nBNMGjOP6P13M1z63gpZi4SMi8xZ+9lDERbjiaeGV16e58c69PPX8KF6DH5uALagCtBKMiwjNWWek2bqpiz86v+kdrW4qONGVYico6qVE3xoaLXD/jw+w9Qe9ZCdD/AotPy8FiESWCCZCtFbcfM1pfOm6ZaSrdbHt9dtWn48XZCdDXuyZ5NGnh+j+jxEG+nJQ6+HVevMSviIFHCQ0Bc47t557Nq3kgrX1B9vkbxO0hOgPbu+j53+n8VLqqCVqKTtYaxkYD3h1f459B3IcGMhDYGc7SbZMFrogREjriNCkazR/d81p3PJnnXhFXq/eRmgOFX56xrD08ucZ7c1BUkV9/1j+XxyO8BUqIWiJ2mFuAambFx/lIZwI+cMPNPLNTSs5a1XNEa3+9pXJhoSA15ZEqfLOE2bHYyyELDxp9eKCXTgRcvUft/PPX15zGKE5GlcvTY+MZkMmJgySFEzIcbVUrE5YYGltS3Lv36w6TPi49XkmG4C1yHE4bq3mprWCy1k++J5aGmq9WRJSzrzPW8N5CNxsKjvhPADj6GhO4BwVAdBgJoTjdAgx9tFYc4NfsQsPjuQ5XpeKFccCSyo4Dyyt3kxQySnk8eUBbQ2JsmeClBIc0DecByULmr/ftTToXDQWV5eOaGdcTu9KPEYLI+Mh6PhNiuNGAaX+vl+tOburanZupyz3H8izrzeHJE5QD5Di2Oo/bHuL5no/do/euogvPLFzhInpEJXUuONQA8KFz9i55oUdwER4cHbHxT1LA1Iq1hEV/083y7zWtJahCTMLWEeSxWuobCzOOoe1x99lKmsd7fWeeLVJGRrK6lYwR21FhuZkuk7hHE5Ltc+QWtSkdyg/hYtXpJ4c4oNViRSLm70dalWbuTupctZZ4ZRRgFWkJGfXtJq7RQu875qdP31hf/3lNhg+ya/NRXcHld/i/35ndvt/PXT+x5Rx3fpLf9J8U2siu8eR9sEGJ7PwjrTfkZzY89VPN91kXLdWbNntLr10de/ZdQMXd6QLPeK3+C7qQVuR2AOXHK9XZ0Vw4Kyzzonf4i+pLfSsa++/eOPG1b1btux2v7s8zSl+ff7/AL8H2LVgSpHpAAAAAElFTkSuQmCC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Big+Shoulders+Display:wght@700;800;900&display=swap">
+<style>
+/* NHL PickLabs NHL Sims (Chris 2026-11-19): the NBA pages' layout and themes, a rink instead of the court. One screen: header -> scoreboard
+   -> tabs -> the one view on screen (it scrolls inside, the page never does). */
+:root {
+  --ground: #e5f0f7; --surface: #f3f9fd; --ink: #0c2138; --muted: #58778f; --faint: #829bae; --rule: #ccdfed; --rule-strong: #a5c2d7;
+  --panel2: #dbe9f3; --accent: #22496f; --accent-soft: #dbe9f3; --accent-ink: #ffffff;
+  --good: #2f7d32; --good-soft: #dff2db; --bad: #c0392b; --bad-soft: #f8e1de; --warn: #9a6400;
+  --board: linear-gradient(180deg, #1d3a60, #142c4c); --board-ink: #ffffff; --board-muted: #c9dbe7; --board-rule: rgba(255, 255, 255, .18);
+  --hdr: #142c4c; --hdr-ink: #ffffff; --sel: #142c4c; --sel-ink: #ffffff; --bar: #142c4c; --bar-ink: #ffffff; --bar-sub: #c9dbe7;
+  --bet: #1d3a60; --bet-ink: #ffffff; --ctl-bg: #ffffff; --ctl-ink: #0c2138; --ctl-rule: #ffffff;
+  --ice: #f4f8fb; --ice2: #e6eef4; --boards: #0c2138; --redline: #c8102e; --blueline: #1d4f91; --crease: #9fd0ef;
+  --t0: #2a6fd6; --t1: #d4561f;
+  --text: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif; --disp: "Big Shoulders Display", "Archivo", sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --ground: #0b1f36; --surface: #142c4c; --ink: #e8f0f6; --muted: #8fa2b6; --faint: #6c8299; --rule: #264765; --rule-strong: #31567a;
+  --panel2: #183353; --accent: #9ccae1; --accent-soft: rgba(156, 202, 225, .14); --accent-ink: #0b1f36;
+  --good: #aeef9c; --good-soft: #26481b; --bad: #ff8a7a; --bad-soft: rgba(255, 111, 94, .16); --warn: #ffd27a;
+  --board: linear-gradient(180deg, #183353, #142c4c); --board-ink: #ffffff; --board-muted: #9ccae1; --board-rule: #264765;
+  --hdr: #142c4c; --hdr-ink: #ffffff; --sel: #c9dbe7; --sel-ink: #0b1f36; --bar: #c9dbe7; --bar-ink: #0b1f36; --bar-sub: #31567a;
+  --bet: #c9dbe7; --bet-ink: #0b1f36; --ctl-bg: #183353; --ctl-ink: #e8f0f6; --ctl-rule: #31567a;
+  --ice: #dfe8ef; --ice2: #cbd7e1; --boards: #0b1f36;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0; overflow: hidden; background: var(--ground); color: var(--ink) }
+body { font: 400 14px/1.4 var(--text); font-variant-numeric: tabular-nums }
+button, select, input { font: inherit; color: inherit }
+button { cursor: pointer }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+[hidden] { display: none !important }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important } }
+.app { height: 100%; height: 100dvh; display: flex; flex-direction: column; gap: 8px; max-width: 1440px; margin: 0 auto;
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) }
+/* header */
+.top { position: relative; z-index: 60; display: flex; align-items: center; gap: 10px; min-width: 0; color: var(--hdr-ink);
+  padding: max(10px, env(safe-area-inset-top, 0px)) 0 10px }
+.top::before { content: ""; position: absolute; top: 0; bottom: 0; left: -100vmax; right: -100vmax; z-index: -1; background: var(--hdr); border-bottom: 1px solid var(--rule) }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 18px; white-space: nowrap }
+.brand .an { display: block; height: 26px } .brand .lg { font: 800 13px/1 var(--text); letter-spacing: .08em; padding: 3px 6px; border: 1px solid rgba(255,255,255,.45); border-radius: 4px }
+.grow { flex: 1; min-width: 0 }
+.top select, .thm { background: var(--ctl-bg); color: var(--ctl-ink); border: 1px solid var(--ctl-rule); border-radius: 6px; min-height: 32px; padding: 0 8px }
+#gamePick { width: 100%; max-width: 360px; font-weight: 700 }
+#bookPick { max-width: 210px; font-weight: 600 } #bookPick.on { box-shadow: 0 0 0 2px var(--accent) inset }
+.upd { color: #c9dbe7; font-size: 12px; white-space: nowrap }
+.thm { min-width: 34px; font-size: 15px; line-height: 1 }
+@media (max-width: 760px) { .top { flex-wrap: wrap; row-gap: 6px } .brand span { display: none } .upd { display: none } #bookPick { order: 9; flex: 1; max-width: none } }
+/* scoreboard */
+.board { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; background: var(--board); color: var(--board-ink);
+  border-radius: 10px; padding: 8px 14px; border: 1px solid var(--rule); position: relative; overflow: hidden }
+.side { display: flex; align-items: center; gap: 10px; min-width: 0 } .side.r { justify-content: flex-end; text-align: right }
+.tn { font: 800 18px/1.1 var(--disp); letter-spacing: .02em; text-transform: uppercase; display: flex; align-items: center; gap: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.side.r .tn { justify-content: flex-end }
+.tlogo { width: 30px; height: 30px; object-fit: contain }
+.tmeta { color: var(--board-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.sc { font: 900 40px/1 var(--disp); min-width: 34px; text-align: center; transition: transform .2s }
+.sc.pop { animation: pop .9s ease-out }
+@keyframes pop { 0% { transform: scale(1) } 25% { transform: scale(1.45); color: #ffdf5e } 100% { transform: scale(1) } }
+.clk { text-align: center; display: flex; flex-direction: column; align-items: center; min-width: 96px }
+.clk b { font: 700 12px/1 var(--text); color: var(--board-muted); text-transform: uppercase; letter-spacing: .08em }
+.clk strong { font: 800 28px/1.1 var(--disp) } .clk small { color: var(--board-muted); font-size: 11px }
+.pp { font: 800 11px/1 var(--text); letter-spacing: .06em; background: #ffdf5e; color: #1a1a1a; border-radius: 4px; padding: 3px 5px; margin-top: 3px }
+.board.goal::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(255, 40, 40, .55), transparent 70%); animation: strobe .5s steps(2) 6 }
+@keyframes strobe { 0% { opacity: 1 } 50% { opacity: .1 } 100% { opacity: 1 } }
+@media (max-width: 760px) { .tn { font-size: 15px } .sc { font-size: 32px } .tmeta { display: none } .tlogo { width: 24px; height: 24px } }
+/* tabs */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--rule-strong); overflow-x: auto; scrollbar-width: none; flex: 0 0 auto }
+.tabs::-webkit-scrollbar { display: none }
+.tabs button { flex: 0 0 auto; background: none; border: 1px solid transparent; border-bottom: 0; padding: 7px 12px; font-weight: 700; color: var(--muted); border-radius: 6px 6px 0 0; white-space: nowrap }
+.tabs button[aria-selected="true"] { background: var(--sel); color: var(--sel-ink) }
+.views { flex: 1; min-height: 0; position: relative }
+.view { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 8px; min-height: 0 }
+.scroll { overflow: auto; min-height: 0; flex: 1 }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; min-height: 0 }
+.seg { display: inline-flex; border: 1px solid var(--sel); border-radius: 7px; overflow: hidden; flex: 0 0 auto }
+.seg button { background: none; border: 0; padding: 5px 10px; font-weight: 700; font-size: 13px; color: var(--ink) }
+.seg button[aria-pressed="true"] { background: var(--sel); color: var(--sel-ink) }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.chip { border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 700 }
+.chip[aria-pressed="true"] { background: var(--sel); color: var(--sel-ink); border-color: var(--sel) }
+.note { color: var(--muted); font-size: 12px }
+.empty { padding: 30px 16px; text-align: center; color: var(--muted) }
+/* replay */
+.rp { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 8px; flex: 1; min-height: 0 }
+.rp-left { display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 8px }
+.rinkbox { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center }
+#rink { width: 100%; height: 100%; max-height: 100%; display: block }
+#rink .ice { fill: var(--ice) } #rink .boards { fill: none; stroke: var(--boards); stroke-width: 1.4 }
+#rink .red { stroke: var(--redline); fill: none } #rink .blue { stroke: var(--blueline); fill: none } #rink .dotr { fill: var(--redline) } #rink .dotb { fill: var(--blueline) }
+#rink .crease { fill: var(--crease); stroke: var(--redline); stroke-width: .25 }
+#rink .net { fill: rgba(255,255,255,.6); stroke: var(--redline); stroke-width: .6 }
+#rink .bench { fill: var(--ice2); stroke: var(--boards); stroke-width: .4 }
+#rink .lbl { font: 700 3px/1 var(--text); fill: #58778f; letter-spacing: .06em; text-transform: uppercase }
+#rink .pl circle { stroke: #fff; stroke-width: .5 } #rink .pl text { font: 800 2.2px/1 var(--text); fill: #fff; text-anchor: middle; dominant-baseline: central; pointer-events: none }
+#rink .pl .nm { font: 700 2px/1 var(--text); fill: #0c2138; dominant-baseline: hanging }
+#rink .pl.g circle { stroke: #000; stroke-width: .6 }
+#rink .puck { fill: #111 }
+#rink .shot { stroke-width: .5 } #rink .shot.goal { stroke: #000 }
+#rink .light { fill: #ff2b2b; opacity: 0 } #rink .light.on { animation: lamp .35s steps(2) 10 }
+@keyframes lamp { 0% { opacity: 1 } 50% { opacity: .15 } 100% { opacity: 1 } }
+.siren { position: absolute; inset: 0; overflow: hidden; border-radius: 10px; pointer-events: none; display: flex; align-items: center; justify-content: center; flex-direction: column; opacity: 0 }
+.siren.on { animation: siren 2.6s ease-out forwards }
+.siren .beam { position: absolute; inset: 0; background: conic-gradient(from 0deg, rgba(255,30,30,.42), transparent 25%, rgba(255,30,30,.42) 50%, transparent 75%, rgba(255,30,30,.42));
+  animation: spin .45s linear infinite; mix-blend-mode: multiply }
+.siren .gl { position: relative; font: 900 64px/1 var(--disp); color: #fff; text-shadow: 0 0 18px #ff1f1f, 0 3px 0 #8b0000; letter-spacing: .06em }
+.siren .who { position: relative; margin-top: 6px; font: 800 16px/1.2 var(--text); color: #fff; background: rgba(0,0,0,.6); padding: 4px 10px; border-radius: 6px; text-align: center }
+@keyframes spin { to { transform: rotate(360deg) } }
+@keyframes siren { 0% { opacity: 0; transform: scale(.9) } 8% { opacity: 1; transform: scale(1) } 80% { opacity: 1 } 100% { opacity: 0 } }
+.callout { position: absolute; left: 10px; top: 10px; background: rgba(12, 33, 56, .86); color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 12px; font-weight: 700; max-width: 70%; pointer-events: none }
+.ctl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap }
+.btn { border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 7px; padding: 5px 12px; font-weight: 700 }
+.btn.primary { background: var(--sel); color: var(--sel-ink); border-color: var(--sel) }
+.scrub { flex: 1; min-width: 160px; position: relative } .scrub input { width: 100% }
+.ticks { position: relative; height: 12px; font-size: 10px; color: var(--muted) } .ticks span { position: absolute; transform: translateX(-50%) }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted) } .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: -1px }
+.rp-right { display: flex; flex-direction: column; min-height: 0 }
+.rp-right .panel { display: flex; flex-direction: column; flex: 1; min-height: 0 }
+.rhd { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--rule) }
+.rhd b { font: 800 15px/1 var(--disp); text-transform: uppercase; letter-spacing: .04em }
+.feed { list-style: none; margin: 0; padding: 0 } .feed li { padding: 6px 10px; border-bottom: 1px solid var(--rule); font-size: 13px; display: flex; gap: 8px }
+.feed li .t { color: var(--muted); flex: 0 0 64px; font-size: 12px } .feed li.goal { background: rgba(255, 60, 60, .12); font-weight: 700 } .feed li.cur { outline: 2px solid var(--accent); outline-offset: -2px }
+.tmk { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px }
+@media (max-width: 900px) { .rp { grid-template-columns: 1fr; grid-template-rows: minmax(220px, 1.1fr) minmax(160px, 1fr) } }
+/* bets panel (replay) */
+.bt { padding: 7px 10px; border-bottom: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center }
+.bt .bl { font-weight: 700; font-size: 13px } .bt .bs { font-size: 12px; color: var(--muted) } .bt .st { font-size: 12px; font-weight: 700 }
+.bt.won { background: var(--good-soft) } .bt.lost { background: var(--bad-soft) } .bt .st.up { color: var(--good) } .bt .st.dn { color: var(--bad) }
+/* bet lanes */
+.lanes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 8px; align-content: start }
+.lcol { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; min-width: 0 }
+.lcol > h3 { margin: 0; padding: 9px 12px; background: var(--bar); color: var(--bar-ink); font: 800 16px/1.1 var(--disp); text-transform: uppercase; letter-spacing: .04em; display: flex; justify-content: space-between; gap: 8px; align-items: baseline }
+.lcol > h3 small { color: var(--bar-sub); font: 600 11px/1.2 var(--text); text-transform: none; letter-spacing: 0 }
+.lane { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; padding: 9px 12px; border-bottom: 1px solid var(--rule); align-items: center }
+.lane:last-child { border-bottom: 0 }
+.ln-bet { font-weight: 800; font-size: 14px; line-height: 1.25 } .ln-ctx { font-size: 12px; color: var(--muted) }
+.track { grid-column: 1 / -1; position: relative; height: 10px; border-radius: 6px; background: var(--panel2) }
+.track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--accent); opacity: .85 }
+.track .be { position: absolute; top: -3px; width: 3px; height: 16px; background: var(--ink); border-radius: 2px }
+.tkt { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 82px; padding: 5px 8px; border-radius: 8px; background: var(--bet); color: var(--bet-ink); text-decoration: none; line-height: 1.1 }
+.tkt b { font: 900 18px/1 var(--disp) } .tkt small { font-size: 10px; opacity: .85 } .tkt em { font-style: normal; font: 800 9px/1 var(--text); text-transform: uppercase; letter-spacing: .08em; margin-top: 3px }
+.tkt.off { background: var(--panel2); color: var(--ink) }
+.sig { display: inline-block; font: 800 10px/1 var(--text); text-transform: uppercase; letter-spacing: .05em; padding: 3px 5px; border-radius: 4px; margin-left: 6px; vertical-align: 1px }
+.sig.strong { background: var(--good-soft); color: var(--good) } .sig.lean { background: rgba(214, 150, 20, .16); color: var(--warn) }
+.ev { font-weight: 800 } .ev.up { color: var(--good) } .ev.dn { color: var(--bad) }
+.lnote { padding: 12px; color: var(--muted); font-size: 13px }
+/* ladders */
+.rungs { display: flex; gap: 6px; flex-wrap: wrap; grid-column: 1 / -1 }
+.rung { display: flex; flex-direction: column; align-items: center; padding: 5px 8px; border-radius: 7px; background: var(--panel2); text-decoration: none; color: var(--ink); min-width: 70px; border-bottom: 3px solid var(--sel) }
+.rung b { font: 800 14px/1 var(--text) } .rung span { font-size: 11px; color: var(--muted) } .rung i { font-style: normal; font: 900 15px/1.2 var(--disp) }
+/* best bets / parlays */
+.cards { list-style: none; margin: 0; padding: 0 }
+.bc { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--rule); align-items: center }
+.bc-k { font: 700 11px/1.2 var(--text); color: var(--muted); text-transform: uppercase; letter-spacing: .05em } .bc-b { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 6px }
+.bc-s { font-size: 12px; color: var(--muted) } .bc-s .was { color: var(--warn) } .bc.past { opacity: .62 }
+.tsw { width: 20px; height: 20px; object-fit: contain }
+.pcard { padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; border-bottom: 1px solid var(--rule) }
+.pcard h4 { margin: 0 0 4px; font: 800 15px/1.2 var(--disp); text-transform: uppercase } .pcard .ps { font-size: 12px; color: var(--muted); margin-bottom: 6px }
+.legs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px }
+.legs li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 8px; border: 1px solid var(--rule); background: var(--panel2); border-radius: 6px; font-size: 13px }
+.legs li.past { opacity: .6 } .legs li span { color: var(--muted); font-size: 12px }
+.lgo { margin-left: 6px; padding: 2px 6px; border-radius: 5px; background: var(--bet); color: var(--bet-ink); font: 800 10px/1.2 var(--text); text-decoration: none; text-transform: uppercase }
+/* tables (box, players, results): the name column stays put on horizontal scroll */
+.tw { overflow: auto; max-width: 100% }
+table.t { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px }
+table.t th, table.t td { padding: 5px 8px; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap }
+table.t th { position: sticky; top: 0; background: var(--panel2); z-index: 2; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); cursor: pointer }
+table.t th:first-child, table.t td:first-child { position: sticky; left: 0; text-align: left; background: var(--surface); z-index: 1; font-weight: 700; box-shadow: 1px 0 0 var(--rule) }
+table.t th:first-child { z-index: 3; background: var(--panel2) }
+table.t tr.tot td { font-weight: 800 } table.t td.l { text-align: left }
+.twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 8px } @media (max-width: 900px) { .twocol { grid-template-columns: 1fr } }
+.kpis { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 12px }
+.kpi { background: var(--panel2); border-radius: 8px; padding: 8px 12px; min-width: 110px } .kpi b { display: block; font: 900 22px/1 var(--disp) } .kpi span { font-size: 11px; color: var(--muted) }
+.tip { position: fixed; z-index: 99; background: #0c2138; color: #fff; padding: 5px 8px; border-radius: 6px; font-size: 12px; pointer-events: none }
+.warnbar { margin: 0; padding: 8px 12px; border-radius: 8px; background: var(--accent-soft); font-size: 12px; color: var(--ink) }
+</style>
+<script>
+(function () { var t = null; try { t = localStorage.getItem("plTheme"); } catch (e) {}
+  if (false) t = "dark";
+  if (t !== "light" && t !== "dark") t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", t); })();
+</script>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><img class="an" alt="PickLabs" src="data:image/png;base64,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"><span class="lg">NHL</span><span>Sims</span></div>
+    <div class="grow"><select id="gamePick" aria-label="Game"></select></div>
+    <select id="bookPick" aria-label="Book: best price or one book's prices"></select>
+    <span class="upd" id="upd"></span>
+    <button class="thm" id="themeBtn" type="button" aria-label="Dark theme" >&#9790;</button>
+  </header>
+
+  <section class="board" id="board" aria-live="polite">
+    <div class="side"><div style="min-width:0"><div class="tn" id="n0"></div><div class="tmeta" id="l0"></div></div><div class="sc" id="s0">0</div></div>
+    <div class="clk"><b id="pLbl">1st</b><strong id="cLbl">20:00</strong><small id="simLbl">typical game</small><span class="pp" id="ppLbl" hidden></span></div>
+    <div class="side r"><div class="sc" id="s1">0</div><div style="min-width:0"><div class="tn" id="n1"></div><div class="tmeta" id="l1"></div></div></div>
+  </section>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button role="tab" data-view="replay" aria-selected="true">Replay</button>
+    <button role="tab" data-view="best" aria-selected="false">Best bets</button>
+    <button role="tab" data-view="parlay" aria-selected="false">Parlay</button>
+    <button role="tab" data-view="bet" aria-selected="false">Betting</button>
+    <button role="tab" data-view="props" aria-selected="false">Props</button>
+    <button role="tab" data-view="scorers" aria-selected="false">Goal scorers</button>
+    <button role="tab" data-view="ladders" aria-selected="false">Ladders</button>
+    <button role="tab" data-view="box" aria-selected="false">Box score</button>
+    <button role="tab" data-view="players" aria-selected="false">Players</button>
+    <button role="tab" data-view="results" aria-selected="false">Results</button>
+  </nav>
+
+  <main class="views" id="views">
+    <section class="view" data-v="replay">
+      <div class="rp">
+        <div class="panel rp-left">
+          <div class="rinkbox" id="rinkbox">
+            <svg id="rink" viewBox="-106 -55 212 110" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Rink with the twelve players of the replayed sim">
+              <defs><clipPath id="rclip"><rect x="-100" y="-42.5" width="200" height="85" rx="28"/></clipPath></defs>
+              <rect class="bench" x="-24" y="-52" width="20" height="7" rx="1.5"/><rect class="bench" x="4" y="-52" width="20" height="7" rx="1.5"/>
+              <rect class="bench" x="-9" y="45" width="18" height="7" rx="1.5"/>
+              <text class="lbl" x="-14" y="-53.2" text-anchor="middle" id="bench0"></text><text class="lbl" x="14" y="-53.2" text-anchor="middle" id="bench1"></text>
+              <text class="lbl" x="0" y="54.3" text-anchor="middle">Penalty box</text>
+              <rect class="ice" x="-100" y="-42.5" width="200" height="85" rx="28"/>
+              <g clip-path="url(#rclip)">
+                <line class="red" x1="-89" y1="-42.5" x2="-89" y2="42.5" stroke-width=".35"/><line class="red" x1="89" y1="-42.5" x2="89" y2="42.5" stroke-width=".35"/>
+                <line class="blue" x1="-25" y1="-42.5" x2="-25" y2="42.5" stroke-width="1"/><line class="blue" x1="25" y1="-42.5" x2="25" y2="42.5" stroke-width="1"/>
+                <line class="red" x1="0" y1="-42.5" x2="0" y2="42.5" stroke-width="1" stroke-dasharray="1.6 .5"/>
+                <circle class="blue" cx="0" cy="0" r="15" stroke-width=".35"/><circle class="dotb" cx="0" cy="0" r=".6"/>
+                <g id="dots"></g>
+                <path class="crease" d="M -89 -4 A 6 6 0 0 1 -89 4 Z" transform="rotate(180 -89 0)"/><path class="crease" d="M 89 -4 A 6 6 0 0 0 89 4 Z" transform="rotate(180 89 0)"/>
+                <rect class="net" x="-92.4" y="-3" width="3.4" height="6" rx="1"/><rect class="net" x="89" y="-3" width="3.4" height="6" rx="1"/>
+                <circle class="light" id="light0" cx="96" cy="0" r="2.6"/><circle class="light" id="light1" cx="-96" cy="0" r="2.6"/>
+                <image id="cLogo" x="-9" y="-9" width="18" height="18" opacity=".55" onerror="this.style.display='none'"/>
+                <text class="lbl" id="dir0" x="60" y="40" text-anchor="middle"></text><text class="lbl" id="dir1" x="-60" y="40" text-anchor="middle"></text>
+                <g id="shots"></g><g id="players"></g><circle class="puck" id="puck" r=".9"/>
+              </g>
+              <rect class="boards" x="-100" y="-42.5" width="200" height="85" rx="28"/>
+            </svg>
+            <div class="siren" id="siren"><div class="beam"></div><div class="gl">GOAL</div><div class="who" id="sirenWho"></div></div>
+            <div class="callout" id="callout" hidden></div>
+          </div>
+          <div class="ctl">
+            <button class="btn primary" id="play">Play</button>
+            <button class="btn" id="prevG" aria-label="Previous goal">‹ Goal</button>
+            <button class="btn" id="nextG" aria-label="Next goal">Goal ›</button>
+            <select id="speed" class="btn" aria-label="Playback speed"><option value="10">10×</option><option value="20" selected>20×</option><option value="40">40×</option><option value="90">90×</option></select>
+            <div class="scrub"><input id="scrub" type="range" min="0" max="3600" step="1" value="0" aria-label="Game time"><div class="ticks" id="ticks"></div></div>
+          </div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="rp-right">
+          <div class="panel">
+            <div class="rhd"><b id="rTitle">Bets</b><div class="seg" id="rMode"><button data-v="bets" aria-pressed="true">Bets</button><button data-v="pbp" aria-pressed="false">Play-by-play</button></div></div>
+            <div class="scroll" id="rBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="view" data-v="best" hidden><div class="scroll" id="bestBoard"></div></section>
+    <section class="view" data-v="parlay" hidden><div class="scroll" id="parBoard"></div></section>
+    <section class="view" data-v="bet" hidden><div class="row" id="betCtl"></div><div class="scroll"><div class="lanes" id="betLanes"></div></div></section>
+    <section class="view" data-v="props" hidden><div class="row" id="propCtl"></div><div class="scroll"><div class="lanes" id="propLanes"></div></div></section>
+    <section class="view" data-v="scorers" hidden><div class="row" id="scCtl"></div><div class="scroll"><div class="lanes" id="scLanes"></div></div></section>
+    <section class="view" data-v="ladders" hidden><div class="row" id="ladCtl"></div><div class="scroll"><div class="lanes" id="ladLanes"></div></div></section>
+    <section class="view" data-v="box" hidden><div class="row"><span class="note" id="boxNote"></span></div><div class="scroll"><div class="twocol" id="boxTwo"></div></div></section>
+    <section class="view" data-v="players" hidden><div class="row" id="plCtl"></div><div class="panel scroll"><div class="tw" id="plT"></div></div></section>
+    <section class="view" data-v="results" hidden><div class="scroll" id="resBoard"></div></section>
+  </main>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+"use strict";
+const BOARD = "action";            // which prices this page shows: "action" (PickLabs: sportsbooks) or "predictionpro" (exchanges)
+const SIMKEY = BOARD === "action" ? "std" : "predictionpro";
+const CTX = BOARD === "action" ? "fantasylabs-picklabs" : "predictionpro";
+const DATA = "https://raw.githubusercontent.com/chrisgimino/jabroni/data/";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (x, d = 0) => x === null || x === undefined ? "–" : (100 * x).toFixed(d) + "%";
+const odds = a => a === null || a === undefined ? "–" : (a > 0 ? "+" + a : String(a));
+const dec1 = a => a > 0 ? 1 + a / 100 : 1 + 100 / Math.abs(a);
+const evf = e => e === null || e === undefined ? "–" : (e >= 0 ? "+" : "") + (100 * e).toFixed(1) + "%";
+const uTxt = u => u ? `${(+u).toFixed(2).replace(/0$/, "")}u` : "";
+const DLURL = id => /^https?:/.test(id) ? id : `https://switchboard.actionnetwork.com/v2/deeplink?deeplinkId[0]=${encodeURIComponent(id)}&context=${CTX}`;
+const DLMULTI = ids => ids.some(i => /^https?:/.test(i)) ? DLURL(ids[0]) : `https://switchboard.actionnetwork.com/v2/deeplink?${ids.map((d, i) => `deeplinkId[${i}]=${encodeURIComponent(d)}`).join("&")}&context=${CTX}`;
+const S = { games: [], slate: null, prices: null, gid: null, sm: null, ins: null, t: 0, playing: false, speed: 20, view: "replay", rMode: "bets",
+  ev: [], endT: 3600, cur: -1, scope: "game", stat: "all", scKind: "anytime", posOnly: true, sortKey: "pts", sortDir: -1, book: null, last: 0, pos: new Map(), sirenAt: -1 };
+try { S.book = localStorage.getItem("nhlBook") || null; } catch (e) {}
+
+// ------------------------------------------------------------------ teams: colours, logos (NHL's public logo files)
+const TCOL = { ANA: "#f47a38", BOS: "#ffb81c", BUF: "#003087", CGY: "#c8102e", CAR: "#ce1126", CHI: "#cf0a2c", COL: "#6f263d", CBJ: "#002654",
+  DAL: "#006847", DET: "#ce1126", EDM: "#ff4c00", FLA: "#c8102e", LAK: "#111111", MIN: "#154734", MTL: "#af1e2d", NSH: "#ffb81c", NJD: "#ce1126",
+  NYI: "#00539b", NYR: "#0038a8", OTT: "#c52032", PHI: "#f74902", PIT: "#fcb514", SJS: "#006d75", SEA: "#001628", STL: "#002f87", TBL: "#002868",
+  TOR: "#00205b", UTA: "#69b3e7", VAN: "#00205b", VGK: "#b4975a", WSH: "#c8102e", WPG: "#041e42" };
+const LOGO = ab => ab ? `https://assets.nhle.com/logos/nhl/svg/${ab}_light.svg` : "";
+const logoImg = (ab, cls = "tsw") => ab ? `<img class="${cls}" src="${LOGO(ab)}" alt="" onerror="this.remove()">` : "";
+function teamColors(a0, a1) {   // two colours that read apart: the away team takes white-ish if both are close
+  let c0 = TCOL[a0] || "#2a6fd6", c1 = TCOL[a1] || "#d4561f";
+  const lum = c => { const n = parseInt(c.slice(1), 16); return .3 * (n >> 16) + .59 * (n >> 8 & 255) + .11 * (n & 255); };
+  const d = (x, y) => { const a = parseInt(x.slice(1), 16), b = parseInt(y.slice(1), 16); return Math.abs((a >> 16) - (b >> 16)) + Math.abs((a >> 8 & 255) - (b >> 8 & 255)) + Math.abs((a & 255) - (b & 255)); };
+  if (d(c0, c1) < 140) c1 = lum(c1) > 120 ? "#1b1b1b" : "#9aa4ad";
+  return [c0, c1];
+}
+
+// ------------------------------------------------------------------ data: the slate (sims + replays) and the prices laid over it
+async function getJSON(u) { const r = await fetch(u, { cache: "no-store" }); if (!r.ok) throw new Error(r.status); return r.json(); }
+async function loadData(first) {
+  const tryGet = async name => { try { return await getJSON(DATA + name); } catch (e) { return await getJSON(name); } };
+  const p = await tryGet("nhl_prices.json");
+  if (!first && S.prices && p.created_utc === S.prices.created_utc) return null;
+  if (first || !S.slate || p.slate !== S.slate.id) S.slate = await tryGet("nhl_replay_data.json");
+  S.prices = p; S.games = (S.slate.index || {}).games || []; return p.created_utc;
+}
+const INS = gid => S.prices?.games?.[gid] || null;
+const SEC = gid => INS(gid ?? S.gid)?.[SIMKEY] || null;
+const GAME = gid => S.games.find(g => String(g.schedule_id) === String(gid));
+const SM = gid => S.slate?.games?.[gid]?.sims;
+function stamp(s) { const d = new Date(s); return isNaN(d) ? "" : d.toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) + " ET"; }
+async function refresh() {
+  try { const st = await loadData(false); if (!st) return; $("upd").textContent = `Updated ${stamp(st)}`; fillBooks(); if (S.view !== "replay") renderView(); else renderRight(); } catch (e) {}
+}
+setInterval(refresh, 5 * 60 * 1000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+
+// ------------------------------------------------------------------ book picker
+function walkBooks(o, set, dp = 0) {
+  if (!o || dp > 9 || typeof o !== "object") return;
+  if (Array.isArray(o)) { for (const v of o) walkBooks(v, set, dp + 1); return; }
+  for (const [k, v] of Object.entries(o)) { if (k === "bp" && v && typeof v === "object") Object.keys(v).forEach(b => set.add(b)); else if (k === "book" && typeof v === "string") set.add(v); else if (v && typeof v === "object") walkBooks(v, set, dp + 1); }
+}
+function fillBooks() {
+  const set = new Set(); for (const g of S.games) walkBooks(SEC(g.schedule_id), set);
+  const list = [...set].filter(Boolean).sort(); if (S.book && !list.includes(S.book)) list.push(S.book);
+  $("bookPick").innerHTML = `<option value="">Best price · any ${BOARD === "action" ? "book" : "exchange"}</option>` + list.map(b => `<option value="${esc(b)}"${b === S.book ? " selected" : ""}>${esc(b)} only</option>`).join("");
+  $("bookPick").classList.toggle("on", !!S.book);
+}
+function atBook(x) {   // a priced bet at the picked book (our chance stays): null when that book doesn't offer it
+  if (!S.book || !x) return x;
+  if (x.book === S.book) return x;
+  const q = x.bp?.[S.book]; if (!q) return null;
+  return { ...x, price: q[0], book: S.book, dl: q[1], ev: x.p * dec1(q[0]) - 1 };
+}
+
+// ------------------------------------------------------------------ game picker
+function gameLbl(gid) { const g = GAME(gid); return g ? g.label : String(gid); }
+function fillPicker() {
+  $("gamePick").innerHTML = S.games.map(g => { const t = g.tip ? new Date(g.tip).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }) : "";
+    return `<option value="${esc(g.schedule_id)}">${esc(g.label)}${t ? " · " + t : ""}</option>`; }).join("");
+}
+function pick(gid) {
+  stop(); S.gid = String(gid); S.sm = SM(gid); S.ins = INS(gid); if (!S.sm) return;
+  prepare(); S.t = 0; S.cur = -1; S.sirenAt = -1; renderStatic(); seek(0); renderView();
+}
+
+// ------------------------------------------------------------------ the replayed game
+const nm = id => S.sm?.players?.[id]?.name || String(id ?? "");
+const last = id => { const n = nm(id).split(" "); return n.length > 1 ? n.slice(1).join(" ") : n[0]; };
+const ini = id => nm(id).split(" ").map(w => w[0] || "").join("").slice(0, 2).toUpperCase();
+const abbr = t => S.sm.teams[t].team;
+const PER = t => t < 3600 ? Math.floor(t / 1200) + 1 : (t < 3900 ? 4 : 5);
+const PNAME = p => ["1st", "2nd", "3rd", "OT", "SO"][p - 1];
+function clockAt(t) { const p = PER(t); if (p === 5) return { p, txt: "SO" }; const st = p <= 3 ? (p - 1) * 1200 : 3600, len = p <= 3 ? 1200 : 300;
+  const r = Math.max(0, len - (t - st)); return { p, txt: `${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}` }; }
+function prepare() {
+  const E = (S.sm.events || []).map((e, i) => ({ ...e, i }));
+  // the puck's spot at each event: shots at their real spot (team 1 attacks left), hits and penalties along the boards
+  const R = mulberry(+S.gid || 7);
+  for (const e of E) {
+    const dir = e.team === 0 ? 1 : -1;
+    if (e.type === "shot") { e.px = dir * (e.x || 70); e.py = dir * (e.y || 0); }
+    else if (e.type === "hit") { e.px = (R() * 2 - 1) * 85; e.py = (R() < .5 ? -1 : 1) * (36 + R() * 5); }
+    else if (e.type === "period_end" || e.type === "ot_start" || e.type === "final") { e.px = 0; e.py = 0; }
+  }
+  S.ev = E; S.endT = E.length ? Math.max(...E.map(e => e.t)) + 2 : 3600;
+  S.goals = E.filter(e => e.type === "shot" && e.res === "goal");
+  S.ons = E.filter(e => e.type === "on");
+  S.col = teamColors(abbr(0), abbr(1));
+  S.R = R;
+}
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// state at time t: score, on ice, box, penalties, pulled goalies, last event
+function stateAt(t) {
+  const st = { score: [0, 0], on: [[], []], str: [5, 5], pulled: [false, false], relief: [false, false], box: {}, pen: [], cur: -1, lastSpot: null, nextSpot: null, prevT: 0, nextT: 0, toi: {} };
+  const B = id => (st.box[id] ||= { g: 0, a: 0, pts: 0, sog: 0, blk: 0, hits: 0, ppp: 0, sv: 0, ga: 0, pim: 0 });
+  let lastOn = 0;
+  for (const e of S.ev) {
+    if (e.t > t) { if (e.px !== undefined && !st.nextSpot) { st.nextSpot = e; st.nextT = e.t; } continue; }
+    st.cur = e.i;
+    if (e.type === "on") { for (const tm of st.on) for (const id of tm) st.toi[id] = (st.toi[id] || 0) + (e.t - lastOn); lastOn = e.t; st.on = e.on.map(x => x.slice()); st.str = e.skaters || [5, 5]; }
+    else if (e.type === "shot") {
+      const g = goalieOf(1 - e.team, st);
+      if (e.res === "goal") { st.score = e.score ? e.score.slice() : st.score; const b = B(e.player); b.g++; b.pts++; b.sog++; if (e.str === "PP") b.ppp++;
+        for (const a of e.ast || []) { const x = B(a); x.a++; x.pts++; if (e.str === "PP") x.ppp++; }
+        if (g && e.str !== "EN") B(g).ga++; }
+      else if (e.res === "save") { B(e.player).sog++; if (g) B(g).sv++; }
+      else if (e.res === "block" && e.blocker) B(e.blocker).blk++;
+    }
+    else if (e.type === "hit") B(e.player).hits++;
+    else if (e.type === "penalty") { B(e.player).pim += e.min; st.pen.push({ team: e.team, player: e.player, until: e.t + 60 * e.min, t: e.t }); }
+    else if (e.type === "goalie_pulled") st.pulled[e.team] = true;
+    else if (e.type === "goalie_back") st.pulled[e.team] = false;
+    else if (e.type === "relief_goalie") st.relief[e.team] = true;
+    else if (e.type === "so_attempt") { st.so = e.score; }
+    else if (e.type === "final" && e.score) st.score = e.score.slice();
+    if (e.px !== undefined) { st.lastSpot = e; st.prevT = e.t; }
+  }
+  for (const tm of st.on) for (const id of tm) st.toi[id] = (st.toi[id] || 0) + (Math.min(t, 3900) - lastOn);
+  st.pen = st.pen.filter(p => p.until > t);
+  return st;
+}
+function goalieOf(team, st) {   // the starter while he is in (a relief goalie isn't in the projections: his saves aren't shown)
+  if (st && st.relief[team]) return null;
+  const g = Object.entries(S.sm.players).filter(([, p]) => p.team === team && p.pos === "G");
+  return g.length ? g[0][0] : null;
+}
+
+// ------------------------------------------------------------------ static parts
+function renderStatic() {
+  const sm = S.sm, g = GAME(S.gid), [c0, c1] = S.col, sim = S.ins?.sim;
+  for (const t of [0, 1]) {
+    const ab = abbr(t), name = (g?.team_names || [])[t] || ab;
+    $("n" + t).innerHTML = t === 0 ? `${logoImg(ab, "tlogo")}<span>${esc(matchMedia("(max-width: 760px)").matches ? ab : name)}</span>` : `<span>${esc(matchMedia("(max-width: 760px)").matches ? ab : name)}</span>${logoImg(ab, "tlogo")}`;
+    $("l" + t).textContent = sim ? `Sim ${sim.goals[t].toFixed(2)} goals · wins ${pct(sim.win[t])}` : "";
+  }
+  document.documentElement.style.setProperty("--t0", c0); document.documentElement.style.setProperty("--t1", c1);
+  const hi = sm.teams.findIndex(x => x.home); $("cLogo").setAttribute("href", LOGO(abbr(hi >= 0 ? hi : 1)));
+  $("dir0").textContent = `${abbr(0)} attacks ▶`; $("dir1").textContent = `◀ ${abbr(1)} attacks`;
+  $("bench0").textContent = `${abbr(0)} bench`; $("bench1").textContent = `${abbr(1)} bench`;
+  $("scrub").max = Math.ceil(S.endT);
+  const tk = [0, 1200, 2400, 3600].filter(x => x < S.endT); if (S.endT > 3900) tk.push(3900);
+  $("ticks").innerHTML = tk.map((x, i) => `<span style="left:${100 * x / S.endT}%">${["P1", "P2", "P3", "OT", "SO"][i]}</span>`).join("");
+  $("legend").innerHTML = `<span><i style="background:${c0}"></i>${esc(abbr(0))}</span><span><i style="background:${c1}"></i>${esc(abbr(1))}</span>` +
+    `<span>★ goal</span><span>○ save</span><span>✕ missed</span><span>▲ blocked</span><span>${sm.trials.toLocaleString()} sims · this is the one closest to the expected total</span>`;
+  $("simLbl").textContent = "typical game";
+  $("players").innerHTML = ""; $("shots").innerHTML = ""; S.pos = new Map(); S.dotEl = new Map();
+  drawFaceoffDots();
+}
+function drawFaceoffDots() {
+  let h = "";
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
+    h += `<circle class="red" cx="${sx * 69}" cy="${sy * 22}" r="15" stroke-width=".35"/><circle class="dotr" cx="${sx * 69}" cy="${sy * 22}" r="1"/><circle class="dotr" cx="${sx * 20}" cy="${sy * 22}" r="1"/>`;
+  }
+  $("dots").innerHTML = h;
+}
+
+// ------------------------------------------------------------------ positions: formations around the puck, eased every frame
+// Team 0 attacks to the right (+x), team 1 to the left. The puck goes from one event's spot to the next; the team that owns the next
+// event has the puck. Skaters take shape around it; a line change sends the old five to the bench and the new ones out from it.
+function puckAt(st, t) {
+  const a = st.lastSpot, b = st.nextSpot;
+  const ax = a ? a.px : 0, ay = a ? a.py : 0;
+  if (!b) return { x: ax, y: ay, own: a ? a.team : 0 };
+  const span = Math.max(.1, st.nextT - st.prevT), f = Math.min(1, Math.max(0, (t - st.prevT) / span));
+  const w = .5 - .5 * Math.cos(Math.PI * f);     // ease
+  // a rush: from the last spot through the neutral zone to the next shot's spot
+  const own = b.type === "hit" ? 1 - b.team : b.team;
+  return { x: ax + (b.px - ax) * w, y: ay + (b.py - ay) * w + Math.sin(f * Math.PI * 2 + b.i) * 4 * (1 - Math.abs(2 * f - 1)), own };
+}
+function targets(st, puck, t) {
+  const out = new Map();
+  for (const team of [0, 1]) {
+    const dir = team === 0 ? 1 : -1, att = puck.own === team, ids = st.on[team] || [];
+    const F = ids.filter(id => S.sm.players[id]?.pos !== "D"), D = ids.filter(id => S.sm.players[id]?.pos === "D");
+    const px = puck.x, py = puck.y, z = px * dir;          // z: how deep the puck is in this team's attacking direction
+    const wob = (id, k) => Math.sin(t / 7 + (+id % 97) * k) * 2.2;
+    F.forEach((id, k) => {
+      let x, y;
+      if (att) { x = k === 0 ? px - dir * 2 : px - dir * (8 + 6 * k); y = k === 0 ? py : (k === 1 ? -py * .6 + 12 * Math.sign(-py || 1) : py * .3 - 14 * Math.sign(py || 1)); }
+      else { x = px - dir * (6 + 9 * k); y = py * .5 + (k - 1) * 14; }
+      x = Math.max(-92, Math.min(92, x)); y = Math.max(-40, Math.min(40, y));
+      out.set(id, [x + wob(id, 1.3), y + wob(id, 2.1)]);
+    });
+    D.forEach((id, k) => {
+      let x, y; const sgn = k === 0 ? -1 : 1;
+      if (att) { x = Math.max(dir > 0 ? 27 : -999, Math.min(dir < 0 ? -27 : 999, z > 25 ? dir * 31 : px - dir * 22)); y = sgn * 16; }
+      else { x = z < -25 ? dir * -80 : px - dir * 18; y = sgn * (z < -25 ? 9 : 17); }
+      x = Math.max(-90, Math.min(90, x));
+      out.set(id, [x + wob(id, 1.7), y + wob(id, .9)]);
+    });
+    const g = goalieOf(team, st) || Object.entries(S.sm.players).find(([, p]) => p.team === team && p.pos === "G")?.[0];
+    if (g) out.set(g, st.pulled[team] ? [team === 0 ? -14 : 14, -48] : [-dir * 86, Math.max(-3, Math.min(3, py * .08))]);
+  }
+  for (const p of st.pen) out.set(p.player, [p.team === 0 ? -4 : 4, 48.5]);
+  return out;
+}
+function drawPlayers(st, t, snap) {
+  const puck = puckAt(st, t), tg = targets(st, puck, t), g = $("players"), seen = new Set();
+  const benchSpot = (team, id) => [team === 0 ? -14 + ((+id % 9) - 4) * 1.6 : 14 + ((+id % 9) - 4) * 1.6, -48.5];
+  for (const [id, xy] of tg) seen.add(id);
+  // players leaving: skate to the bench, then fade
+  for (const [id] of S.pos) if (!seen.has(id)) { const p = S.sm.players[id]; if (p) tg.set(id, benchSpot(p.team, id)); }
+  const k = snap ? 1 : .14;
+  for (const [id, [x, y]] of tg) {
+    const p = S.sm.players[id]; if (!p) continue;
+    let cur = S.pos.get(id);
+    if (!cur) { cur = benchSpot(p.team, id); if (snap) cur = [x, y]; }
+    const nx = cur[0] + (x - cur[0]) * k, ny = cur[1] + (y - cur[1]) * k; S.pos.set(id, [nx, ny]);
+    let el = S.dotEl.get(id);
+    if (!el) { el = document.createElementNS("http://www.w3.org/2000/svg", "g"); el.setAttribute("class", "pl" + (p.pos === "G" ? " g" : ""));
+      el.innerHTML = `<circle r="${p.pos === "G" ? 3 : 2.5}" fill="${S.col[p.team]}"/><text>${esc(p.pos === "G" ? "G" : ini(id))}</text><text class="nm" y="3">${esc(last(id))}</text>`;
+      el.addEventListener("mouseenter", ev => tip(ev, `${nm(id)} · ${abbr(p.team)} ${p.pos}${p.line ? " · line " + p.line : ""}${p.pp ? " · PP" + p.pp : ""}`));
+      el.addEventListener("mouseleave", () => tip(null)); g.appendChild(el); S.dotEl.set(id, el); }
+    const gone = !seen.has(id) && ny < -46;
+    el.setAttribute("transform", `translate(${nx.toFixed(2)} ${ny.toFixed(2)})`); el.style.opacity = gone ? .25 : 1;
+  }
+  for (const [id, el] of S.dotEl) if (!tg.has(id)) { el.remove(); S.dotEl.delete(id); S.pos.delete(id); }
+  $("puck").setAttribute("cx", puck.x.toFixed(2)); $("puck").setAttribute("cy", puck.y.toFixed(2));
+}
+function drawShots(st) {
+  let h = "";
+  for (const e of S.ev) {
+    if (e.i > st.cur) break;
+    if (e.type !== "shot") continue;
+    const c = S.col[e.team], x = e.px, y = e.py;
+    if (e.res === "goal") h += `<path class="shot goal" d="${star(x, y, 2.6)}" fill="${c}"/>`;
+    else if (e.res === "save") h += `<circle class="shot" cx="${x}" cy="${y}" r="1.1" fill="none" stroke="${c}"/>`;
+    else if (e.res === "miss") h += `<path class="shot" d="M${x - 1} ${y - 1}L${x + 1} ${y + 1}M${x - 1} ${y + 1}L${x + 1} ${y - 1}" stroke="${c}"/>`;
+    else h += `<path class="shot" d="M${x} ${y - 1.1}L${x + 1} ${y + .8}L${x - 1} ${y + .8}Z" fill="${c}" opacity=".7"/>`;
+  }
+  $("shots").innerHTML = h;
+}
+function star(x, y, r) { let d = ""; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; d += (i ? "L" : "M") + (x + rr * Math.cos(a)).toFixed(2) + " " + (y + rr * Math.sin(a)).toFixed(2); } return d + "Z"; }
+function tip(ev, txt) { const el = $("tip"); if (!ev) { el.hidden = true; return; } el.textContent = txt; el.hidden = false; el.style.left = ev.clientX + 12 + "px"; el.style.top = ev.clientY + 12 + "px"; }
+
+// ------------------------------------------------------------------ playback
+function seek(t, playing) {
+  S.t = Math.max(0, Math.min(S.endT, t)); const st = stateAt(S.t), changed = st.cur !== S.cur, prev = S.cur; S.cur = st.cur; S.st = st;
+  const ck = clockAt(Math.min(S.t, S.endT - .001)), fin = S.t >= S.endT - .01;
+  $("pLbl").textContent = fin ? "Final" + (S.ev.some(e => e.type === "final" && e.so) ? "/SO" : S.ev.some(e => e.type === "final" && e.ot) ? "/OT" : "") : PNAME(ck.p);
+  $("cLbl").textContent = fin ? "0:00" : ck.txt; $("scrub").value = Math.round(S.t);
+  const pp = ppText(st); $("ppLbl").hidden = !pp; $("ppLbl").textContent = pp;
+  drawPlayers(st, S.t, !playing);
+  if (!changed) return;
+  $("s0").textContent = st.score[0]; $("s1").textContent = st.score[1];
+  drawShots(st);
+  if (playing) for (let i = prev + 1; i <= S.cur; i++) { const e = S.ev[i]; if (e && e.type === "shot" && e.res === "goal") goalFx(e); else if (e && e.type !== "on") callout(e); }
+  renderRight();
+}
+function ppText(st) {
+  if (st.pulled[0] || st.pulled[1]) return `${abbr(st.pulled[0] ? 0 : 1)} EMPTY NET`;
+  const [a, b] = st.str || [5, 5]; if (a === b) return a < 5 ? `${a} on ${b}` : "";
+  const t = a > b ? 0 : 1, p = st.pen.filter(x => x.team !== t).sort((x, y) => x.until - y.until)[0];
+  const r = p ? Math.max(0, p.until - S.t) : 0;
+  return `${abbr(t)} PP ${a}v${b}${p ? ` · ${Math.floor(r / 60)}:${String(Math.floor(r % 60)).padStart(2, "0")}` : ""}`;
+}
+function goalFx(e) {
+  const s = $("siren"); $("sirenWho").innerHTML = `${esc(abbr(e.team))} · ${esc(nm(e.player))}${e.str && e.str !== "EV" ? ` (${esc(e.str)})` : ""}${(e.ast || []).length ? `<br><small>from ${e.ast.map(a => esc(last(a))).join(", ")}</small>` : ""}`;
+  s.classList.remove("on"); void s.offsetWidth; s.classList.add("on");
+  const L = $("light" + e.team); L.classList.remove("on"); void L.getBBox(); L.classList.add("on");
+  const b = $("board"); b.classList.remove("goal"); void b.offsetWidth; b.classList.add("goal"); clearTimeout(S.goalT); S.goalT = setTimeout(() => b.classList.remove("goal"), 3100);
+  const sc = $("s" + e.team); sc.classList.remove("pop"); void sc.offsetWidth; sc.classList.add("pop");
+}
+let coT = 0;
+function callout(e) {
+  const txt = evText(e); if (!txt || e.type === "hit") return;
+  const c = $("callout"); c.innerHTML = txt; c.hidden = false; clearTimeout(coT); coT = setTimeout(() => c.hidden = true, 1600);
+}
+function evText(e) {
+  const n = id => esc(nm(id)), T = t => `<span class="tmk" style="background:${S.col[t]}"></span>`;
+  switch (e.type) {
+    case "shot": return T(e.team) + (e.res === "goal" ? `<b>GOAL</b> ${n(e.player)}${e.str && e.str !== "EV" ? ` (${e.str})` : ""}${(e.ast || []).length ? ` · ast ${e.ast.map(n).join(", ")}` : " · unassisted"}`
+      : e.res === "save" ? `Shot by ${n(e.player)}, saved` : e.res === "miss" ? `${n(e.player)} misses the net` : `${n(e.player)}'s shot blocked by ${n(e.blocker)}`);
+    case "hit": return T(e.team) + `Hit by ${n(e.player)}`;
+    case "penalty": return T(e.team) + `Penalty: ${n(e.player)}, ${e.min} min`;
+    case "goalie_pulled": return T(e.team) + `${esc(abbr(e.team))} pulls the goalie`;
+    case "goalie_back": return T(e.team) + `${esc(abbr(e.team))} goalie back in`;
+    case "relief_goalie": return T(e.team) + `${esc(abbr(e.team))} changes goalies`;
+    case "period_end": return `End of the ${PNAME(e.period)} period · ${e.score ? e.score.join("-") : ""}`;
+    case "ot_start": return `Overtime: 3 on 3`;
+    case "so_attempt": return T(e.team) + `Shootout: ${n(e.player)} ${e.made ? "<b>scores</b>" : "is stopped"}`;
+    case "final": return `<b>Final</b> ${abbr(0)} ${e.score[0]}, ${abbr(1)} ${e.score[1]}${e.so ? " (SO)" : e.ot ? " (OT)" : ""}`;
+    case "on": return "";
+  }
+  return esc(e.type);
+}
+let raf = 0;
+function loop(now) { if (!S.playing) return; const dt = Math.min(.1, (now - S.last) / 1000); S.last = now; seek(S.t + dt * S.speed, true); if (S.t >= S.endT) { stop(); return; } raf = requestAnimationFrame(loop); }
+function play() { if (S.t >= S.endT) seek(0); S.playing = true; S.last = performance.now(); $("play").textContent = "Pause"; raf = requestAnimationFrame(loop); }
+function stop() { S.playing = false; cancelAnimationFrame(raf); $("play").textContent = "Play"; }
+function jumpGoal(d) { const g = d > 0 ? S.goals.find(e => e.t > S.t + .5) : [...S.goals].reverse().find(e => e.t < S.t - .5); if (g) { stop(); seek(g.t - (d > 0 ? 6 : 0)); if (d > 0) { S.playing = true; S.last = performance.now(); $("play").textContent = "Pause"; raf = requestAnimationFrame(loop); } } }
+
+// ------------------------------------------------------------------ right panel: this game's bets, tracked through the replayed game; or the play-by-play
+function trackBet(b, st, fin) {   // -> [text, state "up"/"dn"/"", settled won/lost/null]
+  const sc = st.score, tm = b.team ? (abbr(0) === b.team ? 0 : 1) : null, box = st.box;
+  const settleAt = (v, line, side) => side === "Over" ? (v > line ? "won" : fin ? "lost" : null) : (v > line ? "lost" : fin ? "won" : null);
+  switch (b.kind) {
+    case "ml": { const d = sc[tm] - sc[1 - tm]; return [`${abbr(tm)} ${d >= 0 ? "up " + d : "down " + -d}`, d > 0 ? "up" : d < 0 ? "dn" : "", fin ? (d > 0 ? "won" : "lost") : null]; }
+    case "spread": { const d = sc[tm] - sc[1 - tm] + b.line; return [`${abbr(tm)} ${sc[tm] - sc[1 - tm] >= 0 ? "+" : ""}${sc[tm] - sc[1 - tm]} (line ${b.line > 0 ? "+" : ""}${b.line})`, d > 0 ? "up" : "dn", fin ? (d > 0 ? "won" : "lost") : null]; }
+    case "total": { const v = sc[0] + sc[1]; return [`${v} goals (line ${b.line})`, (v > b.line) === (b.side === "Over") ? "up" : "dn", settleAt(v, b.line, b.side)]; }
+    case "team_total": { const v = sc[tm]; return [`${abbr(tm)} ${v} (line ${b.line})`, (v > b.line) === (b.side === "Over") ? "up" : "dn", settleAt(v, b.line, b.side)]; }
+    case "prop": case "rung": { const v = (box[b.player] || {})[b.stat] || 0, line = b.kind === "rung" ? b.k - .5 : b.line, side = b.kind === "rung" ? "Over" : b.side;
+      return [`${last(b.player)}: ${v} ${(b.stat_label || b.stat).toLowerCase()}`, (v > line) === (side === "Over") ? "up" : "dn", settleAt(v, line, side)]; }
+    case "anytime": { const v = (box[b.player] || {}).g || 0; return [`${last(b.player)}: ${v} goals`, v ? "up" : "", v ? "won" : fin ? "lost" : null]; }
+    case "first": { const f = S.goals.find(e => e.t <= S.t); return [f ? `First goal: ${last(f.player)}` : "No goal yet", f ? (f.player === b.player ? "up" : "dn") : "", f ? (f.player === b.player ? "won" : "lost") : null]; }
+    case "first_team": { const f = S.goals.find(e => e.t <= S.t); return [f ? `${abbr(f.team)} scored first` : "No goal yet", f ? (f.team === tm ? "up" : "dn") : "", f ? (f.team === tm ? "won" : "lost") : null]; }
+    case "btts": { const y = sc[0] > 0 && sc[1] > 0, yes = /yes/i.test(b.label); return [`${sc[0]}-${sc[1]}`, y === yes ? "up" : "", y ? (yes ? "won" : "lost") : fin ? (yes ? "lost" : "won") : null]; }
+    case "ot": case "reg3": return [S.t >= 3600 ? (st.score[0] === st.score[1] || S.ev.some(e => e.type === "ot_start") ? "Went to OT" : "Decided in regulation") : `${sc[0]}-${sc[1]}`, "", null];
+  }
+  return ["", "", null];
+}
+function gameBets() {
+  const sec = SEC(); if (!sec) return [];
+  const all = [...(sec.game || []), ...(sec.props || []).filter(b => b.main !== false), ...(sec.rungs || []), ...((sec.scorers || {}).anytime || []), ...((sec.scorers || {}).first || [])];
+  return all.map(atBook).filter(b => b && b.ev > 0 && (b.p ?? b.sim) >= .2).sort((a, b) => b.ev - a.ev).slice(0, 14);   // long shots stay on their tabs
+}
+function renderRight() {
+  const body = $("rBody"); if (!S.sm) return;
+  if (S.rMode === "pbp") {
+    const items = S.ev.filter(e => e.i <= S.cur && e.type !== "on" && e.type !== "hit").slice(-80).reverse();
+    body.innerHTML = `<ol class="feed">${items.map(e => { const c = clockAt(e.t); return `<li class="${e.type === "shot" && e.res === "goal" ? "goal" : ""}"><span class="t">${PNAME(c.p)} ${c.txt}</span><span>${evText(e)}</span></li>`; }).join("") || `<li><span>Press Play</span></li>`}</ol>`;
+    return;
+  }
+  const bets = gameBets(), st = S.st || stateAt(S.t), fin = S.t >= S.endT - .01;
+  if (!bets.length) { body.innerHTML = `<div class="empty">${S.ins?.markets_rows ? "No +EV bet (20%+ chance) in this game" + (S.book ? " at " + esc(S.book) : "") + " right now." : "No prices for this game yet: lines appear here once the books post them."}</div>`; return; }
+  body.innerHTML = `<div class="note" style="padding:6px 10px">Our best edges for this game (all ${S.sm.trials.toLocaleString()} sims vs the ${BOARD === "action" ? "books" : "exchanges"}), tracked through this one replayed game.</div>` +
+    bets.map(b => { const [txt, dirn, done] = trackBet(b, st, fin);
+      return `<div class="bt ${done || ""}"><div><div class="bl">${esc(b.label)}${b.strength ? `<span class="sig ${b.strength}">${b.strength}</span>` : ""}</div>
+        <div class="bs">Sim ${pct(b.p, 0)} · EV <span class="ev up">${evf(b.ev)}</span>${b.u ? " · " + uTxt(b.u) : ""}</div>
+        <div class="st ${dirn}">${done === "won" ? "✓ Cashes in this sim · " : done === "lost" ? "✗ Loses in this sim · " : ""}${esc(txt)}</div></div>${ticket(b)}</div>`; }).join("");
+}
+function ticket(b) {
+  const inner = `<b>${odds(b.price)}</b><small>${esc(b.book || "")}</small><em>${b.dl ? "Bet now ›" : ""}</em>`;
+  return b.dl ? `<a class="tkt" href="${DLURL(b.dl)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="tkt off">${inner}</div>`;
+}
+
+// ------------------------------------------------------------------ betting tabs: lanes (bar = our chance, tick = what the price needs)
+function lane(b, ctx) {
+  const be = 1 / dec1(b.price), p = b.p ?? b.sim;
+  return `<div class="lane"><div><div class="ln-bet">${b.team ? logoImg(b.team) + " " : ""}${esc(b.label)}${b.strength ? `<span class="sig ${b.strength}">${b.strength}</span>` : ""}</div>
+    <div class="ln-ctx">${ctx ? esc(ctx) + " · " : ""}Sim ${pct(b.sim, 1)}${b.market !== null && b.market !== undefined ? ` · market ${pct(b.market, 1)}` : ""}${b.p !== b.sim ? ` · used ${pct(b.p, 1)}` : ""} · needs ${pct(be, 1)} · EV <span class="ev ${b.ev >= 0 ? "up" : "dn"}">${evf(b.ev)}</span>${b.u ? " · bet " + uTxt(b.u) : ""} · ${b.books} ${b.books === 1 ? "price" : "prices"}</div></div>
+    ${ticket(b)}<div class="track"><div class="fill" style="width:${(100 * Math.min(1, p)).toFixed(1)}%"></div><div class="be" style="left:calc(${(100 * Math.min(1, be)).toFixed(1)}% - 1px)"></div></div></div>`;
+}
+const scopeSeg = () => `<div class="seg" data-k="scope"><button data-v="game" aria-pressed="${S.scope === "game"}">This game</button><button data-v="slate" aria-pressed="${S.scope === "slate"}">Whole slate</button></div>`;
+const posSeg = () => `<button class="chip" data-k="posOnly" aria-pressed="${S.posOnly}">+EV only</button>`;
+function secsIn() { return S.scope === "game" ? [[S.gid, SEC()]] : S.games.map(g => [g.schedule_id, SEC(g.schedule_id)]); }
+function col(title, sub, rows, empty) { return `<div class="lcol"><h3>${esc(title)}<small>${sub || ""}</small></h3>${rows.length ? rows.join("") : `<div class="lnote">${empty}</div>`}</div>`; }
+const KIND_T = { ml: "Moneyline", spread: "Puck line", total: "Total goals", team_total: "Team totals", reg3: "Regulation (3-way)", ot: "Overtime", btts: "Both teams score", first_team: "First to score" };
+function renderBet() {
+  $("betCtl").innerHTML = scopeSeg() + posSeg() + `<span class="note">${BOARD === "action" ? "Game lines: our sims' chance vs the books' best price." : "Game lines: our sims' chance vs Kalshi, Polymarket and Novig."} ${esc(S.ins?.tested?.market || "")}</span>`;
+  const groups = {};
+  for (const [gid, sec] of secsIn()) for (const b0 of sec?.game || []) { const b = atBook(b0); if (!b || (S.posOnly && b.ev <= 0)) continue; (groups[b.kind] ||= []).push([b, S.scope === "slate" ? gameLbl(gid) : ""]); }
+  const order = ["ml", "spread", "total", "team_total", "reg3", "ot", "btts", "first_team"];
+  $("betLanes").innerHTML = order.filter(k => groups[k]).map(k => col(KIND_T[k], `${groups[k].length} bets`, groups[k].sort((a, b) => b[0].ev - a[0].ev).slice(0, 30).map(([b, c]) => lane(b, c)), "")).join("") ||
+    `<div class="lnote">${noPrices()}</div>`;
+}
+function noPrices() { return S.prices ? (S.posOnly ? "No +EV game line" + (S.book ? " at " + esc(S.book) : "") + " right now." : "No prices yet.") : "No prices file yet."; }
+const STATS = [["all", "All"], ["g", "Goals"], ["ast", "Assists"], ["pts", "Points"], ["sog", "Shots"], ["blk", "Blocks"], ["hits", "Hits"], ["ppp", "PP points"], ["sv", "Saves"], ["ga", "Goals against"]];
+function renderProps() {
+  $("propCtl").innerHTML = scopeSeg() + posSeg() + STATS.map(([k, l]) => `<button class="chip" data-k="stat" data-v="${k}" aria-pressed="${S.stat === k}">${l}</button>`).join("");
+  const by = {};
+  for (const [gid, sec] of secsIn()) for (const b0 of sec?.props || []) { const b = atBook(b0); if (!b || (S.posOnly && b.ev <= 0) || (S.stat !== "all" && b.stat !== S.stat)) continue; (by[b.stat_label] ||= []).push([b, S.scope === "slate" ? gameLbl(gid) : ""]); }
+  $("propLanes").innerHTML = Object.entries(by).map(([k, v]) => col(k, `${v.length} lines · sim + market together`, v.sort((a, b) => b[0].ev - a[0].ev).slice(0, 40).map(([b, c]) => lane(b, c)), "")).join("") ||
+    `<div class="lnote">${S.posOnly ? "No +EV player line" + (S.book ? " at " + esc(S.book) : "") + " here right now." : "No player lines posted yet."}</div>`;
+}
+function renderScorers() {
+  $("scCtl").innerHTML = scopeSeg() + posSeg() + `<div class="seg" data-k="scKind"><button data-v="anytime" aria-pressed="${S.scKind === "anytime"}">Anytime goal</button><button data-v="first" aria-pressed="${S.scKind === "first"}">First goal</button></div>`;
+  const rows = [];
+  for (const [gid, sec] of secsIn()) for (const b0 of (sec?.scorers || {})[S.scKind] || []) { const b = atBook(b0); if (!b || (S.posOnly && b.ev <= 0)) continue; rows.push([b, S.scope === "slate" ? gameLbl(gid) : ""]); }
+  rows.sort((a, b) => b[0].ev - a[0].ev);
+  $("scLanes").innerHTML = col(S.scKind === "anytime" ? "Anytime goal scorer" : "First goal scorer", S.scKind === "anytime" ? "sim + market together" : "sim's chance (first goal of the game, OT incl.)", rows.slice(0, 60).map(([b, c]) => lane(b, c)),
+    S.posOnly ? "No +EV scorer price here right now." : "No scorer prices posted yet.") +
+    col("Sims: most likely scorers", "anytime / first goal", (S.ins?.sim?.players || []).filter(p => p.anytime).sort((a, b) => b.anytime - a.anytime).slice(0, 12)
+      .map(p => `<div class="lane"><div><div class="ln-bet">${logoImg(p.team)} ${esc(p.name)}</div><div class="ln-ctx">${esc(p.pos)} · line ${esc(p.line || "–")}${p.pp ? " · PP" + esc(p.pp) : ""}</div></div><div class="ln-ctx" style="text-align:right">${pct(p.anytime, 1)} anytime<br>${pct(p.first, 1)} first</div></div>`), "");
+}
+function renderLadders() {
+  $("ladCtl").innerHTML = scopeSeg() + `<span class="note">Alt lines and milestones the sims price best: each rung is its own bet, safest first. ${esc(S.ins?.tested?.props || "")}</span>`;
+  const out = [];
+  for (const [gid, sec] of secsIn()) for (const L of sec?.ladders || []) {
+    const rungs = L.rungs.map(r => atBook({ ...r, bp: r.bp })).filter(Boolean);
+    if (rungs.length < 2) continue;
+    out.push(`<div class="lane"><div><div class="ln-bet">${logoImg(L.team)} ${esc(L.name)} · ${esc(L.stat_label)}</div><div class="ln-ctx">${S.scope === "slate" ? esc(gameLbl(gid)) + " · " : ""}avg EV ${evf(L.ev_per_unit)} per rung</div></div><span></span>
+      <div class="rungs">${rungs.map(r => `<a class="rung" ${r.dl ? `href="${DLURL(r.dl)}" target="_blank" rel="noopener"` : ""}><b>${r.k}+</b><i>${odds(r.price)}</i><span>${pct(r.p, 0)} · ${esc(r.book)}</span><span class="ev up">${evf(r.p * dec1(r.price) - 1)}</span></a>`).join("")}</div></div>`);
+  }
+  $("ladLanes").innerHTML = col("Ladders", `${out.length} players`, out, "No ladder here right now: it needs 2+ rungs at 10%+ EV.");
+}
+
+// ------------------------------------------------------------------ best bets, parlay, results
+const SLOT_LBL = { "11:30": "11:30 AM", "15:30": "3:30 PM", "17:30": "5:30 PM" };
+function slotsOf() { return (S.prices?.best_bets?.slots || []).slice().reverse(); }
+function pickCard(p) {
+  const n = p.now || {}, past = n.status === "past" || n.status === "started";
+  const pr = n.odds ?? p.price, dl = n.dl || p.dl, was = n.status === "moved" ? ` · <span class="was">was ${odds(p.price)}</span>` : n.status === "past" ? ` · <span class="was">${esc(n.why || "past our number")} (posted ${odds(p.price)})</span>` : n.status === "started" ? ` · <span class="was">game started</span>` : "";
+  return `<li class="bc ${past ? "past" : ""}"><div><div class="bc-k">${esc(KIND_T[p.kind] || p.stat_label || p.kind)}${p.strength ? `<span class="sig ${p.strength}">${p.strength}</span>` : ""}</div>
+    <div class="bc-b">${logoImg(p.team)}${esc(p.label)}</div><div class="bc-s">${esc(p.game)} · Sim ${pct(p.p, 0)} · EV <span class="ev up">${evf(n.ev ?? p.ev)}</span>${p.u ? " · bet " + uTxt(p.u) : ""}${was}</div></div>
+    ${ticket({ price: pr, book: p.book, dl: past ? null : dl })}</li>`;
+}
+function renderBest() {
+  const slots = slotsOf();
+  let h = `<div class="lanes">`;
+  h += slots.length ? slots.map(s => { const sec = s.sims?.[BOARD] || {}; const ps = (sec.picks || []).filter(p => !S.book || p.book === S.book || p.bp?.[S.book]);
+    return col(`${SLOT_LBL[s.slot] || s.slot} ET`, `${ps.length} picks · posted ${esc((s.made_et || "").slice(11, 16))}`, ps.map(p => `<ul class="cards">${pickCard(S.book && p.book !== S.book ? { ...p, ...atBook(p) } : p)}</ul>`), "No bet cleared the floor at this time."); }).join("")
+    : `<div class="lcol"><h3>Best bets<small>11:30 AM, 3:30 and 5:30 PM ET</small></h3><div class="lnote">The first best bets of the day come at 11:30 AM ET. Picks need EV 4% to 40% at the best price, 2 per game at most; earlier picks are re-checked at the books every run.</div></div>`;
+  $("bestBoard").innerHTML = h + `</div><p class="note" style="padding:8px 4px">${esc(S.ins?.tested?.market || "")} ${esc(S.ins?.tested?.sim || "")}</p>`;
+}
+function legLi(l, z) {
+  const st = z?.status, gone = st === "past" || st === "started";
+  return `<li class="${gone ? "past" : ""}"><div>${logoImg(l.team)} <b>${esc(l.text)}</b><br><span>${esc(l.game)} · sim ${pct(z?.p ?? l.p, 0)}${st === "moved" ? ` · was ${odds(l.odds)}` : gone ? ` · ${st === "started" ? "game started" : "past our number"}` : ""}</span></div>
+    <em>${odds(z?.odds ?? l.odds)}${!gone && (z?.dl || l.dl) ? `<a class="lgo" href="${DLURL(z?.dl || l.dl)}" target="_blank" rel="noopener">Bet ›</a>` : ""}</em></li>`;
+}
+function renderParlay() {
+  const slots = slotsOf(); let h = `<div class="lanes">`;
+  const pars = slots.map(s => [s.slot, s.sims?.[BOARD]?.parlay]).filter(([, p]) => p && (!S.book || p.book === S.book));
+  h += col("Parlay of the day", "4 legs, 4 games, one book · odds = the legs' prices multiplied", pars.map(([slot, p]) => {
+    const n = p.now || {}, ids = p.legs.map((l, i) => n.legs?.[i]?.dl || l.dl).filter(Boolean), pass = n.status === "past";
+    return `<div class="pcard"><div><h4>${esc(SLOT_LBL[slot] || slot)} ET · ${p.legs.length} legs${p.u ? " · bet " + uTxt(p.u) : ""}</h4><div class="ps">All legs hit in ${pct(n.p ?? p.p, 1)} of our sims · EV ${evf(p.ev)} at ${esc(p.book)}${n.status ? ` · checked ${esc((n.t || "").slice(11, 16))}: ${n.status === "same" ? "same prices" : n.status === "moved" ? "a leg moved, still +EV" : "a leg is gone: pass the full parlay"}` : ""}</div>
+      <ol class="legs">${p.legs.map((l, i) => legLi(l, n.legs?.[i])).join("")}</ol></div>
+      ${pass ? `<div class="tkt off"><b>PASS</b><small>past our number</small></div>` : ids.length === p.legs.length ? `<a class="tkt" href="${DLMULTI(ids)}" target="_blank" rel="noopener"><b>${odds(n.odds ?? p.odds)}</b><small>${esc(p.book)}</small><em>Bet all ›</em></a>` : `<div class="tkt off"><b>${odds(p.odds)}</b><small>${esc(p.book)}</small></div>`}</div>`; }),
+    slots.length ? "No parlay today: it needs 4 games with a +EV leg at the same book." : "The first parlay comes with the 11:30 AM ET best bets.");
+  const sg = SEC()?.sgp;
+  h += col(`Same-game parlay · ${gameLbl(S.gid)}`, "each leg +EV at one book; the book prices the parlay", sg && (!S.book || sg.book === S.book) ? [`<div class="pcard"><div><div class="ps">Legs in one game move together, so ${esc(sg.book)} prices it; the legs' prices multiplied would be ${odds(sg.odds_if_separate)}.</div><ol class="legs">${sg.legs.map(l => legLi(l, null)).join("")}</ol></div>
+      <a class="tkt" href="${DLMULTI(sg.legs.map(l => l.dl))}" target="_blank" rel="noopener"><b>SGP</b><small>${esc(sg.book)}</small><em>Build it ›</em></a></div>`] : [], "No same-game parlay for this game: it needs 2+ +EV legs at one book.");
+  $("parBoard").innerHTML = h + `</div>`;
+}
+function renderResults() {
+  const R = S.prices?.bet_results || {}, b = R.by_board?.[BOARD];
+  if (!b) { $("resBoard").innerHTML = `<div class="lcol"><h3>Results<small>graded from the NHL's box scores</small></h3><div class="lnote">No graded bets yet: picks are graded the morning after their games end.</div></div>`; return; }
+  const kp = (v, l) => `<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
+  let h = `<div class="lcol"><h3>Results<small>every logged pick and parlay, graded</small></h3><div class="kpis">${kp(`${b.won}-${b.lost}${b.push ? "-" + b.push : ""}`, "won-lost-push")}${kp((b.units >= 0 ? "+" : "") + b.units + "u", "units")}${kp(b.roi === null ? "–" : (100 * b.roi).toFixed(1) + "%", "ROI")}${kp(b.risked + "u", "risked")}</div>`;
+  h += `<div class="tw"><table class="t"><thead><tr><th>Bet</th><th>Date</th><th>Type</th><th>Price</th><th>Book</th><th>Result</th><th>Units</th></tr></thead><tbody>` +
+    (b.recent || []).slice().reverse().map(r => `<tr><td>${esc(r.label)}</td><td>${esc(r.date)} ${esc(r.slot)}</td><td class="l">${esc(KIND_T[r.kind] || r.kind)}</td><td>${odds(+r.price)}</td><td class="l">${esc(r.book)}</td><td>${esc(r.result)}</td><td>${(+r.units).toFixed(2)}</td></tr>`).join("") + `</tbody></table></div></div>`;
+  $("resBoard").innerHTML = h;
+}
+
+// ------------------------------------------------------------------ box score, players
+function renderBox() {
+  const st = S.st || stateAt(S.t), sm = S.sm; let h = "";
+  for (const t of [0, 1]) {
+    const ps = Object.entries(sm.players).filter(([, p]) => p.team === t);
+    const sk = ps.filter(([, p]) => p.pos !== "G").sort((a, b) => (st.box[b[0]]?.pts || 0) - (st.box[a[0]]?.pts || 0) || (st.toi[b[0]] || 0) - (st.toi[a[0]] || 0));
+    const gl = ps.filter(([, p]) => p.pos === "G"), mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+    h += `<div class="panel"><div class="rhd"><b>${logoImg(abbr(t))} ${esc(abbr(t))} · ${st.score[t]}</b></div><div class="tw"><table class="t"><thead><tr><th>Skater</th><th>Pos</th><th>G</th><th>A</th><th>P</th><th>SOG</th><th>BLK</th><th>HIT</th><th>PPP</th><th>PIM</th><th>TOI</th></tr></thead><tbody>` +
+      sk.map(([id, p]) => { const b = st.box[id] || {}; return `<tr><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${b.g || 0}</td><td>${b.a || 0}</td><td>${b.pts || 0}</td><td>${b.sog || 0}</td><td>${b.blk || 0}</td><td>${b.hits || 0}</td><td>${b.ppp || 0}</td><td>${b.pim || 0}</td><td>${mmss(st.toi[id] || 0)}</td></tr>`; }).join("") +
+      `</tbody></table></div><div class="tw"><table class="t"><thead><tr><th>Goalie</th><th>SV</th><th>GA</th><th>SV%</th></tr></thead><tbody>` +
+      gl.map(([id, p]) => { const b = st.box[id] || {}; return `<tr><td>${esc(p.name)}${st.relief[t] ? " (pulled)" : ""}</td><td>${b.sv || 0}</td><td>${b.ga || 0}</td><td>${b.sv + b.ga ? (b.sv / (b.sv + b.ga)).toFixed(3).replace(/^0/, "") : "–"}</td></tr>`; }).join("") + `</tbody></table></div></div>`;
+  }
+  $("boxTwo").innerHTML = h; $("boxNote").textContent = `The replayed game at ${PNAME(clockAt(S.t).p)} ${clockAt(S.t).txt}: scrub or play it on the Replay tab.`;
+}
+const PCOLS = [["name", "Player"], ["team", "Tm"], ["pos", "Pos"], ["line", "Line"], ["pp", "PP"], ["g", "G"], ["ast", "A"], ["pts", "P"], ["sog", "SOG"], ["blk", "BLK"], ["hits", "HIT"], ["ppp", "PPP"], ["anytime", "Goal %"], ["first", "1st goal"], ["sv", "SV"], ["ga", "GA"], ["win", "Win"]];
+function renderPlayers() {
+  $("plCtl").innerHTML = `<span class="note">Sim averages per game (all ${S.sm?.trials?.toLocaleString?.() || ""} sims), this game. Tap a column to sort.</span>`;
+  const ps = (S.ins?.sim?.players || []).slice(), k = S.sortKey, d = S.sortDir;
+  ps.sort((a, b) => { const x = a[k], y = b[k]; return (typeof x === "string" || typeof y === "string") ? d * String(x ?? "").localeCompare(String(y ?? "")) : d * ((x ?? -1) - (y ?? -1)); });
+  const f = (k, v) => v === null || v === undefined ? "" : ["anytime", "first", "win"].includes(k) ? pct(v, 1) : typeof v === "number" ? v.toFixed(2) : esc(v);
+  $("plT").innerHTML = `<table class="t"><thead><tr>${PCOLS.map(([k, l]) => `<th data-sort="${k}">${l}${S.sortKey === k ? (S.sortDir < 0 ? " ▾" : " ▴") : ""}</th>`).join("")}</tr></thead><tbody>` +
+    ps.map(p => `<tr>${PCOLS.map(([k]) => `<td${["team", "pos"].includes(k) ? ' class="l"' : ""}>${f(k, p[k])}</td>`).join("")}</tr>`).join("") + `</tbody></table>`;
+}
+
+// ------------------------------------------------------------------ views + wiring
+function showView() {
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === S.view)));
+  document.querySelectorAll(".view").forEach(v => v.hidden = v.dataset.v !== S.view);
+}
+function renderView() {
+  showView(); if (!S.sm) return;
+  ({ replay: renderRight, best: renderBest, parlay: renderParlay, bet: renderBet, props: renderProps, scorers: renderScorers, ladders: renderLadders, box: renderBox, players: renderPlayers, results: renderResults })[S.view]?.();
+}
+$("tabs").addEventListener("click", e => { const b = e.target.closest("button[data-view]"); if (!b) return; S.view = b.dataset.view; renderView(); });
+$("views").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]"); const th = e.target.closest("th[data-sort]");
+  if (th) { const k = th.dataset.sort; S.sortDir = S.sortKey === k ? -S.sortDir : -1; S.sortKey = k; renderPlayers(); return; }
+  if (!b) return;
+  const seg = b.closest(".seg[data-k]"), btn = e.target.closest("button");
+  if (seg && btn) { S[seg.dataset.k] = btn.dataset.v; renderView(); return; }
+  if (b.dataset.k === "posOnly") S.posOnly = !S.posOnly; else if (b.dataset.k === "stat") S.stat = b.dataset.v;
+  renderView();
+});
+$("rMode").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; S.rMode = b.dataset.v; $("rTitle").textContent = S.rMode === "bets" ? "Bets" : "Play-by-play";
+  [...$("rMode").children].forEach(x => x.setAttribute("aria-pressed", String(x === b))); renderRight(); });
+$("play").addEventListener("click", () => S.playing ? stop() : play());
+$("prevG").addEventListener("click", () => jumpGoal(-1)); $("nextG").addEventListener("click", () => jumpGoal(1));
+$("speed").addEventListener("change", e => S.speed = +e.target.value);
+$("scrub").addEventListener("input", e => { stop(); seek(+e.target.value); });
+$("gamePick").addEventListener("change", e => pick(e.target.value));
+$("bookPick").addEventListener("change", e => { S.book = e.target.value || null; try { S.book ? localStorage.setItem("nhlBook", S.book) : localStorage.removeItem("nhlBook"); } catch (x) {} fillBooks(); renderView(); });
+window.addEventListener("resize", () => { if (S.sm) renderStatic(), seek(S.t); });
+
+async function boot() {
+  try {
+    const st = await loadData(true); $("upd").textContent = `Updated ${stamp(st)}`;
+    if (!S.games.length) throw new Error("no games");
+    fillPicker(); fillBooks(); pick(S.games[0].schedule_id);
+  } catch (e) {
+    $("views").innerHTML = `<div class="empty"><b>No NHL slate yet.</b><br>The sims and prices for today's games appear here once the EC2 run has pushed them (nhl_replay_data.json + nhl_prices.json).</div>`;
+  }
+}
+boot();
+})();
+</script>
+<script>
+(function () {
+  var b = document.getElementById("themeBtn"), root = document.documentElement; if (!b || b.hidden) return;
+  function paint() { var d = root.getAttribute("data-theme") === "dark"; b.textContent = d ? "☀" : "☾"; b.setAttribute("aria-label", d ? "Light theme" : "Dark theme"); b.title = b.getAttribute("aria-label"); }
+  b.addEventListener("click", function () { var t = root.getAttribute("data-theme") === "dark" ? "light" : "dark"; root.setAttribute("data-theme", t); try { localStorage.setItem("plTheme", t); } catch (e) {} paint(); });
+  paint();
+})();
+</script>
+</body>
+</html>
