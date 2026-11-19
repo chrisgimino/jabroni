@@ -218,6 +218,7 @@ a.tkt:hover { filter: brightness(1.08) } a.tkt:active { transform: translateY(2p
 .tkt.pass { background: var(--panel2); box-shadow: none; cursor: default; padding: 0; justify-content: center; border-bottom: 4px solid var(--bad) } .tkt.pass b { color: var(--bad); font-size: 22px } .tkt.pass small { color: var(--walnut2) }
 .lnote { padding: 12px 16px; font: 600 13.5px/1.4 var(--text); color: var(--walnut) }
 .lnote.slot-h { font: 800 19px/1 var(--disp); padding: 14px 16px 4px }
+.lnote.wait { color: var(--walnut2, var(--walnut)); font-size: 12.5px; border-top: 1px dashed rgba(44, 28, 12, .25); padding-top: 9px }   /* the NBA page's held-bets line */
 .ln-move { font: 700 12px/1.3 var(--text); color: var(--walnut2); margin-top: 3px; white-space: normal } .ln-move b { color: var(--walnut) }
 .ln-move.bad { color: var(--bad) } .ln-move.bad b { color: var(--bad) }
 .ln-move.mv::before, .ln-move.bad::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #c98a1a } .ln-move.bad::before { background: var(--bad) }
@@ -1143,6 +1144,8 @@ function betCands(ins, tr) {   // every priced bet, with how it went in the repl
     add({ cat: "special", text: `No touchdown in the game: ${sd}`, price: o.best_price, book: o.best_book, dl: o.dl, bp: o.bp, sim: sd === "yes" ? gm.no_td.sim : 1 - gm.no_td.sim, ev: o.ev,
       res: { won: sd === "yes" ? none : !none, at: !none && sd === "no" ? tr.tds[0].i : fin, txt: none ? "no touchdown" : `${tr.tds.length} TD` } }); }
   for (const x of out) if ((x.ev === null || x.ev === undefined) && x.sim !== null && x.sim !== undefined) x.ev = x.sim * dec1(x.price) - 1;
+  const held = ins.held || {}, gameHeld = Object.keys(held).length > 0;   // questionable QB1 / RB1-2 / WR1-2 / TE1: game bets for the game, player bets for his team
+  for (const x of out) x.unc = ["ml", "spread", "total"].includes(x.cat) || !x.team ? gameHeld : !!held[x.team];
   return out;
 }
 function candAt(x, bk) {   // a bet at one book (our chance stays); [] when that book doesn't offer it
@@ -1179,8 +1182,8 @@ function betCard(label, x, n, mode) {
       const inner = `${r.k}+ <b>${odds(r.price)}</b>`;
       return live(r.dl) ? `<a class="rg${st}" href="${DLURL(r.dl)}" target="_blank" rel="noopener" title="${esc(r.book)} · EV ${evf(r.ev)}">${inner}</a>` : `<span class="rg${st}">${inner}</span>`; }).join("")}</div>` : "";
   const u = x.rungs ? 0 : stakeU(x.ev, x.price);
-  const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs`
-    : `Sim ${pct(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${u ? ` · bet ${uTxt(u)}` : ""}${x.was ? ` at ${esc(x.book)} (best ${odds(x.was[0])} at ${esc(x.was[1])})` : ""}`;
+  const sub = x.rungs ? `EV ${evf(x.ev)} per rung · ${x.rungs.length} rungs${x.unc ? " · ⚠ questionable player" : ""}`
+    : `Sim ${pct(x.sim, 1)} · EV <span class="${evc(x.ev)}">${evf(x.ev)}</span>${u ? ` · bet ${uTxt(u)}` : ""}${x.was ? ` at ${esc(x.book)} (best ${odds(x.was[0])} at ${esc(x.was[1])})` : ""}${x.unc ? " · ⚠ questionable player" : ""}`;
   const btn = x.rungs ? `<div class="bc-p off"><b>${evf(x.ev)}</b><small>per rung</small></div>`
     : live(x.dl) ? `<a class="bc-p" href="${DLURL(x.dl)}" target="_blank" rel="noopener"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small><span>${GO}</span></a>`
     : `<div class="bc-p off"><b>${odds(x.price)}</b><small>${esc(x.book || "")}</small></div>`;
@@ -1201,8 +1204,8 @@ function renderLiveBets() {   // the replay calls this after every play
     : `The best edge in each market over all the sims, ${S.book ? "at " + esc(S.book) + "'s prices" : "at the best price across the " + BOOKS_WORD}. Tap a price to bet it.`;
   const rows = BET_CATS.map(([key, label]) => {
     const xs = C.filter(x => x.cat === key);
-    const pick = mode === "trial" ? xs.filter(x => x.res?.won === true).sort((p, q) => (q.trialRank ?? q.ev ?? -9) - (p.trialRank ?? p.ev ?? -9))[0]
-      : xs.slice().sort((p, q) => (q.ev ?? -9) - (p.ev ?? -9))[0];
+    const pick = mode === "trial" ? xs.filter(x => x.res?.won === true).sort((p, q) => (p.unc - q.unc) || (q.trialRank ?? q.ev ?? -9) - (p.trialRank ?? p.ev ?? -9))[0]
+      : xs.slice().sort((p, q) => (p.unc - q.unc) || (q.ev ?? -9) - (p.ev ?? -9))[0];   // questionable-player bets last (as the NBA page)
     return betCard(label, pick, xs.length, mode);
   });
   const box = el.parentElement, top = box.scrollTop; el.innerHTML = rows.join(""); box.scrollTop = top;
@@ -1315,6 +1318,8 @@ function poolOf(kind, gid) {   // -> [{gid, k, team, who, what, price, book, dl,
     if (rungs.length) out.push({ gid, k: "alt", ladder: true, team: l.team, who: l.name, what: `${String(l.stat).toLowerCase()} ladder`, rungs, price: rungs[0].price, ev: Math.max(...rungs.map(r => r.ev)), books: 2 });
   }
   for (const x of out) if (!x.ladder) { const d = dec1(x.price); x.be = 1 / d; x.ev = x.p * d - 1; }
+  const held = ins.held || {}, gameHeld = Object.keys(held).length > 0;   // a questionable QB1 / RB1-2 / WR1-2 / TE1 (as the NBA board): held
+  for (const x of out) x.unc = kind === "bet" ? gameHeld : !!held[x.team];
   return S.book ? out.flatMap(x => laneAt(x, S.book)) : out;
 }
 function laneAt(x, bk) {   // a lane at one book: its price, link and edge (our chance stays); [] when that book doesn't offer it
@@ -1358,20 +1363,26 @@ function laneHTML(x, showGame) {
     <div class="track" role="img" aria-label="Needs ${be.toFixed(0)}% to break even, we say ${p.toFixed(0)}%"><span class="gap" style="left:${Math.min(be, p)}%;width:${Math.max(.5, Math.abs(p - be))}%;background:${col}"></span><span class="be" style="left:${be}%"></span><span class="ball" style="left:${p}%"></span></div>
     <div class="cap">${cap}</div></div>${tk}</li>`;
 }
+function waitNote(xs) {   // the NBA page's line: "N more bets wait on X's status." (this game's held bets that clear the rules)
+  const n = oneSide(xs.filter(x => x.unc)).length; if (!n) return "";
+  const who = Object.values(INS(S.gid)?.held || {}).flat().map(h => `${h.name} (${h.status})`);
+  const list = who.length < 2 ? who.join("") : who.slice(0, -1).join(", ") + " and " + who[who.length - 1];
+  return `<div class="lnote wait">${n} more ${n > 1 ? "bets wait" : "bet waits"} on ${esc(list)}'s status.</div>`;
+}
 function renderLanes(kind) {
   const el = $("lanes_" + kind); if (!el) return;
   const top = $("top_" + kind);
   if (top) top.innerHTML = "";
-  const mine = poolOf(kind, S.gid), good = oneSide(mine.filter(laneOK)).sort(laneRank).slice(0, LANE_N.game);
+  const mine = poolOf(kind, S.gid), wait = waitNote(mine.filter(laneOK)), good = oneSide(mine.filter(x => laneOK(x) && !x.unc)).sort(laneRank).slice(0, LANE_N.game);
   const scope = S.laneScope || (good.length ? "game" : "slate");   // nothing here: the slate first
   el.dataset.scope = scope;
-  const slate = oneSide(allGames().flatMap(g => poolOf(kind, g)).filter(laneOK)).sort(laneRank).slice(0, LANE_N.slate);
+  const slate = oneSide(allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc)).sort(laneRank).slice(0, LANE_N.slate);
   const gameCol = `<div class="lcol" data-scope="game"><h3>This game<small>${[S.book ? esc(S.book) + " only" : "", good.length ? `${good.length} worth betting` : ""].filter(Boolean).join(" · ")}</small></h3>` +
-    (good.length ? `<ol>${good.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${S.book ? `None of this game's ${POOL_TXT[kind]} is a bet at ${esc(S.book)} right now.` : mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + `</div>`;
+    (good.length ? `<ol>${good.map(x => laneHTML(x, false)).join("")}</ol>` : `<div class="lnote">${S.book ? `None of this game's ${POOL_TXT[kind]} is a bet at ${esc(S.book)} right now.` : mine.length ? `None of this game's ${POOL_TXT[kind]} beats its price right now.` : `No ${POOL_TXT[kind]} posted for this game yet.`}</div>`) + wait + `</div>`;
   const slateCol = `<div class="lcol" data-scope="slate"><h3>Whole slate<small>${[S.book ? esc(S.book) + " only" : "", slate.length ? `top ${slate.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
     (slate.length ? `<ol>${slate.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">Nothing on the slate beats its price right now.</div>`) + `</div>`;
   if (kind === "ladders") {   // ladders: whole slate only, as the NBA page
-    const all = allGames().flatMap(g => poolOf(kind, g)).filter(laneOK).sort(laneRank).slice(0, 15);
+    const all = allGames().flatMap(g => poolOf(kind, g)).filter(x => laneOK(x) && !x.unc).sort(laneRank).slice(0, 15);
     el.dataset.scope = "slate"; el.classList.add("single");
     el.innerHTML = `<div class="lcol" data-scope="slate"><h3>Best ladders on the slate<small>${[S.book ? esc(S.book) + " only" : "", all.length ? `top ${all.length}` : ""].filter(Boolean).join(" · ")}</small></h3>` +
       (all.length ? `<ol>${all.map(x => laneHTML(x, true)).join("")}</ol>` : `<div class="lnote">No ladder on the slate beats its prices${S.book ? " at " + esc(S.book) : ""} right now.</div>`) + `</div>`;
