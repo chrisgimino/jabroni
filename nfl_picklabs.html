@@ -291,7 +291,7 @@ a.bc-p:hover { filter: brightness(1.08) } a.bc-p:active { transform: translateY(
 .rg { font-size: 11.5px; border: 1px solid var(--rule-strong); border-radius: 6px; padding: 1px 6px; color: var(--ink); text-decoration: none; white-space: nowrap }
 .rg.hit { border-color: var(--good); background: var(--good-soft) } .rg.miss { opacity: .5 }
 @media (max-width: 900px) { .bets { padding: 9px 9px 8px } .bets-t { font-size: 16px } .bets-hd .seg button { font-size: 12px; padding: 4px 8px } .rp-right .bets-fill { flex: 0 0 auto; max-height: 46vh } }
-/* Results: backtest + live charts */
+/* Results: live charts */
 #resBoard { padding: 2px }
 .charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 10px }
 .chart { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px }
@@ -1218,7 +1218,6 @@ const BOOKS_WORD = "books";
 const GO = "Bet now ›", GO_LEG = "Bet ›", GO_ALL = "Bet all now ›";   // Prediction Pro: Trade
 const PRICE_NOTE = "";                    // Prediction Pro: what its prices are
 const RES_WHO = "";                       // Prediction Pro: whose picks the Results tab grades
-const BT_NOTE = "";                       // Prediction Pro: the backtest is at the sportsbooks' prices
 const ONE_LINK = ids => ids.length > 0;   // one link for every leg (Prediction Pro: Novig ids only)
 const mobile = () => matchMedia("(max-width: 760px)").matches;
 const DROPS = [3, 4, 5, 6];   // JS getDay(): Wed, Thu, Fri, Sat
@@ -1439,8 +1438,7 @@ function renderParlay() {
   el.innerHTML = h + `</div></div>`;
 }
 
-// ---------------------------------------------------------------- results: the backtest, then our graded picks (as the NBA page)
-const BT = /*BT*/{"bands":[{"label":"0-5%","n":1567,"v":2.7},{"label":"5-10%","n":989,"v":1.3},{"label":"10-15%","n":539,"v":9.2},{"label":"15-20%","n":256,"v":13.1},{"label":"20-35%","n":188,"v":37.3},{"label":"35%+","n":53,"v":36.6}],"bands_note":"Every main-line receptions, receiving yards, rush attempts and rush yards prop of 2026 weeks 1-10 (150 games) where the sim's own chance found an edge at the best pre-kick price, one bet per player-stat. EV 5-35%: 1,972 bets, +8.4%.","cum":[{"name":"Board rules","color":"var(--accent)","pts":[["Wk 1",8.08],["Wk 2",12.87],["Wk 3",17.37],["Wk 4",15.14],["Wk 5",15.85],["Wk 6",15.64],["Wk 7",19.81],["Wk 8",25.8],["Wk 9",30.31],["Wk 10",36.12]]}],"cum_note":"Each week the board's own rules: Wed-Sat 5 PM ET slots, up to 4 picks a slot from the games not yet started, EV 5-35% at the best price, 2+ books, -200 to +300, one pick per game a slot, a player once and a stat at most twice a week. Sized quarter-Kelly. Limits: pre-kick prices stand in for each slot's prices, and the projections had seen those lines (the agent uses them), so this is a bet-at-kickoff test; the live record is the real test.","kpis":[["record","57-23"],["units","+36.1 u"],["return","+45.6%"],["90% range","+26% to +64%"]],"groups":{"Receiving yards":"18-2","Receptions":"13-7","Rush attempts":"9-11","Rush yards":"17-3"}}/*BT*/;
+// ---------------------------------------------------------------- results: our graded picks (as the NBA page)
 function svgBars(rows, o = {}) {   // rows: [{label, v, n}] -> vertical bars around 0 (v in %)
   const W = mobile() ? 340 : 460, H = 190, pl = 34, pb = 34, pt = 14, mx = Math.max(5, ...rows.map(r => Math.abs(r.v))) * 1.15, bw = (W - pl - 8) / rows.length;
   const y = v => pt + (H - pt - pb) * (mx - v) / (2 * mx), y0 = y(0);
@@ -1466,13 +1464,8 @@ function svgLine(series, o = {}) {   // series: [{name, color, pts: [[label, y]]
 }
 const STATN = { rec: "Receptions", rec_yds: "Receiving yards", rush_att: "Rush attempts", rush_yds: "Rush yards" };
 function renderResults() {
-  const el = $("resBoard"), R = S.prices?.bet_results || {}, rv = S.resView || "straight", b = BT;
+  const el = $("resBoard"), R = S.prices?.bet_results || {}, rv = S.resView || "straight";   // our graded picks only (the 2026 backtest was pulled 2026-11-18: its prices were not real bettable lines)
   let h = `<div class="charts">`;
-  if (b && b.bands) {
-    h += `<div class="chart"><h4>2026 weeks 1–10 check: the bigger our edge, the more it won</h4><div class="cs">${esc(b.bands_note)}${BT_NOTE}</div>${svgBars(b.bands, { aria: "Return by edge band" })}</div>`;
-    h += `<div class="chart"><h4>2026 weeks 1–10, the board's rules each week</h4><div class="cs">${esc(b.cum_note)}${BT_NOTE}</div>
-      <div class="kpis">${b.kpis.map(k => `<span><b>${esc(k[1])}</b>${esc(k[0])}</span>`).join("")}${Object.entries(b.groups || {}).map(([g, x]) => `<span><b>${esc(x)}</b>${esc(g)}</span>`).join("")}</div>${svgLine(b.cum, { aria: "Cumulative units, 2026 weeks 1-10" })}</div>`;
-  } else h += `<div class="chart"><h4>2026 backtest</h4><div class="cs">Not loaded.</div></div>`;
   const rows = (R.last || []).filter(r => ["win", "loss", "push"].includes(r.grade)).sort((a, c) => String(a.slot).localeCompare(String(c.slot)));
   const sel = rows.filter(r => rv === "overall" || r.kind === (rv === "parlays" ? "parlay" : "pick"));
   const tot = rv === "parlays" ? [R.parlay] : rv === "overall" ? [R.pick, R.parlay] : [R.pick];
