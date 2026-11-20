@@ -805,7 +805,7 @@ function beginSegment(k) {
     at(Math.max(t0 + .1, tEnd - .32), () => { let r = null;
       if (b.type === "shot") r = R.sk.get(b.player); else if (b.type === "hit") { const h = R.sk.get(b.player); r = h && h.st === "ice" ? nearest(onIce(O).filter(s => s.pos !== "G"), h.x, h.y) : null; R.victim = r ? r.id : null; }
       if (!r || r.st !== "ice") return; const c = carrier(); if (c === r) return; puckTo(r.id, clamp(Math.hypot(r.x - R.puck.x, r.y - R.puck.y) / 85, .15, .4)); });
-    if (b.type === "shot") { R.flow.recv = b.player; at(Math.max(0, R.fl - .9), () => { R.pull = b.player; }); }
+    if (b.type === "shot") { R.flow.recv = b.player; at(0, () => { R.pull = b.player; }); }
   }
   R.fired = 0; R.sched.sort((a, b) => a[0] - b[0]);
   // the action
@@ -834,10 +834,11 @@ function placeFace(dot, per) { R.fo = { on: true, dot }; const T = faceSpots(dot
 function whistle() { const p = R.puck; if (p.mode === "carry" || p.mode === "fly") { p.mode = "hold"; } }
 function actShot(b, act) {
   const per = b.period, dA = dirOf(b.team, per), sp = shotSpot(b), net = [dA * NET, 0];
-  act(0, () => { R.pull = null; const s = R.sk.get(b.player); if (s && s.st === "ice") { R.ovr.set(s.id, [dA * sp[0], sp[1], 14, 60]); if (carrier() !== s) puckTo(s.id, .18); } });
+  act(0, () => { R.pull = null; const s = R.sk.get(b.player); if (s && s.st === "ice") { R.ovr.set(s.id, [dA * sp[0], sp[1], 14, 60]); R.ovr.set(s.id, [dA * sp[0], sp[1], 38, 120]); R.waitShot = { s, x: dA * sp[0], y: sp[1], t: 0, sp }; if (carrier() !== s) puckTo(s.id, .18); } });
   if (b.res === "block") act(0, () => { const bl = R.sk.get(b.blocker); if (bl && bl.st === "ice") R.ovr.set(bl.id, [dA * (sp[0] + (NET - sp[0]) * .3), sp[1] * .7, 30, 90]); });
   act(.3, () => {
-    const s = R.sk.get(b.player), x0 = R.puck.x, y0 = R.puck.y, g = goalieOf(1 - b.team), k = b.i;
+    R.windup = null; const s = R.sk.get(b.player), x0 = dA * sp[0], y0 = sp[1], g = goalieOf(1 - b.team), k = b.i;
+    if (s && s.st === "ice") { s.x = x0 - Math.cos(s.h + .5) * 2.6; s.y = y0 - Math.sin(s.h + .5) * 2.6; }
     R.done = k; R.puck.mode = "hold"; R.puck.x = x0; R.puck.y = y0; R.sogNow = R.C[k + 1].sog;
     if (s) { s.tag = lastName(b.player); s.tagT = 1.6; }
     const d = Math.hypot(net[0] - x0, net[1] - y0), ft = Math.round(Math.hypot(NET - sp[0], sp[1]));
@@ -1038,14 +1039,20 @@ function frame(now) {
   for (const p of R.pens) { if (!p.out && R.clock >= p.t1) { p.out = true; const s = R.sk.get(p.id); if (s && (s.st === "box" || s.st === "toBox")) { const on = (R.onNow || []).flat().includes(s.id);
     if (on) { s.st = "ice"; s.x = boxX(s.team); s.y = 43.5; s.vy = -12; } else s.st = "bench"; benchSlots(); } } }
   if (R.hit && R.hit.charge && !R.hit.done) { const { h, v } = R.hit; R.ovr.set(h.id, [v.x + v.vx * .12, v.y + v.vy * .12, 48, 190]); if (Math.hypot(h.x - v.x, h.y - v.y) < 3.7) impact(R.B[R.k]); }
-  if (R.pull) { const s = R.sk.get(R.pull), b = R.B[R.k]; if (s && b?.type === "shot") { const sp = shotSpot(b), d = dirOf(b.team, b.period); R.ovr.set(s.id, [d * sp[0], sp[1], 36, 110]); } }
+  if (R.pull) { const s = R.sk.get(R.pull), b = R.B[R.k]; if (s && b?.type === "shot") { const sp = shotSpot(b), d = dirOf(b.team, b.period); R.ovr.set(s.id, [d * sp[0], sp[1], 38, 120]); } }
   physics(dt, R.B[R.k]?.period || 1); fxStep(dt);
+  if (R.windup && dt > 0) { const w = R.windup, s = w.s, f = Math.min(1, dt * 9); s.x += (w.x - s.x) * f; s.y += (w.y - s.y) * f; }
   for (const s of R.sk.values()) if (s.tagT > 0) s.tagT -= dt;
   if (R.callT > 0) { R.callT -= dt; if (R.callT <= 0) $("call").hidden = true; }
   drawFrame(); paintBoard();
   if (R.playing || R.fx.length || R.shake > 0) R.raf = requestAnimationFrame(frame);
 }
 function advance(dt) {
+  if (R.waitShot) {   // the shot waits (clock stopped) until the shooter has skated onto his spot, at most 2.5 s
+    const w = R.waitShot, d = Math.hypot(w.s.x - w.x, w.s.y - w.y); w.t += dt;
+    if (d > 5 && w.t < 2.5 && w.s.st === "ice") return;
+    R.waitShot = null; R.ovr.set(w.s.id, [w.x, w.y, 14, 60]); R.windup = { s: w.s, x: w.x, y: w.y };
+  }
   R.u += dt;
   while (R.fired < R.sched.length && R.sched[R.fired][0] <= R.u) { const f = R.sched[R.fired][1]; R.fired++; f(); }
   if (R.u >= R.fl + R.act) {
@@ -1065,7 +1072,7 @@ function stopLoop() { if (R.raf) cancelAnimationFrame(R.raf); R.raf = 0; }
 // ---- jump to a beat: the clock, the lineups, the box and the goalies as they stood; everyone set in shape around the puck
 function seek(k) {
   k = clamp(k, 0, R.B.length - 1); const b = R.B[k], prev = R.B[k - 1];
-  R.fx.forEach(f => f.e.remove()); R.fx = []; R.shake = 0; R.slow = 1; R.slowT = 0; R.hit = null; R.pull = null; R.victim = null; R.ovr = new Map();
+  R.fx.forEach(f => f.e.remove()); R.fx = []; R.shake = 0; R.slow = 1; R.slowT = 0; R.hit = null; R.pull = null; R.windup = null; R.waitShot = null; R.victim = null; R.ovr = new Map();
   $("banner").hidden = true; $("call").hidden = true; $("siren").hidden = true; $("pow").hidden = true;
   R.fin = false; R.done = k - 1; R.scoreNow = R.C[k].sc; R.sogNow = R.C[k].sog; R.gs = R.C[k];
   const t0 = prev ? prev.t : 0; R.clock = t0;
