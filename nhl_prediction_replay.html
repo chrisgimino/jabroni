@@ -203,6 +203,40 @@ td small { color: var(--muted) }
   .call { min-width: 0; max-width: calc(100% - 12px); padding: 4px 8px 4px 11px } .call .h { font-size: 12px; gap: 8px } .call .b { font-size: 12px } .call .s { font-size: 11px } .sit { font-size: 11px } }
 @media (max-width: 760px) { #dLbl { display: none } }
 @media (max-width: 600px) { .banner { top: auto; bottom: 34px; padding: 4px 14px 5px } }
+/* box score on the rink (Chris 2026-11-25, the NBA page's overlay): off / on ice / full box; phones get a Bets | Box score tab instead */
+.boxseg { position: absolute; left: 8px; top: 8px; z-index: 5; background: rgba(8, 8, 10, .82); border-color: rgba(255, 255, 255, .18) }
+.boxseg button { font-size: 11.5px; padding: 3px 8px; color: #c9c9cf }
+.boxseg button[aria-pressed="true"] { background: #f2f2f3; color: #08080a }
+.boxov { position: absolute; z-index: 4; background: rgba(8, 8, 10, .86); backdrop-filter: blur(2px); border: 1px solid rgba(255, 255, 255, .12); border-radius: 8px;
+  color: #f2f2f3; padding: 6px 10px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; cursor: default }
+.boxov[hidden] { display: none }
+.boxov[data-mode="floor"] { left: 8px; right: 8px; bottom: 8px }
+.boxov[data-mode="full"] { left: 8px; right: 8px; top: 40px; bottom: 8px; overflow: auto; align-content: start }
+.boxov table { width: 100%; border-collapse: collapse }
+.boxov th { font-size: 10px; font-weight: 700; color: #a3a3ab; text-align: right; padding: 0 4px; height: 18px; letter-spacing: .04em; white-space: nowrap }
+.boxov th:first-child { text-align: left; text-transform: uppercase; letter-spacing: .07em; font-size: 10.5px }
+.boxov td { font-size: 12.5px; text-align: right; padding: 0 4px; height: 20px; border-top: 1px solid rgba(255, 255, 255, .09); white-space: nowrap }
+.boxov td:first-child { text-align: left; max-width: 0; width: 100%; overflow: hidden; text-overflow: ellipsis }
+.boxov td b { font-weight: 800 }
+.boxov tr.on td:first-child { font-weight: 800 } .boxov tr.on td:first-child::after { content: " \2022"; color: var(--accent) }
+.boxov tr.hot td:first-child { color: var(--accent) }
+.fieldbox[data-box="floor"] .sit { left: auto; right: 8px; bottom: auto; top: 8px }
+.rp-tabs, .boxpanel { display: none }
+@media (max-width: 760px) {
+  .fieldbox .boxseg, .fieldbox .boxov { display: none !important }
+  #betsPanel .rp-tabs { display: flex; flex: 0 0 auto; width: 100%; margin-bottom: 8px }
+  .rp-tabs button { flex: 1 1 0; min-height: 40px; font-weight: 800 }
+  #betsPanel[data-tab="box"] > :not(.rp-tabs):not(.boxpanel) { display: none }
+  #betsPanel[data-tab="box"] .boxpanel:not([hidden]) { display: grid; flex: 1 1 auto; min-height: 0; overflow: auto; max-height: 60vh }
+  .boxpanel.boxov { position: static; inset: auto; backdrop-filter: none; background: var(--surface); color: var(--ink); border: 1px solid var(--rule);
+                    border-radius: 10px; padding: 8px 10px; grid-template-columns: minmax(0, 1fr); gap: 12px; align-content: start }
+  .boxpanel.boxov th { color: var(--muted); font-size: 11px; height: 22px }
+  .boxpanel.boxov td { font-size: 13px; height: 26px; border-top: 1px solid var(--rule) }
+  .boxov .hide-m { display: none }
+}
+.boxov th, .boxov td, .boxov th:first-child, .boxov td:first-child { position: static; background: transparent; box-shadow: none; color: inherit }
+.boxov th { color: #a3a3ab } .boxov tr.hot td:first-child { color: var(--accent) }
+@media (max-width: 760px) { .boxpanel.boxov th { color: var(--muted) } }
 /* cards */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; align-content: start }
 .card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column }
@@ -435,6 +469,8 @@ img.tsw { width: 18px !important; height: 18px !important; border-radius: 0 !imp
             <div class="banner" id="banner" hidden></div>
             <div class="pow" id="pow" hidden></div>
             <div class="sit" id="sit" hidden></div>
+            <div class="boxov" id="boxov" hidden></div>
+            <div class="seg boxseg" id="boxOv" aria-label="Box score on the rink"><button data-v="off">Box off</button><button data-v="floor">On ice</button><button data-v="full">Full box</button></div>
           </div>
           <div class="ctl">
             <button class="btn primary" id="play">Play</button>
@@ -1023,6 +1059,7 @@ function paintBoard() {
     const gs = R.gs; for (const x of [a, h]) if (gs && gs.pulled[x]) txt += ` · ${tm[x]} net empty`; }
   $("sit").textContent = txt; $("sit").hidden = false;
   $("dLbl").textContent = `sim closest to the expected total (${(SM()?.expected_total || 0).toFixed(1)} goals)`;
+  renderBoxOv();
 }
 
 // ---- the loop
@@ -1121,6 +1158,66 @@ $("prevGoal").addEventListener("click", () => { const g = R.goals.filter(x => x 
 $("nextGoal").addEventListener("click", () => { const g = R.goals.find(x => x > R.k); if (g !== undefined) { seek(g); play(); } });
 try { new ResizeObserver(() => { placeCall(); }).observe($("fieldbox")); } catch (e) {}
 document.addEventListener("visibilitychange", () => { if (document.hidden) stopLoop(); else if (S.view === "replay") startLoop(); });
+
+// ---- box score of the replayed sim (Chris 2026-11-25: "box score for median sim like nba, same interface"): on the rink (off / on ice / full),
+// a Bets | Box score tab under the rink on phones. Counts what has happened by the replay's clock; DK points as nhl.go scores them.
+const BOXZ = () => ({ sec: 0, g: 0, a: 0, sog: 0, blk: 0, hit: 0, pim: 0, shp: 0, sog2: 0 });
+function boxNow() {
+  const box = {}, z = id => (box[id] ||= BOXZ()), upto = R.fin ? R.B.length : R.k;
+  for (let i = 0; i < upto; i++) { const b = R.B[i];
+    if (b.type === "shot") { const p = z(b.player);
+      if (b.res === "goal" || b.res === "save") p.sog++;
+      if (b.res === "block" && b.blocker) z(b.blocker).blk++;
+      if (b.res === "goal") { p.g++; for (const a of b.ast || []) { z(a).a++; if (b.str === "SH") z(a).shp++; } if (b.str === "SH") p.shp++; } }
+    else if (b.type === "hit" && b.player) z(b.player).hit++;
+    else if (b.type === "penalty" && b.player) z(b.player).pim += b.min || 2;
+    else if (b.type === "so_attempt" && b.made && b.player) z(b.player).sog2++; }
+  const ons = R.ons, now = R.clock;
+  for (let j = 0; j < ons.length && ons[j].t < now; j++) { const d = Math.min(j + 1 < ons.length ? ons[j + 1].t : now, now) - ons[j].t;
+    if (d > 0) for (const ids of ons[j].on || []) for (const id of ids) z(id).sec += d; }
+  return box;
+}
+function boxDK(b) { const p = b.g + b.a;
+  return 8.5 * b.g + 5 * b.a + 1.5 * b.sog + 1.3 * b.blk + 2 * b.shp + 1.5 * b.sog2 + (b.sog >= 5 ? 3 : 0) + (b.blk >= 3 ? 3 : 0) + (p >= 3 ? 3 : 0) + (b.g >= 3 ? 3 : 0); }
+const boxTc = t => { const c = tcol(t), n = parseInt(c.slice(1), 16), l = .299 * (n >> 16) + .587 * (n >> 8 & 255) + .114 * (n & 255); return l < 90 ? "#f2f2f3" : c; };   // dark team colors read white on the dark box
+const toiTxt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+function renderBoxOv(force) {
+  const narrow = matchMedia("(max-width: 760px)").matches, bp = $("boxPanel"), ov = $("boxov"), fb = $("fieldbox");
+  const mode = narrow ? "full" : (S.boxOv || "floor");
+  $("boxOv")?.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === mode)));
+  if (fb) fb.dataset.box = narrow ? "off" : mode;
+  if (narrow) { if (ov) ov.hidden = true; } else if (bp) bp.innerHTML = "";
+  const el = narrow ? (S.rpTab === "box" ? bp : null) : ov; if (!el) return;
+  if (mode === "off" || !R.ready || !R.B.length) { el.hidden = true; return; }
+  const key = [S.gid, R.k, R.fin, Math.floor(R.clock / 2), mode, narrow].join("|"); if (!force && el.dataset.key === key && !el.hidden) return;
+  el.dataset.key = key; el.hidden = false; el.dataset.mode = mode;
+  const box = boxNow(), on = R.onNow || [[], []], onNow = new Set(on.flat()), pl = SM()?.players || {}, tm = teams(), order = [awayIx(), homeIx()];
+  const hot = b => b.g >= 2 || b.g + b.a >= 3;
+  if (mode === "floor") {
+    el.innerHTML = order.map(t => `<table><thead><tr><th style="color:${boxTc(tm[t])}">${esc(tm[t])} on ice</th><th>G</th><th>A</th><th>SOG</th></tr></thead><tbody>` +
+      (on[t] || []).map(id => { const b = box[id] || BOXZ();
+        return `<tr class="${hot(b) ? "hot" : ""}"><td>${esc(lastName(id))}</td><td><b>${b.g}</b></td><td>${b.a}</td><td>${b.sog}</td></tr>`; }).join("") + "</tbody></table>").join("");
+    return;
+  }
+  el.innerHTML = order.map(t => { const ids = Object.keys(pl).filter(id => pl[id].team === t && pl[id].pos !== "G")
+      .sort((x, y) => ((box[y]?.sec || 0) - (box[x]?.sec || 0)) || ((+pl[x].line || 9) - (+pl[y].line || 9)));
+    return `<table><thead><tr><th style="color:${narrow ? tcol(tm[t]) : boxTc(tm[t])}">${esc(tm[t])}</th><th>TOI</th><th>G</th><th>A</th><th>SOG</th><th class="hide-m">BLK</th><th class="hide-m">HIT</th><th class="hide-m">PIM</th><th>DK</th></tr></thead><tbody>` +
+      ids.map(id => { const b = box[id] || BOXZ();
+        return `<tr class="${onNow.has(id) ? "on" : ""}${hot(b) ? " hot" : ""}"><td>${esc(narrow ? lastName(id) : playerName(id))}</td><td>${toiTxt(b.sec)}</td><td><b>${b.g}</b></td><td>${b.a}</td><td>${b.sog}</td>
+          <td class="hide-m">${b.blk}</td><td class="hide-m">${b.hit}</td><td class="hide-m">${b.pim}</td><td>${boxDK(b).toFixed(1)}</td></tr>`; }).join("") + "</tbody></table>"; }).join("");
+}
+$("boxOv")?.addEventListener("click", e => { e.stopPropagation(); const b = e.target.closest("button[data-v]"); if (!b) return; S.boxOv = b.dataset.v; renderBoxOv(true); });
+(() => {   // phones: Bets | Box score tabs under the rink
+  const panel = $("betsPanel"); if (!panel) return;
+  const seg = document.createElement("div"); seg.className = "seg rp-tabs"; seg.setAttribute("role", "tablist"); seg.setAttribute("aria-label", "Bets or box score");
+  seg.innerHTML = `<button type="button" data-t="bets" aria-pressed="true">Bets</button><button type="button" data-t="box" aria-pressed="false">Box score</button>`;
+  const box = document.createElement("div"); box.className = "boxov boxpanel"; box.id = "boxPanel"; box.dataset.mode = "full"; box.hidden = true;
+  panel.prepend(seg); panel.append(box);
+  const set = t => { S.rpTab = t; panel.dataset.tab = t; seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t))); renderBoxOv(true); };
+  seg.addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if (b) set(b.dataset.t); });
+  set("bets");
+  try { matchMedia("(max-width: 760px)").addEventListener("change", () => renderBoxOv(true)); } catch (e) {}
+})();
 
 // ---------------------------------------------------------------- the Replay tab's Bets panel (the NFL / NBA pages')
 //   From this sim     in each market, of the bets the replayed game cashes, the one with the best edge over all the sims
@@ -1512,6 +1609,16 @@ function svgLine(series, o = {}) {   // series: [{name, color, pts: [[label, y]]
     series.map(s => `<polyline fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" points="${s.pts.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ")}"/>
       <text class="v" x="${W - pr}" y="${(v => v - 6 < 12 ? v + 16 : v - 6)(y(s.pts[s.pts.length - 1][1]))}" text-anchor="end" style="fill:${s.color}">${s.pts[s.pts.length - 1][1] >= 0 ? "+" : ""}${s.pts[s.pts.length - 1][1].toFixed(1)} u${s.est ? " est." : ""}</text>`).join("") + `</svg>`;
 }
+const BT = /*BT*/{"std":{"bands":[{"label":"4-8%","n":1004,"v":0.7},{"label":"8-12%","n":302,"v":2.1},{"label":"12-16%","n":110,"v":8.9},{"label":"16-20%","n":38,"v":0.2},{"label":"20-30%","n":31,"v":-58.8},{"label":"30%+","n":20,"v":65.0}],"bands_note":"Every main-line player prop where our sims + the books found an edge, at the best closing pre-game price across the books (one bet per player and stat a night). EV 8%+: 501 bets, +2.2% (95% range -12.8 to +17.1).","cum":[{"name":"Best bets a day","color":"var(--accent)","pts":[["2026-10-03",-3.9],["2026-10-04",4.84],["2026-10-05",3.24],["2026-10-06",2.52],["2026-10-07",1.03],["2026-10-08",-0.55],["2026-10-09",-3.95],["2026-10-10",-4.43],["2026-10-11",-4.72],["2026-10-12",-3.09],["2026-10-13",-1.12],["2026-10-14",2.02],["2026-10-15",-0.6],["2026-10-16",-2.95],["2026-10-17",-2.8],["2026-10-18",-4.65],["2026-10-19",-4.25],["2026-10-20",-2.22],["2026-10-21",-0.42],["2026-10-29",-3.42],["2026-10-30",-3.77],["2026-10-31",-3.67],["2026-11-01",-3.27],["2026-11-02",-4.56],["2026-11-03",-8.21],["2026-11-04",-10.87],["2026-11-05",-14.47],["2026-11-06",-12.86],["2026-11-07",-13.04],["2026-11-08",-13.74],["2026-11-09",-15.23],["2026-11-10",-12.05],["2026-11-11",-9.25],["2026-11-12",-3.85],["2026-11-13",-2.26],["2026-11-14",9.78],["2026-11-15",18.66],["2026-11-16",27.07],["2026-11-17",31.08]]}],"cum_note":"Each day the live board's best bets (EV 4-40%, 20%+ to hit, at most 2 a game, 5 a day; main lines, props, rungs, anytime scorers), best closing price across the books, sized like the live picks (0.05-1 unit, quarter-Kelly), 39 days. Flat 1 unit each: +17.7% (95% range -10.1 to +45.4).","kpis":[["record","57-132"],["units","+31.1"],["return","+22.5%"],["flat 1u","+17.7%"]],"lines":[{"label":"Moneyline","n":50,"v":-1.5},{"label":"Puck line","n":23,"v":-14.2},{"label":"Total","n":107,"v":0.2},{"label":"All","n":180,"v":-2.1}],"lines_note":"One bet per game and market (best closing price across the books), only when it passes the board's rules: EV 6-35% (moneyline 6-20% and shorter than +200), 25%+ to hit, no heavier than -200. All: -2.1% (95% range -17.8 to +13.5)."},"pp":{"bands":[{"label":"4-8%","n":62,"v":-37.4},{"label":"8-12%","n":12,"v":-7.6},{"label":"12-16%","n":4,"v":36.5},{"label":"20-30%","n":1,"v":115.0}],"bands_note":"Every main-line player prop where our sims + the books found an edge, at the best closing pre-game price at Novig (one bet per player and stat a night). EV 8%+: 17 bets, +10.0% (95% range -75.3 to +95.3).","cum":[{"name":"Best bets a day","color":"var(--accent)","pts":[["2026-10-30",2.24],["2026-10-31",1.93],["2026-11-01",0.27],["2026-11-02",0.94],["2026-11-03",1.87],["2026-11-04",-0.13],["2026-11-05",-0.58],["2026-11-06",-0.6],["2026-11-07",-0.27],["2026-11-08",-0.61],["2026-11-09",-4.41],["2026-11-10",-8.71],["2026-11-11",-9.0],["2026-11-12",-7.74],["2026-11-13",-8.67],["2026-11-14",-9.77],["2026-11-15",-7.55],["2026-11-16",-8.46],["2026-11-17",-9.67]]}],"cum_note":"Each day the live board's best bets (EV 4-40%, 20%+ to hit, at most 2 a game, 5 a day; main lines, props, rungs, anytime scorers), best closing price at Novig, sized like the live picks (0.05-1 unit, quarter-Kelly), 19 days. Flat 1 unit each: -14.6% (95% range -38.0 to +8.7).","kpis":[["record","34-53"],["units","-9.7"],["return","-13.5%"],["flat 1u","-14.6%"]],"lines":[{"label":"Moneyline","n":19,"v":18.2},{"label":"Puck line","n":7,"v":-34.9},{"label":"Total","n":80,"v":-0.6},{"label":"All","n":106,"v":0.5}],"lines_note":"One bet per game and market (best closing price at Novig), only when it passes the board's rules: EV 6-35% (moneyline 6-20% and shorter than +200), 25%+ to hit, no heavier than -200. All: +0.5% (95% range -19.8 to +20.8)."},"span":"2026-10-03 to 2026-11-17, 270 regular-season games","note":"How it was run: our production sim engine, fed only what was known before each game (FantasyLabs' pregame player projections, lines and power-play units from each player's previous game, that night's roster and starting goalie). Prices are each book's last pre-game price from Action Network's history; ESPN Bet is left out (its history mixes in live prices), and any book more than 10 points off the other books is dropped. A bet needs 2+ books. Bets on a player who didn't play are void, over or under; goalie bets void if he didn't start."}/*BT*/;   // the backtest (nhlbt/work/bt_summary.py)
+function btBlock() {   // the NBA page's backtest charts: the daily best bets, props by EV band, the game lines
+  const b = BT[BOARD]; if (!b || !b.bands) return "";
+  return `<div class="bb-h">Backtest: ${esc(BT.span || "")}, real closing prices</div><div class="charts">
+    <div class="chart"><h4>Best bets a day</h4><div class="cs">${esc(b.cum_note)}</div>
+      <div class="kpis">${b.kpis.map(([l, v]) => `<span><b>${esc(v)}</b>${esc(l)}</span>`).join("")}</div>${svgLine(b.cum, { aria: "Backtest cumulative units" })}</div>
+    <div class="chart"><h4>Player props by edge</h4><div class="cs">${esc(b.bands_note)}</div>${svgBars(b.bands, { aria: "Backtest return by EV band" })}</div>
+    <div class="chart"><h4>Game lines</h4><div class="cs">${esc(b.lines_note)}</div>${svgBars(b.lines, { aria: "Backtest return by market" })}</div>
+  </div>${BT.note ? `<div class="cs" style="margin:6px 2px;color:var(--muted);font-size:12px">${esc(BT.note)}</div>` : ""}`;
+}
 const STATN = { sog: "Shots on goal", pts: "Points", blk: "Blocked shots", sv: "Saves", g: "Goals", ast: "Assists", hits: "Hits" };
 function renderResults() {
   const el = $("resBoard"), R = S.prices?.bet_results || {}, rv = S.resView || "straight";   // our graded picks only (the 2026 backtest was pulled 2026-11-18: its prices were not real bettable lines)
@@ -1529,7 +1636,7 @@ function renderResults() {
   const rel = {}; for (const r of sel) { const k = String(r.slot).slice(11, 16); const x = rel[k] || (rel[k] = { won: 0, lost: 0, units: 0, staked: 0 }); x.won += r.grade === "win"; x.lost += r.grade === "loss"; x.units += +r.units || 0; x.staked += +(r.stake || 1); }
   const grp = {}; if (rv === "straight") for (const r of sel) { const k = STATN[r.stat] || null; if (!k) continue; const x = grp[k] || (grp[k] = [0, 0]); x[0] += r.grade === "win"; x[1] += r.grade === "loss"; }
   h += `<div class="chart"><h4>2026-27 live: our best bets</h4>${seg}<div class="cs">${NOTE}</div>
-    <div class="kpis"><span><b>${T.won}-${T.lost}${T.push ? "-" + T.push : ""}</b>record</span><span><b>${sg(T.units)}${T.units.toFixed(1)} u</b>${est ? "units (est.)" : "units"}</span><span><b>${sg(roi)}${roi.toFixed(1)}%</b>return</span>${Object.entries(grp).map(([g, x]) => `<span><b>${x[0]}-${x[1]}</b>${esc(g)}</span>`).join("")}</div>
+    <div class="kpis"><span><b>${T.won}-${T.lost}${T.push ? "-" + T.push : ""}</b>record</span><span><b>${sg(T.units)}${T.units.toFixed(1)} u</b>${est ? "units (est.)" : "units"}</span><span><b>${sg(roi)}${roi.toFixed(1)}%</b>return</span></div>
     ${ser[0].pts.length ? svgLine(ser, { aria: "Cumulative units, 2026 live" }) : `<div class="cs">No graded ${rv === "parlays" ? "parlays" : "bets"} yet.</div>`}
     ${Object.keys(rel).length ? `<div class="cs" style="margin-top:8px"><b>By release</b>: the picks made at each release</div><div class="kpis">${Object.keys(rel).sort().map(k => { const x = rel[k];
       return `<span><b>${x.won}-${x.lost} · ${sg(x.units)}${x.units.toFixed(1)}u · ${sg(x.units)}${(x.staked ? 100 * x.units / x.staked : 0).toFixed(1)}%</b>${hm12(+k.slice(0, 2), +k.slice(3, 5))} ET</span>`; }).join("")}</div>` : ""}</div>`;
@@ -1538,6 +1645,7 @@ function renderResults() {
   if (rec.length) h += `<div class="bb-h">Latest graded</div><div class="chart"><table class="rtab">${rec.map(r =>
     `<tr><td>${esc(String(r.slot).slice(5, 10))} ${esc(SLOT_DAY(String(r.slot)))}</td><td class="t">${esc(r.text)}<br><span style="color:var(--muted)">${esc(r.game || "")}</span></td><td>${odds(+r.price)} <small>${esc(r.book || "")}</small></td>
      <td class="${r.grade}">${esc(r.grade)}</td><td>${(+r.units) >= 0 ? "+" : ""}${(+r.units).toFixed(2)}${r.kind === "parlay" && r.grade === "win" ? " est." : ""}<br><span style="color:var(--muted)">bet ${uTxt(+(r.stake || 1))}</span></td></tr>`).join("")}</table></div>`;
+  h += btBlock();
   el.innerHTML = h;
 }
 
