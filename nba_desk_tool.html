@@ -656,6 +656,11 @@ table.oo td,table.oo th{font-size:.8rem}
 
 <script type="text/plain" id="deskapp">
 const D = window.NBA_DATA;
+// RG's lineups feed says PHO where the stats say PHX (and similar): point any slate team code with no stats at the code that has them
+(()=>{ const AL={PHO:"PHX",PHX:"PHO",GS:"GSW",GSW:"GS",NY:"NYK",NYK:"NY",NO:"NOP",NOP:"NO",SA:"SAS",SAS:"SA",BRK:"BKN",BKN:"BRK",CHO:"CHA",CHA:"CHO",UTAH:"UTA",UTA:"UTAH",WSH:"WAS",WAS:"WSH"};
+  const fix=c=>(!D.teams[c]&&D.teams[AL[c]])?AL[c]:c;
+  for(const gs of Object.values(D.slate||{})) for(const g of gs){ g.home=fix(g.home); g.away=fix(g.away); for(const x of g.inj_extra||[]) x.team=fix(x.team); }
+})();
 // unpack: rotation strings -> second arrays; on/off per-36 views rebuilt from raw season totals
 (function(){
   if(!D.packed) return;
@@ -853,8 +858,10 @@ function renderTop(){
   const ds=$("date"); ds.innerHTML=DATES.slice().reverse().map(d=>`<option ${d===st.date?"selected":""}>${d}</option>`).join("");
   ds.onchange=()=>{st.date=ds.value;st.gi=0;st.out={};st.open=null;render();};
   const gs=D.slate[st.date]||[];
-  $("slate").innerHTML=gs.map((g,i)=>`<button class="chip-game" data-i="${i}" aria-pressed="${i===st.gi}"><b>${dot(g.away)}${g.away}</b><span>${LIVE?g.tip+" PM":D.teams[g.away].profile.season.wins+"-"+D.teams[g.away].profile.season.losses}</span><b>${dot(g.home)}${g.home}</b><span>${LIVE?"ET":D.teams[g.home].profile.season.wins+"-"+D.teams[g.home].profile.season.losses}</span></button>`).join("");
-  $("slate").querySelectorAll("button").forEach(b=>b.onclick=()=>{st.gi=+b.dataset.i;st.out={};st.open=null;render();});
+  const sl=$("slate"), keepX=sl.scrollLeft;
+  sl.innerHTML=gs.map((g,i)=>`<button class="chip-game" data-i="${i}" aria-pressed="${i===st.gi}"><b>${dot(g.away)}${g.away}</b><span>${LIVE?g.tip+" PM":D.teams[g.away].profile.season.wins+"-"+D.teams[g.away].profile.season.losses}</span><b>${dot(g.home)}${g.home}</b><span>${LIVE?"ET":D.teams[g.home].profile.season.wins+"-"+D.teams[g.home].profile.season.losses}</span></button>`).join("");
+  sl.scrollLeft=keepX;      // re-rendering the chips must not send the bar back to the left
+  sl.querySelectorAll("button").forEach(b=>b.onclick=()=>{st.gi=+b.dataset.i;st.out={};st.open=null;render();});
 }
 function renderBoard(){
   const g=game(), {a,h,A,H}=teams(), W0=st.win==="l10"?"l10":"season", pa=A.profile[W0]||A.profile.season, ph=H.profile[W0]||H.profile.season;
